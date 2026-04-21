@@ -28,7 +28,7 @@ Implementar as abstrações transversais: `IIntegrationEventBus`, `IIntegrationE
 
 Configurar o `Program.cs` mínimo: Swagger (sem auth ainda), health check em `/health`, exception middleware global retornando Problem Details (RFC 7807). Deixar os registros de módulos como placeholders comentados.
 
-**Validação:** `dotnet run` sobe sem erro. `GET /health` retorna 200. Swagger acessível em `/swagger`.
+**Validação:** `dotnet run` sobe sem erro. `GET /healthz` retorna 200. Scalar acessível em `/scalar`.
 
 ---
 
@@ -36,7 +36,7 @@ Configurar o `Program.cs` mínimo: Swagger (sem auth ainda), health check em `/h
 
 Criar o `Dockerfile` multi-stage em `src/Bootstrap/Api/` (build no `sdk`, runtime no `aspnet`). Criar o `docker-compose.yml` na raiz com os serviços `postgres` (postgres:16, volume persistente) e `api` (build do Dockerfile, depende do postgres), com as variáveis de ambiente necessárias para a connection string.
 
-**Validação:** `docker compose up --build` sobe os dois containers sem erro. `GET /health` retorna 200 através do container da api.
+**Validação:** `docker compose up --build` sobe os dois containers sem erro. `GET /healthz` retorna 200 através do container da api.
 
 ---
 

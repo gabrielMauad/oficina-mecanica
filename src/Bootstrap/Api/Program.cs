@@ -1,34 +1,39 @@
+using Api.Middlewares;
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
+builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<CustomExceptionHandler>();
+// builder.Services.AddCadastroModule(builder.Configuration);
+// builder.Services.AddOrdemServicoModule(builder.Configuration);
+// builder.Services.AddPecasInsumosModule(builder.Configuration);
+
+builder.Services.AddControllers();
+// .AddApplicationPart(typeof(Cadastro.Presentation.CadastroAssemblyMarker).Assembly)
+// .AddApplicationPart(typeof(OrdemServico.Presentation.OrdemServicoAssemblyMarker).Assembly)
+// .AddApplicationPart(typeof(PecasInsumos.Presentation.PecasInsumosAssemblyMarker).Assembly);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+// app.UseAuthorization();
+app.MapControllers();
+// Configure the HTTP request pipeline for DEVELOPMENT only
+if (app.Environment.IsDevelopment())
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    app.MapOpenApi();
+    app.MapScalarApiReference(option =>
+    {
+        option.Title = "Oficina Mecanica API";
+    });
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-});
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    // Automatically redirect to Scalar documentation
+    app.MapGet("/", () => Results.Redirect("/scalar"));
 }
+app.MapHealthChecks("/healthz");
+app.Run();
