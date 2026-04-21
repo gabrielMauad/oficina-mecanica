@@ -28,7 +28,7 @@ Implementar as abstrações transversais: `IIntegrationEventBus`, `IIntegrationE
 
 Configurar o `Program.cs` mínimo: Swagger (sem auth ainda), health check em `/health`, exception middleware global retornando Problem Details (RFC 7807). Deixar os registros de módulos como placeholders comentados.
 
-**Validação:** `dotnet run` sobe sem erro. `GET /health` retorna 200. Swagger acessível em `/swagger`.
+**Validação:** `dotnet run` sobe sem erro. `GET /healthz` retorna 200. Scalar acessível em `/scalar`.
 
 ---
 
