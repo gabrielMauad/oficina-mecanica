@@ -21,7 +21,6 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseHttpsRedirection();
 // app.UseAuthorization();
 app.MapControllers();
 // Configure the HTTP request pipeline for DEVELOPMENT only
