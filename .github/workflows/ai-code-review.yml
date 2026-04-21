@@ -1,0 +1,135 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  ai-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      models: read
+
+    steps:
+      - name: AI Code Review
+        uses: actions/github-script@v7
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const MAX_DIFF_LENGTH = 12000;
+
+            // Busca os arquivos alterados no PR
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            const diffContent = files
+              .filter(f => f.patch && f.status !== 'removed')
+              .map(f => `### ${f.filename}\n\`\`\`diff\n${f.patch}\n\`\`\``)
+              .join('\n\n');
+
+            if (!diffContent.trim()) {
+              console.log('Nenhuma alteração de código para revisar.');
+              return;
+            }
+
+            const truncatedDiff = diffContent.length > MAX_DIFF_LENGTH
+              ? diffContent.slice(0, MAX_DIFF_LENGTH) + '\n\n*(diff truncado por tamanho)*'
+              : diffContent;
+
+            // Chama a API do GitHub Models
+            const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.GH_TOKEN}`,
+              },
+              body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                  {
+                    role: 'system',
+                    content: `Você é um revisor de código experiente em .NET/C# e Domain-Driven Design (DDD). Revise o diff do PR abaixo e forneça feedback construtivo em Português (Brasil).
+
+                    Regras obrigatórias:
+                    - Cite APENAS os tópicos onde houver problemas reais. Se um tópico não tiver nenhum problema, ignore-o completamente.
+                    - NÃO escreva frases do tipo "não se aplica" ou "nenhum problema encontrado neste tópico". Simplesmente não mencione o tópico.
+                    - Se não houver NENHUM problema em nenhum tópico, responda apenas com: "✅ Esse PR não contém nenhum ponto de atenção relevante. Ótima implementação!"
+                    - Seja direto e objetivo. Não faça elogios desnecessários nem preencha a resposta com texto vazio.
+
+                    Tópicos a avaliar (somente se houver problemas):
+
+                    **1. DDD (Domain-Driven Design)**
+                    - A lógica de negócio está no domínio (Domain layer) ou vazou para Application/Infrastructure?
+                    - Entidades e Value Objects estão sendo usados corretamente?
+                    - Aggregates respeitam seus limites (Aggregate Boundaries)?
+                    - Repositórios estão definidos no domínio e implementados na infraestrutura?
+                    - Nomenclatura reflete a Ubiquitous Language do domínio?
+                    - Domain Events sendo utilizados onde adequado?
+
+                    **2. Boas práticas .NET/C#**
+                    - Padrões e convenções C# estão sendo seguidos?
+                    - A qualidade do código está em um padrao aceitável?
+                    - Algum problema de Clean Code?
+                    - Uso adequado de async/await, injeção de dependência, etc.?
+
+                    **3. Princípios SOLID**
+                    - Algum princípio está sendo violado?
+
+                    **4. Possíveis bugs e segurança**
+                    - Há bugs, dados não validados ou falhas de segurança?`,
+                  },
+                  {
+                    role: 'user',
+                    content: `Revise este pull request:\n\n${truncatedDiff}`,
+                  },
+                ],
+                max_tokens: 1500,
+                temperature: 0.3,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              core.setFailed(`Erro na API do GitHub Models: ${response.status} - ${errorText}`);
+              return;
+            }
+
+            const data = await response.json();
+            const review = data.choices?.[0]?.message?.content;
+
+            if (!review) {
+              core.warning('Nenhuma revisão foi gerada.');
+              return;
+            }
+
+            // Remove comentários anteriores deste bot para não poluir o PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+
+            for (const comment of comments) {
+              if (comment.body?.startsWith('## 🤖 AI Code Review')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            // Posta o novo comentário de revisão
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## 🤖 AI Code Review\n\n${review}\n\n---\n*Revisão gerada automaticamente via [GitHub Models](https://github.com/marketplace/models) (GPT-4o mini) — não substitui a revisão humana.*`,
+            });
