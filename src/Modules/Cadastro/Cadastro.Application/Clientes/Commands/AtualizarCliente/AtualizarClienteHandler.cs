@@ -25,19 +25,27 @@ public sealed class AtualizarClienteHandler
         if (cliente is null)
             return ClienteErrors.NaoEncontrado;
 
+        if (!cliente.Ativo)
+            return ClienteErrors.JaDesativado;
+
+        bool houveAlteracao = false;
+
         if (StringHasChanges(command.Nome, cliente.Nome))
         {
             var result = cliente.AtualizarNome(command.Nome!);
             if (result.IsFailure) return result.Error;
+            houveAlteracao = true;
         }
 
         if (StringHasChanges(command.Telefone, cliente.Telefone))
         {
             var result = cliente.AtualizarTelefone(command.Telefone!);
             if (result.IsFailure) return result.Error;
+            houveAlteracao = true;
         }
 
-        await _repository.Atualizar(cliente, cancellationToken);
+        if (houveAlteracao)
+            await _repository.Atualizar(cliente, cancellationToken);
 
         return AtualizarClienteResponse.FromCliente(cliente);
     }

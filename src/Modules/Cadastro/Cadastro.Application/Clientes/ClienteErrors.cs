@@ -11,4 +11,8 @@ internal static class ClienteErrors
     public static readonly Error NaoEncontrado = Error.NotFound(
         "Cliente.NaoEncontrado",
         "Cliente não encontrado.");
+
+    public static readonly Error JaDesativado = Error.Conflict(
+        "Cliente.JaDesativado",
+        "O cliente já está desativado.");
 }
