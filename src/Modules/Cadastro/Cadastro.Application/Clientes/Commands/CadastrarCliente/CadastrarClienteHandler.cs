@@ -52,6 +52,6 @@ public sealed class CadastrarClienteHandler
                 OcorridoEm: DateTime.UtcNow),
             ct));
 
-        return new CadastrarClienteResponse(cliente.Id.Value);
+        return CadastrarClienteResponse.FromCliente(cliente);
     }
 }

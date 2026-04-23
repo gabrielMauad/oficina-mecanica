@@ -1,23 +1,19 @@
-using Cadastro.Domain.Cliente;
+﻿using Cadastro.Domain.Cliente;
 
-namespace Cadastro.Application.Clientes.Commands.CadastrarCliente;
+namespace Cadastro.Application.Clientes.Commands.AtualizarCliente;
 
-public sealed record CadastrarClienteResponse(
+public sealed record AtualizarClienteResponse(
     Guid ClienteId,
     string Nome,
-    string Documento,
-    string Email,
     string Telefone,
     bool Ativo,
     DateTime CadastradoEm,
     DateTime AtualizadoEm
 )
 {
-    public static CadastrarClienteResponse FromCliente(Cliente cliente) => new(
+    public static AtualizarClienteResponse FromCliente(Cliente cliente) => new(
         ClienteId: cliente.Id.Value,
         Nome: cliente.Nome,
-        Documento: cliente.Documento.Numero,
-        Email: cliente.Email,
         Telefone: cliente.Telefone,
         Ativo: cliente.Ativo,
         CadastradoEm: cliente.CadastradoEm,

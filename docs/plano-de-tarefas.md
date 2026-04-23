@@ -83,11 +83,13 @@ Definir a interface pública do módulo (o que outros módulos podem consumir):
 Implementar os use cases com CQRS (MediatR v12), um por pasta (Command + Handler + Validator + Response):
 
 - `CadastrarCliente`, `CadastrarVeiculo`, `AdicionarServico`
-- `AtualizarCliente`, `AtualizarServico` (edição dos dados básicos)
+- `AtualizarCliente` (PATCH parcial — Nome e Telefone independentes), `AtualizarServico` (edição dos dados básicos)
 - `DesativarCliente`, `DesativarServico` (soft delete via flag `ativo`)
 - Queries: `ObterClientePorId`, `ObterVeiculoPorId`, `ObterServicoPorId`, `ListarClientes`, `ListarVeiculos`, `ListarServicos`, `ListarVeiculosPorCliente`
 
 > **Decisão de design — Veiculo é imutável:** o agregado `Veiculo` não possui métodos de mutação. Placa, modelo, marca e ano são definidos na criação e não podem ser alterados. O use case `AtualizarVeiculo` não existe — esta é uma decisão intencional de domínio, não um item pendente.
+
+> **Decisão de design — AtualizarCliente usa PATCH parcial:** Como Documento e Email são imutáveis após o cadastro, um `PUT /clientes/{id}` nunca substituiria o recurso inteiro — portanto a semântica PUT não se aplica. A atualização é exposta como dois endpoints `PATCH` independentes (`PATCH /clientes/{id}/nome` e `PATCH /clientes/{id}/telefone`), cada um com seu próprio command. O command `AtualizarClienteCommand` declara `Nome` e `Telefone` como `string?`; campos `null` são ignorados pelo handler (nenhuma alteração aplicada). O validator usa `.When(x => x.Campo is not null)` para só validar formato quando o campo é fornecido.
 
 > **Decisão de design — publicação de eventos:** handlers de comando NÃO publicam via `IIntegrationEventBus` diretamente. Em vez disso, enfileiram os eventos em `IPendingIntegrationEvents` (injetado por DI). A publicação efetiva ocorre no `TransactionBehavior`, após o `SaveChangesAsync` bem-sucedido. Ver nota em T02.
 
@@ -115,7 +117,7 @@ Implementar os use cases com CQRS (MediatR v12), um por pasta (Command + Handler
 
 Controllers REST com os endpoints de cada agregado:
 
-- `ClientesController` — `POST /clientes`, `GET /clientes`, `GET /clientes/{id}`, `PUT /clientes/{id}`, `DELETE /clientes/{id}` (desativa)
+- `ClientesController` — `POST /clientes`, `GET /clientes`, `GET /clientes/{id}`, `PATCH /clientes/{id}/nome`, `PATCH /clientes/{id}/telefone`, `DELETE /clientes/{id}` (desativa)
 - `VeiculosController` — `POST /veiculos`, `GET /veiculos`, `GET /veiculos/{id}`, `GET /clientes/{id}/veiculos` (sem `PUT` — Veiculo é imutável por decisão de domínio)
 - `ServicosController` — `POST /servicos`, `GET /servicos`, `GET /servicos/{id}`, `PUT /servicos/{id}`, `DELETE /servicos/{id}` (desativa)
 

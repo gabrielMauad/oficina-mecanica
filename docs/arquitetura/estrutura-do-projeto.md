@@ -252,6 +252,8 @@ OrdemServico.Application/
 
 > **Decisão — interfaces de leitura para listagens ficam na Application:** interfaces de repositório de domínio (`IClienteRepository`, etc.) servem ao modelo de escrita — buscam um agregado por id e salvam. Não são o lugar certo para métodos de filtro e listagem. Para casos de uso de consulta que precisam de projeções planas (listas, filtros), define-se uma interface de leitura **dentro da própria Application** (ex.: na pasta da query ou numa subpasta `ReadModel`). A Infrastructure implementa essa interface com uma projeção direta do `DbContext` para DTOs simples, sem hidratar o agregado completo. Esse padrão mantém as interfaces de repositório de domínio enxutas e focadas na escrita.
 
+> **Decisão — `AtualizarCliente` usa PATCH parcial, não PUT:** `Documento` e `Email` são imutáveis após o cadastro (o documento é identidade do cliente; o email não possui caso de uso de alteração no domínio). Como o recurso nunca pode ser substituído por inteiro, `PUT /clientes/{id}` não faz sentido semântico. A atualização é exposta como dois endpoints `PATCH` independentes: `PATCH /clientes/{id}/nome` e `PATCH /clientes/{id}/telefone`. O command `AtualizarClienteCommand` declara `Nome` e `Telefone` como `string?`; campos `null` são ignorados pelo handler. O validator aplica regras de formato apenas quando o campo é não-nulo (`.When(x => x.Campo is not null)`), sem exigir que ambos sejam enviados juntos.
+
 ---
 
 ### 5.4 `<Modulo>.Infrastructure`
