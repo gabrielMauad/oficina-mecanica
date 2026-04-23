@@ -5,9 +5,8 @@ using SharedKernel.Domain;
 namespace SharedKernel.Application.Behaviors;
 
 public sealed class ValidationBehavior<TRequest, TResponse>
-    : IPipelineBehavior<TRequest, TResponse>
+    : IPipelineBehavior<TRequest, Result<TResponse>>
     where TRequest : notnull
-    where TResponse : class
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
 
@@ -16,9 +15,9 @@ public sealed class ValidationBehavior<TRequest, TResponse>
         _validators = validators;
     }
 
-    public async Task<TResponse> Handle(
+    public async Task<Result<TResponse>> Handle(
         TRequest request,
-        RequestHandlerDelegate<TResponse> next,
+        RequestHandlerDelegate<Result<TResponse>> next,
         CancellationToken cancellationToken)
     {
         if (!_validators.Any())
@@ -39,6 +38,6 @@ public sealed class ValidationBehavior<TRequest, TResponse>
             "validation.failed",
             string.Join("; ", failures.Select(f => f.ErrorMessage)));
 
-        return (TResponse)(object)Result.Failure<TResponse>(error);
+        return Result.Failure<TResponse>(error);
     }
 }

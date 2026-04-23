@@ -20,6 +20,10 @@ Implementar os tipos-base que todos os módulos vão herdar e usar: `Entity<TId>
 
 Implementar as abstrações transversais: `IIntegrationEventBus`, `IIntegrationEventHandler<T>`, `InMemoryIntegrationEventBus` (via `IServiceProvider`), e os pipeline behaviors do MediatR: `ValidationBehavior`, `LoggingBehavior` e `TransactionBehavior`.
 
+> **Decisão de design — publicação de integration events:** handlers NÃO devem publicar eventos diretamente no corpo do handler, porque o `TransactionBehavior` chama `SaveChangesAsync` apenas após o handler retornar. Publicar antes do commit é um bug crítico (evento vai, commit falha).
+>
+> Solução adotada: criar a abstração `IPendingIntegrationEvents` (escopo de request — wrapper simples em torno de uma lista de `IIntegrationEvent`). Handlers enfileiram os eventos nessa lista via injeção de dependência. O `TransactionBehavior` é estendido para, após o `SaveChangesAsync` com sucesso, iterar a fila e publicar cada evento via `IIntegrationEventBus`. Isso garante que eventos só saem após o commit bem-sucedido.
+
 **Validação:** Projeto compila. `InMemoryIntegrationEventBus` consegue publicar para múltiplos handlers registrados.
 
 ---
@@ -79,13 +83,19 @@ Definir a interface pública do módulo (o que outros módulos podem consumir):
 Implementar os use cases com CQRS (MediatR v12), um por pasta (Command + Handler + Validator + Response):
 
 - `CadastrarCliente`, `CadastrarVeiculo`, `AdicionarServico`
-- `AtualizarCliente`, `AtualizarVeiculo`, `AtualizarServico` (edição dos dados básicos)
+- `AtualizarCliente`, `AtualizarServico` (edição dos dados básicos)
 - `DesativarCliente`, `DesativarServico` (soft delete via flag `ativo`)
 - Queries: `ObterClientePorId`, `ObterVeiculoPorId`, `ObterServicoPorId`, `ListarClientes`, `ListarVeiculos`, `ListarServicos`, `ListarVeiculosPorCliente`
 
-Handlers de comando publicam o integration event correspondente via `IIntegrationEventBus` após persistir.
+> **Decisão de design — Veiculo é imutável:** o agregado `Veiculo` não possui métodos de mutação. Placa, modelo, marca e ano são definidos na criação e não podem ser alterados. O use case `AtualizarVeiculo` não existe — esta é uma decisão intencional de domínio, não um item pendente.
 
-**Validação:** Projeto compila. Referências externas limitadas a `Cadastro.Domain`, `SharedKernel.*`.
+> **Decisão de design — publicação de eventos:** handlers de comando NÃO publicam via `IIntegrationEventBus` diretamente. Em vez disso, enfileiram os eventos em `IPendingIntegrationEvents` (injetado por DI). A publicação efetiva ocorre no `TransactionBehavior`, após o `SaveChangesAsync` bem-sucedido. Ver nota em T02.
+
+> **Decisão de design — response DTOs:** `Cadastro.Application` referencia `Cadastro.Contracts` para instanciar eventos de integração via `IPendingIntegrationEvents`. DTOs de Contracts (ex.: `ClienteDto`) podem ser reutilizados como tipo de retorno de queries quando o shape bate exatamente. Quando o caso de uso precisa de mais campos, define-se um tipo próprio na Application (ex.: `ObterClientePorIdResponse`). Tipos de retorno de commands (ex.: `CadastrarClienteResponse`) são sempre definidos na Application.
+
+> **Decisão de design — queries de listagem:** os métodos de listagem (`ListarClientes`, `ListarVeiculos`, `ListarServicos`, `ListarVeiculosPorCliente`) NÃO devem ser adicionados às interfaces de repositório de domínio (`IClienteRepository`, `IVeiculoRepository`, `IServicoRepository`). Repositórios de domínio existem para servir invariantes de agregado, não projeções de leitura. Em vez disso, definir interfaces de leitura dentro da própria camada Application (ex: em cada pasta de query ou em um subdiretório `ReadModel`). Infrastructure implementa essas interfaces com projeção direta via `DbContext` para DTOs planos.
+
+**Validação:** Projeto compila. Referências externas limitadas a `Cadastro.Domain`, `Cadastro.Contracts`, `SharedKernel.*`.
 
 ---
 
@@ -106,7 +116,7 @@ Handlers de comando publicam o integration event correspondente via `IIntegratio
 Controllers REST com os endpoints de cada agregado:
 
 - `ClientesController` — `POST /clientes`, `GET /clientes`, `GET /clientes/{id}`, `PUT /clientes/{id}`, `DELETE /clientes/{id}` (desativa)
-- `VeiculosController` — `POST /veiculos`, `GET /veiculos`, `GET /veiculos/{id}`, `GET /clientes/{id}/veiculos`, `PUT /veiculos/{id}`
+- `VeiculosController` — `POST /veiculos`, `GET /veiculos`, `GET /veiculos/{id}`, `GET /clientes/{id}/veiculos` (sem `PUT` — Veiculo é imutável por decisão de domínio)
 - `ServicosController` — `POST /servicos`, `GET /servicos`, `GET /servicos/{id}`, `PUT /servicos/{id}`, `DELETE /servicos/{id}` (desativa)
 
 **Validação:** Todos os endpoints aparecem no Swagger. CRUD completo de cliente funciona via Swagger UI com Postgres rodando.

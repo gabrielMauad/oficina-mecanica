@@ -1,0 +1,14 @@
+using SharedKernel.Domain;
+
+namespace Cadastro.Application.Clientes;
+
+internal static class ClienteErrors
+{
+    public static readonly Error DocumentoJaExiste = Error.Conflict(
+        "Cliente.DocumentoJaExiste",
+        "Já existe um cliente cadastrado com este documento.");
+
+    public static readonly Error NaoEncontrado = Error.NotFound(
+        "Cliente.NaoEncontrado",
+        "Cliente não encontrado.");
+}
