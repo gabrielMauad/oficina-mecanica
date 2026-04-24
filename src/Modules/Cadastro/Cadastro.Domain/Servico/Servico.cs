@@ -6,13 +6,13 @@ namespace Cadastro.Domain.Servico;
 public sealed class Servico : AggregateRoot<ServicoId>
 {
     public string Nome { get; private set; }
-    public string Descricao { get; private set; }
+    public string? Descricao { get; private set; }
     public Dinheiro PrecoBase { get; private set; }
     public bool Ativo { get; private set; }
     public DateTime CadastradoEm { get; private set; }
     public DateTime AtualizadoEm { get; private set; }
 
-    private Servico(ServicoId id, string nome, string descricao, Dinheiro precoBase)
+    private Servico(ServicoId id, string nome, string? descricao, Dinheiro precoBase)
        : base(id)
     {
         Nome = nome;
@@ -23,12 +23,12 @@ public sealed class Servico : AggregateRoot<ServicoId>
         AtualizadoEm = DateTime.UtcNow;
     }
 
-    public static Result<Servico> Criar(string nome, string descricao, decimal preco)
+    public static Result<Servico> Criar(string nome, string? descricao, decimal preco)
     {
         if (string.IsNullOrWhiteSpace(nome))
             return Error.Validation("Servico.NomeVazio", "Nome é obrigatório.");
         Result<Dinheiro> precoBaseResult = Dinheiro.Criar(preco);
-        if (precoBaseResult.IsFailure) 
+        if (precoBaseResult.IsFailure)
             return precoBaseResult.Error;
         Dinheiro precoBase = precoBaseResult.Value;
 
@@ -49,7 +49,7 @@ public sealed class Servico : AggregateRoot<ServicoId>
     public Result<Servico> AtualizarPrecoBase(decimal novoPreco)
     {
         Result<Dinheiro> precoBaseResult = Dinheiro.Criar(novoPreco);
-        if (precoBaseResult.IsFailure) 
+        if (precoBaseResult.IsFailure)
             return precoBaseResult.Error;
         PrecoBase = precoBaseResult.Value;
         AtualizadoEm = DateTime.UtcNow;
