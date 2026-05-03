@@ -160,6 +160,8 @@ Testes dos handlers com mocks dos repositórios (Moq):
 
 Chamar `AddCadastroModule(configuration)` no `Program.cs` e registrar os controllers de `Cadastro.Presentation` via `AddApplicationPart`. Documentar o comando de migration manual no README (ou configurar auto-migration no startup).
 
+Criar o método `AddSharedKernelServices(this IServiceCollection services)` em `SharedKernel.Application` registrando `IPendingIntegrationEvents → PendingIntegrationEvents` (Scoped) e `IIntegrationEventBus → InMemoryIntegrationEventBus` (Singleton). Chamar esse método no `Program.cs` e remover o registro de `IPendingIntegrationEvents` do `CadastroModule`.
+
 **Validação:** `docker compose up`. `POST /clientes` cria um cliente. `GET /clientes/{id}` retorna o cliente criado.
 
 ---
