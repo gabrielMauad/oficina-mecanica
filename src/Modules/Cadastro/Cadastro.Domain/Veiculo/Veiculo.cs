@@ -23,12 +23,11 @@ public sealed class Veiculo : AggregateRoot<VeiculoId>
         Ano = ano;
         ClienteId = clienteId;
         CadastradoEm = DateTime.UtcNow;
+        AtualizadoEm = DateTime.UtcNow;
     }
 
     public static Result<Veiculo> Criar(string numPlaca, string modelo, string marca, int ano, ClienteId clienteId)
     {
-        if (string.IsNullOrWhiteSpace(numPlaca))
-            return Error.Validation("Veiculo.PlacaVazia", "Placa é obrigatória.");
         if (string.IsNullOrWhiteSpace(modelo))
             return Error.Validation("Veiculo.ModeloVazio", "Modelo é obrigatório.");
         if (string.IsNullOrWhiteSpace(marca))

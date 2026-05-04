@@ -1,0 +1,50 @@
+﻿using SharedKernel.Domain;
+using ServicoEntity = Cadastro.Domain.Servico.Servico;
+
+namespace Cadastro.Domain.Tests.Servico;
+
+public class ServicoTests
+{
+    [Theory]
+    [InlineData("Servico 1", "Descricao 1", 100.0)]
+    [InlineData("Servico 1", null, 0)]
+    [InlineData("Servico 1", "", 0.1)]
+    [InlineData("Servico 1", "  ", 100.1)]
+    public void Criar_ComDadosValidos_RetornaServico(string nome, string? descricao, decimal preco)
+    {
+        // Act
+        var servicoResult = ServicoEntity.Criar(nome, descricao, preco);
+
+        // Assert
+        Assert.True(servicoResult.IsSuccess);
+        Assert.False(servicoResult.IsFailure);
+        Assert.Equal(Error.None, servicoResult.Error);
+        Assert.Equal(nome, servicoResult.Value.Nome);
+        Assert.Equal(descricao, servicoResult.Value.Descricao);
+        Assert.Equal(preco, servicoResult.Value.PrecoBase.Valor);
+        Assert.True(servicoResult.Value.Ativo);
+        Assert.InRange(servicoResult.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
+        Assert.InRange(servicoResult.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
+        Assert.NotEmpty(servicoResult.Value.DomainEvents);
+        Assert.NotEqual(Guid.Empty, servicoResult.Value.Id.Value);
+    }
+
+
+    [Theory]
+    [InlineData("", "Descricao 1", 100.0, "Servico.NomeVazio", "Nome é obrigatório.")]
+    [InlineData("   ", "Descricao 1", 100.0, "Servico.NomeVazio", "Nome é obrigatório.")]
+    [InlineData("Servico 1", null, -1, "Dinheiro.Negativo", "Preço não pode ser negativo.")]
+    [InlineData("Servico 1", "", -0.00001, "Dinheiro.Negativo", "Preço não pode ser negativo.")]
+    public void Criar_ComDadosInvalidos_RetornaErro(string nome, string? descricao, decimal preco, string errorCode, string errorMessage)
+    {
+        // Act
+        var servicoResult = ServicoEntity.Criar(nome, descricao, preco);
+
+        // Assert
+        Assert.False(servicoResult.IsSuccess);
+        Assert.True(servicoResult.IsFailure);
+        Assert.Equal(errorCode, servicoResult.Error.Code);
+        Assert.Equal(errorMessage, servicoResult.Error.Message);
+    }
+}
+
