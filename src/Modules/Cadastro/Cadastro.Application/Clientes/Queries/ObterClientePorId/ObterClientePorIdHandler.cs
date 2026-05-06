@@ -33,6 +33,7 @@ public sealed class ObterClientePorIdHandler
             Telefone: cliente.Telefone,
             Ativo: cliente.Ativo,
             CadastradoEm: cliente.CadastradoEm,
-            AtualizadoEm: cliente.AtualizadoEm);
+            AtualizadoEm: cliente.AtualizadoEm
+        );
     }
 }
