@@ -27,8 +27,8 @@ CREATE TABLE cadastro.cliente (
     id          UUID PRIMARY KEY,
     nome        VARCHAR(200)  NOT NULL,
     documento   VARCHAR(14)   NOT NULL UNIQUE, -- CPF (11 dígitos) ou CNPJ (14 dígitos), só dígitos
-    email       VARCHAR(200),
-    telefone    VARCHAR(20),
+    email       VARCHAR(200)  NOT NULL,
+    telefone    VARCHAR(20)   NOT NULL,
     ativo       BOOLEAN       NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ   NOT NULL,
     updated_at  TIMESTAMPTZ   NOT NULL

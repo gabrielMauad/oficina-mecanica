@@ -7,7 +7,6 @@ namespace SharedKernel.Application.Behaviors;
 public sealed class ValidationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
-    where TResponse : class
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
 
@@ -39,6 +38,16 @@ public sealed class ValidationBehavior<TRequest, TResponse>
             "validation.failed",
             string.Join("; ", failures.Select(f => f.ErrorMessage)));
 
-        return (TResponse)(object)Result.Failure<TResponse>(error);
+        var responseType = typeof(TResponse);
+        if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
+        {
+            var innerType = responseType.GetGenericArguments()[0];
+            var failureMethod = typeof(Result<>)
+                .MakeGenericType(innerType)
+                .GetMethod(nameof(Result<object>.Failure), [typeof(Error)])!;
+            return (TResponse)failureMethod.Invoke(null, [error])!;
+        }
+
+        return await next(cancellationToken);
     }
 }

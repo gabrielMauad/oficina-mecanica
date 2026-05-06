@@ -142,6 +142,12 @@ Abstrações usadas por qualquer Application:
 - `IIntegrationEventHandler<T>` — interface dos handlers que consomem eventos de integração.
 - `InMemoryIntegrationEventBus` — implementação in-process padrão do bus, via `IServiceProvider.GetServices<IIntegrationEventHandler<T>>()`. (Alternativa: implementação pode ficar numa `SharedKernel.Infrastructure` separada; para o MVP, manter aqui simplifica.)
 - Pipeline behaviors do MediatR: `ValidationBehavior`, `LoggingBehavior`, `TransactionBehavior`. São pieces de cross-cutting registrados uma vez e aplicados a todo command/query.
+- `IPendingIntegrationEvents` — abstração scoped (wrapper sobre `List<IIntegrationEvent>`) que resolve o problema de ordenação entre commit e publicação de eventos de integração (ver decisão abaixo).
+
+> **Decisão — `TransactionBehavior` com publicação pós-commit:** o pipeline do MediatR envolve o handler: `TransactionBehavior` chama `next()` (executa o handler) e só então chama `SaveChangesAsync()`. Se o handler publicasse eventos de integração diretamente via `IIntegrationEventBus` **dentro do seu corpo**, o evento seria despachado **antes** do commit — bug crítico caso o commit falhe. Solução adotada:
+> 1. Handlers injetam `IPendingIntegrationEvents` e chamam `Enqueue(evento)` em vez de publicar diretamente.
+> 2. `TransactionBehavior` é estendido para, **após** o `SaveChangesAsync()` bem-sucedido, iterar a fila e chamar `IIntegrationEventBus.Publish()` para cada evento pendente.
+> Essa ordem garante que eventos de integração só saem após um commit confirmado.
 
 #### O que NÃO entra no SharedKernel
 
@@ -201,6 +207,8 @@ OrdemServico.Domain/
 
 **Referências permitidas:** apenas `SharedKernel.Domain`. O Domain não referencia Application, Infrastructure, Contracts de ninguém — nem seus, nem de outro módulo.
 
+> **Decisão — imutabilidade do agregado `Veiculo`:** `placa`, `modelo`, `marca` e `ano` são imutáveis após a criação. O agregado não expõe métodos de mutação por decisão de modelagem: no contexto deste sistema, os dados de registro de um veículo não se alteram. Não existe caso de uso `AtualizarVeiculo`. Agregar invariantes que não mudam elimina toda uma classe de bugs e simplifica o modelo.
+
 ---
 
 ### 5.3 `<Modulo>.Application`
@@ -236,7 +244,15 @@ OrdemServico.Application/
 
 **Sobre MediatR:** é uma lib de mediator in-process. Controllers publicam um `IRequest`; o MediatR descobre e invoca o handler certo; pipeline behaviors adicionam validação, logging e transação sem poluir o handler. Da v13 em diante virou comercial; **usamos v12**, que é MIT e suficiente para o MVP.
 
-**Referências permitidas:** `<Modulo>.Domain`, `SharedKernel.Domain`, `SharedKernel.Application`, e **`<OutroModulo>.Contracts`** (apenas quando precisa consumir).
+**Referências permitidas:** `<Modulo>.Domain`, `SharedKernel.Domain`, `SharedKernel.Application`, `<Modulo>.Contracts` e **`<OutroModulo>.Contracts`** (apenas quando precisa consumir).
+
+> **Decisão — Application referencia seus próprios Contracts:** `<Modulo>.Application` depende de `<Modulo>.Contracts` para instanciar e enfileirar eventos de integração (ex.: `ClienteCadastradoIntegrationEvent`) via `IPendingIntegrationEvents`. A alternativa — delegar a criação do evento a um handler de Infrastructure — adiciona complexidade não justificada para o MVP.
+>
+> Sobre reutilização de DTOs: DTOs de Contracts (ex.: `ClienteDto`) **podem** ser reutilizados como tipo de retorno de queries quando o shape corresponde exatamente ao que o caso de uso precisa. Quando o caso de uso precisa de mais campos, define-se um tipo de resposta específico na Application. Tipos de retorno de commands (ex.: `CadastrarClienteResponse`) são sempre definidos na Application, pois representam o resultado da operação (como o novo ID gerado), não um shape de leitura.
+
+> **Decisão — interfaces de leitura para listagens ficam na Application:** interfaces de repositório de domínio (`IClienteRepository`, etc.) servem ao modelo de escrita — buscam um agregado por id e salvam. Não são o lugar certo para métodos de filtro e listagem. Para casos de uso de consulta que precisam de projeções planas (listas, filtros), define-se uma interface de leitura **dentro da própria Application** (ex.: na pasta da query ou numa subpasta `ReadModel`). A Infrastructure implementa essa interface com uma projeção direta do `DbContext` para DTOs simples, sem hidratar o agregado completo. Esse padrão mantém as interfaces de repositório de domínio enxutas e focadas na escrita.
+
+> **Decisão — `AtualizarCliente` usa PATCH parcial, não PUT:** `Documento` e `Email` são imutáveis após o cadastro (o documento é identidade do cliente; o email não possui caso de uso de alteração no domínio). Como o recurso nunca pode ser substituído por inteiro, `PUT /clientes/{id}` não faz sentido semântico. A atualização é exposta como dois endpoints `PATCH` independentes: `PATCH /clientes/{id}/nome` e `PATCH /clientes/{id}/telefone`. O command `AtualizarClienteCommand` declara `Nome` e `Telefone` como `string?`; campos `null` são ignorados pelo handler. O validator aplica regras de formato apenas quando o campo é não-nulo (`.When(x => x.Campo is not null)`), sem exigir que ambos sejam enviados juntos.
 
 ---
 
@@ -431,10 +447,7 @@ Usada quando é **fato consumado que outros podem querer saber** (ex.: orçament
        Guid OrdemServicoId, IReadOnlyList<ItemOrcamentoDto> Itens
    ) : IIntegrationEvent;
    ```
-2. Depois de persistir a mudança de estado, o produtor publica via bus:
-   ```csharp
-   await _bus.Publish(new OrcamentoAprovadoIntegrationEvent(...));
-   ```
+2. O handler do produtor **enfileira** o evento via `IPendingIntegrationEvents.Enqueue(...)` em vez de publicar diretamente. O `TransactionBehavior` (em `SharedKernel.Application`) chama `SaveChangesAsync()` e, só após o commit bem-sucedido, itera a fila e despacha cada evento via `IIntegrationEventBus`. Isso garante que nenhum evento sai antes do commit. (Padrão descrito em detalhe na seção 5.1.)
 3. O **consumidor** implementa um handler em sua `Application`:
    ```csharp
    // PecasInsumos.Application.IntegrationEventHandlers

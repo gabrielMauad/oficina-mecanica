@@ -11,4 +11,10 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.14.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Modules\Cadastro\Cadastro.Infrastructure\Cadastro.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Cadastro\Cadastro.Presentation\Cadastro.Presentation.csproj" />
+    <ProjectReference Include="..\..\SharedKernel\SharedKernel.Application\SharedKernel.Application.csproj" />
+  </ItemGroup>
+
 </Project>

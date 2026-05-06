@@ -1,0 +1,31 @@
+using Cadastro.Contracts.Dtos;
+using Cadastro.Contracts.Queries;
+using Cadastro.Domain.Servico;
+using Cadastro.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace Cadastro.Infrastructure.Queries;
+
+internal sealed class CadastroServicoQuery : ICadastroServicoQuery
+{
+    private readonly CadastroDbContext _context;
+
+    public CadastroServicoQuery(CadastroDbContext context) => _context = context;
+
+    public async Task<ServicoDto?> ObterPorId(Guid id, CancellationToken ct = default)
+    {
+        var servicoId = new ServicoId(id);
+        var servico = await _context.Servicos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == servicoId, ct);
+
+        if (servico is null)
+            return null;
+
+        return new ServicoDto(
+            servico.Id.Value,
+            servico.Nome,
+            servico.PrecoBase.Valor,
+            servico.Ativo);
+    }
+}
