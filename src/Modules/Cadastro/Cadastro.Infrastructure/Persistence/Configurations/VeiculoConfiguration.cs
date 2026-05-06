@@ -42,7 +42,6 @@ internal sealed class VeiculoConfiguration : IEntityTypeConfiguration<Veiculo>
 
         builder.Property(v => v.Ano)
             .HasColumnName("ano")
-            .HasColumnType("smallint")
             .IsRequired();
 
         builder.Property(v => v.ClienteId)

@@ -7,7 +7,7 @@ internal sealed class CadastroDbContextFactory : IDesignTimeDbContextFactory<Cad
 {
     public CadastroDbContext CreateDbContext(string[] args)
     {
-        var connectionString = Environment.GetEnvironmentVariable("Database_Connection__DefaultConnection");
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Default");
 
         var options = new DbContextOptionsBuilder<CadastroDbContext>()
             .UseNpgsql(connectionString)

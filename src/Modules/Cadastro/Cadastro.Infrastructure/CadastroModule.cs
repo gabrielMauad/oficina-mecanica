@@ -26,7 +26,7 @@ public static class CadastroModule
         IConfiguration configuration)
     {
         services.AddDbContext<CadastroDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("Default")));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<CadastroDbContext>());
 
