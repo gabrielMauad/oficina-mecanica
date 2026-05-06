@@ -4,8 +4,8 @@ using SharedKernel.Domain;
 namespace SharedKernel.Application.Behaviors;
 
 public sealed class TransactionBehavior<TRequest, TResponse>
-    : IPipelineBehavior<TRequest, Result<TResponse>>
-    where TRequest : ICommand<TResponse>
+    : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : ICommand
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPendingIntegrationEvents _pendingEvents;
@@ -16,14 +16,14 @@ public sealed class TransactionBehavior<TRequest, TResponse>
         _pendingEvents = pendingEvents;
     }
 
-    public async Task<Result<TResponse>> Handle(
+    public async Task<TResponse> Handle(
         TRequest request,
-        RequestHandlerDelegate<Result<TResponse>> next,
+        RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
         var response = await next(cancellationToken);
 
-        if (response.IsFailure)
+        if (response is IResult { IsFailure: true })
             return response;
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

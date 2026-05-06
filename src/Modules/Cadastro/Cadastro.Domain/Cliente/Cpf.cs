@@ -1,7 +1,8 @@
-﻿using SharedKernel.Domain;
-using DocumentValidator;
+﻿using DocumentValidator;
+using SharedKernel.Domain;
 
 namespace Cadastro.Domain.Cliente;
+
 public sealed class Cpf : Documento
 {
 
@@ -12,9 +13,9 @@ public sealed class Cpf : Documento
         if (string.IsNullOrWhiteSpace(numero))
             return Error.Validation("CPF.Invalido", "CPF é obrigatório.");
 
-        var cpf = new Cpf(numero);
-
-        if (!cpf.ValidarDocumento(numero))
+        var digits = new string(numero.Where(char.IsDigit).ToArray());
+        var cpf = new Cpf(digits);
+        if (!cpf.ValidarDocumento(digits))
             return Error.Validation("CPF.Invalido", "CPF inválido.");
 
         return cpf;

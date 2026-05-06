@@ -20,9 +20,9 @@ public class ClienteTests
         Assert.False(clienteResult.IsFailure);
         Assert.Equal(Error.None, clienteResult.Error);
         Assert.Equal(nome, clienteResult.Value.Nome);
-        Assert.Equal(documento, clienteResult.Value.Documento.Numero);
+        Assert.Equal(new string(documento.Where(char.IsDigit).ToArray()), clienteResult.Value.Documento.Numero);
         Assert.Equal(email, clienteResult.Value.Email);
-        Assert.Equal(telefone, clienteResult.Value.Telefone);
+        Assert.Equal(new string(telefone.Where(char.IsDigit).ToArray()), clienteResult.Value.Telefone);
         Assert.True(clienteResult.Value.Ativo);
         Assert.InRange(clienteResult.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(clienteResult.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
@@ -41,6 +41,8 @@ public class ClienteTests
     [InlineData("Cliente 1", "632.582.650-70", "cliente1@example.com", "    ", true, "Cliente.TelefoneInvalido", "Telefone inválido.")]
     [InlineData("Cliente 1", "632.582.650-70", "cliente1@example.com", "12312312313123123", true, "Cliente.TelefoneInvalido", "Telefone inválido.")]
     [InlineData("Cliente 1", "632.582.650-70", "cliente1@example.com", "select * from dbo as 31999999999", true, "Cliente.TelefoneInvalido", "Telefone inválido.")]
+    [InlineData("Cliente 1", "632.582.650-70", "cliente1@example.com", "3188888888", true, "Cliente.TelefoneInvalido", "Telefone inválido.")]
+    [InlineData("Cliente 1", "632.582.650-70", "cliente1@example.com", "(31)8888-8888", true, "Cliente.TelefoneInvalido", "Telefone inválido.")]
     [InlineData("Cliente 1", "", "cliente1@example.com.br", "31999999999", true, "CPF.Invalido", "CPF é obrigatório.")]
     [InlineData("Cliente 1", "  ", "cliente1@example.com.br", "31999999999", true, "CPF.Invalido", "CPF é obrigatório.")]
     [InlineData("Cliente 1", "123.456.789-10", "cliente1@example.com.br", "31999999999", true, "CPF.Invalido", "CPF inválido.")]

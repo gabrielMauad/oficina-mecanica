@@ -27,7 +27,9 @@ public sealed class CadastrarClienteHandler
         CadastrarClienteCommand command,
         CancellationToken cancellationToken)
     {
-        if (await _repository.ExistePorDocumento(command.Documento, cancellationToken))
+        var documentoNormalizado = new string(command.Documento.Where(char.IsDigit).ToArray());
+
+        if (await _repository.ExistePorDocumento(documentoNormalizado, cancellationToken))
             return ClienteErrors.DocumentoJaExiste;
 
         var result = Cliente.Criar(

@@ -15,4 +15,8 @@ internal static class VeiculoErrors
     public static readonly Error ClienteNaoEncontrado = Error.NotFound(
         "Veiculo.ClienteNaoEncontrado",
         "Cliente não encontrado.");
+
+    public static readonly Error ClienteInativo = Error.Conflict(
+        "Veiculo.ClienteInativo",
+        "Não é possível cadastrar veículo para um cliente inativo.");
 }

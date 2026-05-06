@@ -46,8 +46,9 @@ public class CadastrarVeiculoHandlerTests
         );
         var clienteId = new ClienteId(command.ClienteId);
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
+        var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _repositoryMock.Setup(x => x.ExistePorPlaca(command.Placa, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _clienteRepositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         Func<CancellationToken, Task>? enqueuedAction = null;
@@ -65,7 +66,7 @@ public class CadastrarVeiculoHandlerTests
         Assert.Equal(Error.None, result.Error);
 
         Assert.NotEqual(Guid.Empty, result.Value.VeiculoId);
-        Assert.Equal(command.Placa, result.Value.Placa);
+        Assert.Equal(placaNormalizada, result.Value.Placa);
         Assert.Equal(command.Modelo, result.Value.Modelo);
         Assert.Equal(command.Marca, result.Value.Marca);
         Assert.Equal(command.Ano, result.Value.Ano);
@@ -73,8 +74,8 @@ public class CadastrarVeiculoHandlerTests
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _repositoryMock.Verify(x => x.Adicionar(It.Is<VeiculoEntity>(x => x.Placa.Numero == command.Placa), It.IsAny<CancellationToken>()), Times.Once);
-        _busMock.Verify(x => x.Publish(It.Is<VeiculoCadastradoIntegrationEvent>(x => x.Placa == command.Placa), It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(x => x.Adicionar(It.Is<VeiculoEntity>(x => x.Placa.Numero == placaNormalizada), It.IsAny<CancellationToken>()), Times.Once);
+        _busMock.Verify(x => x.Publish(It.Is<VeiculoCadastradoIntegrationEvent>(x => x.Placa == placaNormalizada), It.IsAny<CancellationToken>()), Times.Once);
         _pendingEventsMock.Verify(x => x.Enqueue(It.IsAny<Func<CancellationToken, Task>>()), Times.Once);
     }
 
@@ -89,8 +90,9 @@ public class CadastrarVeiculoHandlerTests
             Ano: 2026,
             ClienteId: clienteIdGuid
         );
+        var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _repositoryMock.Setup(x => x.ExistePorPlaca(command.Placa, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -113,8 +115,9 @@ public class CadastrarVeiculoHandlerTests
             Ano: 2026,
             ClienteId: clienteIdGuid
         );
+        var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _repositoryMock.Setup(x => x.ExistePorPlaca(command.Placa, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -124,6 +127,37 @@ public class CadastrarVeiculoHandlerTests
         Assert.True(result.IsFailure);
         Assert.Equal("Veiculo.ClienteNaoEncontrado", result.Error.Code);
         Assert.Equal("Cliente não encontrado.", result.Error.Message);
+    }
+
+    [Fact(DisplayName = "Erro: Cliente inativo")]
+    public async Task Handle_ShouldReturnError_WhenClienteIsInactive()
+    {
+        // Arrange
+        var clienteIdGuid = Guid.NewGuid();
+        var command = new CadastrarVeiculoCommand(
+            Placa: "ABC1234",
+            Modelo: "Modelo",
+            Marca: "Marca",
+            Ano: 2026,
+            ClienteId: clienteIdGuid
+        );
+        var clienteId = new ClienteId(command.ClienteId);
+        ClienteEntity cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
+        cliente.Desativar();
+
+        var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
+
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _clienteRepositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.True(result.IsFailure);
+        Assert.Equal("Veiculo.ClienteInativo", result.Error.Code);
+        Assert.Equal("Não é possível cadastrar veículo para um cliente inativo.", result.Error.Message);
     }
 
     [Fact(DisplayName = "Replica erro do dominio")]
@@ -141,7 +175,9 @@ public class CadastrarVeiculoHandlerTests
         var clienteId = new ClienteId(command.ClienteId);
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
 
-        _repositoryMock.Setup(x => x.ExistePorPlaca(command.Placa, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
+
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _clienteRepositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act

@@ -16,8 +16,11 @@ public sealed class AtualizarClienteValidator : AbstractValidator<AtualizarClien
             .When(x => x.Nome is not null);
 
         RuleFor(x => x.Telefone)
-            .Matches(@"^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$")
-            .WithMessage("Telefone inválido. Formatos aceitos: (11) 91234-5678 ou (11) 1234-5678.")
+            .Matches(@"^[\d\s()\-]+$")
+            .WithMessage("Telefone inválido.")
+            .Must(t => t is null || System.Text.RegularExpressions.Regex.IsMatch(
+                new string(t.Where(char.IsDigit).ToArray()), @"^\d{2}9\d{8}$"))
+            .WithMessage("Telefone inválido. Formato aceito: (11) 91234-5678.")
             .When(x => x.Telefone is not null);
     }
 }

@@ -37,7 +37,11 @@ public sealed class AtualizarClienteHandler
             houveAlteracao = true;
         }
 
-        if (StringHasChanges(command.Telefone, cliente.Telefone))
+        var telefoneNormalizado = command.Telefone is null
+            ? null
+            : new string(command.Telefone.Where(char.IsDigit).ToArray());
+
+        if (StringHasChanges(telefoneNormalizado, cliente.Telefone))
         {
             var result = cliente.AtualizarTelefone(command.Telefone!);
             if (result.IsFailure) return result.Error;

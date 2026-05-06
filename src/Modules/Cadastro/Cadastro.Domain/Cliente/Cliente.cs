@@ -31,7 +31,12 @@ public sealed class Cliente : AggregateRoot<ClienteId>
             return Error.Validation("Cliente.NomeVazio", "Nome é obrigatório.");
         if (string.IsNullOrWhiteSpace(email) || !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
             return Error.Validation("Cliente.EmailInvalido", "Email inválido.");
-        if (string.IsNullOrWhiteSpace(telefone) || !Regex.IsMatch(telefone, @"^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$"))
+        if (string.IsNullOrWhiteSpace(telefone) || !Regex.IsMatch(telefone, @"^[\d\s()\-]+$"))
+            return Error.Validation("Cliente.TelefoneInvalido", "Telefone inválido.");
+
+        var telefoneNormalizado = new string(telefone.Where(char.IsDigit).ToArray());
+
+        if (!Regex.IsMatch(telefoneNormalizado, @"^\d{2}9\d{8}$"))
             return Error.Validation("Cliente.TelefoneInvalido", "Telefone inválido.");
 
         Documento doc;
@@ -48,7 +53,7 @@ public sealed class Cliente : AggregateRoot<ClienteId>
             doc = cnpjResult.Value;
         }
 
-        var cliente = new Cliente(ClienteId.Novo(), nome, doc, email, telefone);
+        var cliente = new Cliente(ClienteId.Novo(), nome, doc, email, telefoneNormalizado);
 
         cliente.AddDomainEvent(new ClienteCadastrado(cliente.Id, cliente.Nome, DateTime.UtcNow));
 
@@ -57,7 +62,7 @@ public sealed class Cliente : AggregateRoot<ClienteId>
 
     public Result<Cliente> AtualizarTelefone(string novoTelefone)
     {
-        Telefone = novoTelefone;
+        Telefone = new string(novoTelefone.Where(char.IsDigit).ToArray());
         AtualizadoEm = DateTime.UtcNow;
         return this;
     }

@@ -17,7 +17,7 @@ public class CnpjTests
         Assert.True(cnpjResult.IsSuccess);
         Assert.False(cnpjResult.IsFailure);
         Assert.Equal(Error.None, cnpjResult.Error);
-        Assert.Equal(cnpj, cnpjResult.Value.Numero);
+        Assert.Equal(new string(cnpj.Where(char.IsDigit).ToArray()), cnpjResult.Value.Numero);
     }
 
     [Theory]

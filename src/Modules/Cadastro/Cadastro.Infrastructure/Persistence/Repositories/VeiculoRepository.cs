@@ -19,5 +19,7 @@ internal sealed class VeiculoRepository : IVeiculoRepository
         _context.Veiculos.FirstOrDefaultAsync(v => v.Id == id, ct);
 
     public Task<bool> ExistePorPlaca(string placa, CancellationToken ct = default) =>
-        _context.Veiculos.AnyAsync(v => v.Placa.Numero == placa, ct);
+        _context.Database
+            .SqlQuery<bool>($"SELECT EXISTS(SELECT 1 FROM cadastro.veiculo WHERE placa = {placa}) AS \"Value\"")
+            .FirstAsync(ct);
 }

@@ -19,7 +19,9 @@ internal sealed class ClienteRepository : IClienteRepository
         _context.Clientes.FirstOrDefaultAsync(c => c.Id == id, ct);
 
     public Task<bool> ExistePorDocumento(string documento, CancellationToken ct = default) =>
-        _context.Clientes.AnyAsync(c => c.Documento.Numero == documento, ct);
+        _context.Database
+            .SqlQuery<bool>($"SELECT EXISTS(SELECT 1 FROM cadastro.cliente WHERE documento = {documento}) AS \"Value\"")
+            .FirstAsync(ct);
 
     public Task Atualizar(Cliente cliente, CancellationToken ct = default)
     {

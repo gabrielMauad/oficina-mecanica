@@ -29,7 +29,9 @@ public sealed class CadastrarVeiculoHandler
 
     public async Task<Result<CadastrarVeiculoResponse>> Handle(CadastrarVeiculoCommand command, CancellationToken cancellationToken)
     {
-        if (await _repository.ExistePorPlaca(command.Placa, cancellationToken))
+        var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
+
+        if (await _repository.ExistePorPlaca(placaNormalizada, cancellationToken))
             return VeiculoErrors.PlacaJaExiste;
 
         ClienteId clienteId = new(command.ClienteId);
@@ -37,6 +39,9 @@ public sealed class CadastrarVeiculoHandler
 
         if (cliente is null)
             return VeiculoErrors.ClienteNaoEncontrado;
+
+        if (!cliente.Ativo)
+            return VeiculoErrors.ClienteInativo;
 
         Result<Veiculo> veiculoResult = Veiculo.Criar(command.Placa, command.Modelo, command.Marca, command.Ano, clienteId);
 

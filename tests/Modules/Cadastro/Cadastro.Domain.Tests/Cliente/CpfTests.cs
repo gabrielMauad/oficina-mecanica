@@ -19,7 +19,7 @@ public class CpfTests
         Assert.True(cpfResult.IsSuccess);
         Assert.False(cpfResult.IsFailure);
         Assert.Equal(Error.None, cpfResult.Error);
-        Assert.Equal(cpf, cpfResult.Value.Numero);
+        Assert.Equal(new string(cpf.Where(char.IsDigit).ToArray()), cpfResult.Value.Numero);
     }
 
     [Theory]

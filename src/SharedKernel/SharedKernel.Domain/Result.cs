@@ -1,6 +1,13 @@
 namespace SharedKernel.Domain;
 
-public sealed class Result<T>
+public interface IResult
+{
+    bool IsSuccess { get; }
+    bool IsFailure { get; }
+    Error Error { get; }
+}
+
+public sealed class Result<T> : IResult
 {
     private readonly T? _value;
 

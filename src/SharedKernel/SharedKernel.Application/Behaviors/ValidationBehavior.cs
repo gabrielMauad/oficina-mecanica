@@ -5,7 +5,7 @@ using SharedKernel.Domain;
 namespace SharedKernel.Application.Behaviors;
 
 public sealed class ValidationBehavior<TRequest, TResponse>
-    : IPipelineBehavior<TRequest, Result<TResponse>>
+    : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
@@ -15,9 +15,9 @@ public sealed class ValidationBehavior<TRequest, TResponse>
         _validators = validators;
     }
 
-    public async Task<Result<TResponse>> Handle(
+    public async Task<TResponse> Handle(
         TRequest request,
-        RequestHandlerDelegate<Result<TResponse>> next,
+        RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
         if (!_validators.Any())
@@ -38,6 +38,16 @@ public sealed class ValidationBehavior<TRequest, TResponse>
             "validation.failed",
             string.Join("; ", failures.Select(f => f.ErrorMessage)));
 
-        return Result.Failure<TResponse>(error);
+        var responseType = typeof(TResponse);
+        if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
+        {
+            var innerType = responseType.GetGenericArguments()[0];
+            var failureMethod = typeof(Result<>)
+                .MakeGenericType(innerType)
+                .GetMethod(nameof(Result<object>.Failure), [typeof(Error)])!;
+            return (TResponse)failureMethod.Invoke(null, [error])!;
+        }
+
+        return await next(cancellationToken);
     }
 }

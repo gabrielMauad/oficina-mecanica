@@ -2,6 +2,7 @@
 using SharedKernel.Domain;
 
 namespace Cadastro.Domain.Cliente;
+
 public sealed class Cnpj : Documento
 {
     private Cnpj(string numero) : base(numero) { }
@@ -11,9 +12,9 @@ public sealed class Cnpj : Documento
         if (string.IsNullOrWhiteSpace(numero))
             return Error.Validation("CNPJ.Invalido", "CNPJ é obrigatório.");
 
-        var cnpj = new Cnpj(numero);
-
-        if (!cnpj.ValidarDocumento(numero))
+        var digits = new string(numero.Where(char.IsDigit).ToArray());
+        var cnpj = new Cnpj(digits);
+        if (!cnpj.ValidarDocumento(digits))
             return Error.Validation("CNPJ.Invalido", "CNPJ inválido.");
 
         return cnpj;

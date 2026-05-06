@@ -1,5 +1,6 @@
 using Cadastro.Contracts.Dtos;
 using Cadastro.Contracts.Queries;
+using Cadastro.Domain.Cliente;
 using Cadastro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,9 +14,10 @@ internal sealed class CadastroClienteQuery : ICadastroClienteQuery
 
     public async Task<ClienteDto?> ObterPorId(Guid id, CancellationToken ct = default)
     {
+        var clienteId = new ClienteId(id);
         var cliente = await _context.Clientes
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id.Value == id, ct);
+            .FirstOrDefaultAsync(c => c.Id == clienteId, ct);
 
         if (cliente is null)
             return null;

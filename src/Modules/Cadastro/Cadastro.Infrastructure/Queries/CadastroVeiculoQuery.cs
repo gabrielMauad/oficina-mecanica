@@ -1,5 +1,6 @@
 using Cadastro.Contracts.Dtos;
 using Cadastro.Contracts.Queries;
+using Cadastro.Domain.Veiculo;
 using Cadastro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,9 +14,10 @@ internal sealed class CadastroVeiculoQuery : ICadastroVeiculoQuery
 
     public async Task<VeiculoDto?> ObterPorId(Guid id, CancellationToken ct = default)
     {
+        var veiculoId = new VeiculoId(id);
         var veiculo = await _context.Veiculos
             .AsNoTracking()
-            .FirstOrDefaultAsync(v => v.Id.Value == id, ct);
+            .FirstOrDefaultAsync(v => v.Id == veiculoId, ct);
 
         if (veiculo is null)
             return null;
