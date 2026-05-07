@@ -197,12 +197,12 @@ Regra de negócio crítica: estoque não pode ficar negativo — o método de de
 - `AtualizarPecaInsumo` (dados básicos)
 - `IncrementarEstoque`, `DecrementarEstoque` (Commands separados)
 - `DesativarPecaInsumo`
-- Queries: `ObterPecaInsumoPorId`, `ListarPecasInsumos`, `BuscarPecasPorNome`
-- Handler `DecrementarEstoqueQuandoOrcamentoAprovado` (reage ao `OrcamentoAprovadoIntegrationEvent` do módulo OrdemServico) — implementar já, será conectado na Fase 5
-
+- Queries: `ObterPecaInsumoPorId`, `ListarPecasInsumos`
 > **Nota sobre o fluxo do event storming:** o event storming mostra o estoque sendo decrementado no momento em que as peças são vinculadas à OS (durante o diagnóstico). Para o MVP, simplificamos: o estoque é verificado em `RegistrarDiagnostico` via ACL port (sem decremento), e decrementado apenas quando o orçamento é aprovado (T27). Isso reduz a complexidade sem comprometer os requisitos do Tech Challenge.
 
-**Validação:** Projeto compila. Handler de decremento por integration event existe e implementado, mesmo que não conectado ainda.
+> **Nota sobre `DecrementarEstoqueQuandoOrcamentoAprovado`:** este handler depende de `OrcamentoAprovadoIntegrationEvent`, que só existirá após a T21 (`OrdemServico.Contracts`). A implementação foi movida para a T27, onde será criado junto com o registro no `PecasInsumosModule`.
+
+**Validação:** Projeto compila. Todos os commands e queries listados acima estão implementados.
 
 ---
 
@@ -366,7 +366,7 @@ Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
 
 ### T27 — OrcamentoAprovado → DecrementarEstoque
 
-Garantir que o handler `DecrementarEstoqueQuandoOrcamentoAprovado` (já implementado em T15) está registrado como `IIntegrationEventHandler<OrcamentoAprovadoIntegrationEvent>` no `AddPecasInsumosModule`. Verificar que o handler de `AprovarOrcamento` em OrdemServico está publicando o evento corretamente via `IIntegrationEventBus`.
+Implementar o handler `DecrementarEstoqueQuandoOrcamentoAprovado` em `PecasInsumos.Application/IntegrationEventHandlers/`. Ele deve implementar `IIntegrationEventHandler<OrcamentoAprovadoIntegrationEvent>` (do `OrdemServico.Contracts`, disponível após T21), iterar os itens do evento e chamar `DecrementarEstoque` para cada peça. Registrá-lo como `IIntegrationEventHandler<OrcamentoAprovadoIntegrationEvent>` no `AddPecasInsumosModule`. Verificar que o handler de `AprovarOrcamento` em OrdemServico está publicando o evento corretamente via `IPendingIntegrationEvents`.
 
 **Validação:** Aprovar um orçamento que contém peças decrementa o `quantidade_estoque` correspondente em `pecas_insumos.peca_insumo`. Verificar diretamente no banco após a aprovação.
 
