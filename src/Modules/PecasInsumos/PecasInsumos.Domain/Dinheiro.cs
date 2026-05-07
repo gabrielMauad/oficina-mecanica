@@ -1,6 +1,6 @@
 ﻿using SharedKernel.Domain;
 
-namespace PecasInsumos.Domain.PecasInsumos;
+namespace PecasInsumos.Domain;
 
 public sealed class Dinheiro : ValueObject
 {

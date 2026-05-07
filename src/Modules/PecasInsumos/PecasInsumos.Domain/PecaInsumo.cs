@@ -1,7 +1,7 @@
-﻿using PecasInsumos.Domain.PecasInsumos.Events;
+﻿using PecasInsumos.Domain.Events;
 using SharedKernel.Domain;
 
-namespace PecasInsumos.Domain.PecasInsumos;
+namespace PecasInsumos.Domain;
 
 public sealed class PecaInsumo : AggregateRoot<PecaInsumoId>
 {

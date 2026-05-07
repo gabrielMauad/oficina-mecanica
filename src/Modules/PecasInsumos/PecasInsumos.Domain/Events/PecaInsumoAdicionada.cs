@@ -1,8 +1,8 @@
 ﻿using SharedKernel.Domain;
 
-namespace PecasInsumos.Domain.PecasInsumos.Events;
+namespace PecasInsumos.Domain.Events;
 
-public sealed record EstoqueAtualizado(
+public sealed record PecaInsumoAdicionada(
     PecaInsumoId Id,
     string Nome,
     int QuantidadeEmEstoque,

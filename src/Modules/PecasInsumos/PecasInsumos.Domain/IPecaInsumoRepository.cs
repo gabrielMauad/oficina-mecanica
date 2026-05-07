@@ -1,4 +1,4 @@
-﻿namespace PecasInsumos.Domain.PecasInsumos;
+﻿namespace PecasInsumos.Domain;
 
 public interface IPecaInsumoRepository
 {

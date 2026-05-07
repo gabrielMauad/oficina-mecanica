@@ -1,6 +1,6 @@
 ﻿using SharedKernel.Domain;
 
-namespace PecasInsumos.Domain.PecasInsumos.Events;
+namespace PecasInsumos.Domain.Events;
 
 public sealed record EstoqueEsgotado(
     PecaInsumoId PecaInsumoId,
