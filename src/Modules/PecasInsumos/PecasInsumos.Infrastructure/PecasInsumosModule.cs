@@ -47,6 +47,9 @@ public static class PecasInsumosModule
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(applicationAssembly);
+            cfg.AddOpenBehavior(typeof(SharedKernel.Application.Behaviors.LoggingBehavior<,>));
+            cfg.AddOpenBehavior(typeof(SharedKernel.Application.Behaviors.ValidationBehavior<,>));
+            cfg.AddOpenBehavior(typeof(SharedKernel.Application.Behaviors.TransactionBehavior<,>));
         });
 
         services.AddValidatorsFromAssembly(applicationAssembly);

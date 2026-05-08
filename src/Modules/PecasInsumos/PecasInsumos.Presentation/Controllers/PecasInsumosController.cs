@@ -75,9 +75,9 @@ public class PecasInsumosController : ControllerBase
     }
 
     [HttpPatch("{id}/estoque/entrada")]
-    public async Task<IActionResult> IncrementarEstoque(Guid id, [FromBody] int quantidade)
+    public async Task<IActionResult> IncrementarEstoque(Guid id, [FromBody] EstoqueRequest request)
     {
-        var result = await _sender.Send(new IncrementarEstoqueCommand(id, quantidade));
+        var result = await _sender.Send(new IncrementarEstoqueCommand(id, request.Quantidade));
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -86,9 +86,9 @@ public class PecasInsumosController : ControllerBase
     }
 
     [HttpPatch("{id}/estoque/saida")]
-    public async Task<IActionResult> DecrementarEstoque(Guid id, [FromBody] int quantidade)
+    public async Task<IActionResult> DecrementarEstoque(Guid id, [FromBody] EstoqueRequest request)
     {
-        var result = await _sender.Send(new DecrementarEstoqueCommand(id, quantidade));
+        var result = await _sender.Send(new DecrementarEstoqueCommand(id, request.Quantidade));
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
