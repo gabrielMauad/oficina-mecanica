@@ -68,5 +68,49 @@ public class ClienteTests
         Assert.Equal(errorCode, clienteResult.Error.Code);
         Assert.Equal(errorMessage, clienteResult.Error.Message);
     }
+
+    [Fact]
+    public void AtualizarNome_ComNovoNome_AtualizaNome()
+    {
+        // Arrange
+        var cliente = ClienteEntity.Criar("Cliente 1", "632.582.650-70", "cliente1@example.com", "31999999999", true).Value;
+
+        // Act
+        var clienteResult = cliente.AtualizarNome("Cliente Atualizado");
+
+        // Assert
+        Assert.True(clienteResult.IsSuccess);
+        Assert.Equal("Cliente Atualizado", cliente.Nome);
+    }
+
+    [Theory]
+    [InlineData("31988888888")]
+    [InlineData("(31)98888-8888")]
+    public void AtualizarTelefone_ComTelefoneValido_AtualizaTelefone(string novoTelefone)
+    {
+        // Arrange
+        var cliente = ClienteEntity.Criar("Cliente 1", "632.582.650-70", "cliente1@example.com", "31999999999", true).Value;
+        var telefoneEsperado = new string(novoTelefone.Where(char.IsDigit).ToArray());
+
+        // Act
+        var clienteResult = cliente.AtualizarTelefone(novoTelefone);
+
+        // Assert
+        Assert.True(clienteResult.IsSuccess);
+        Assert.Equal(telefoneEsperado, cliente.Telefone);
+    }
+
+    [Fact]
+    public void Desativar_ClienteAtivo_SetaAtivoComoFalso()
+    {
+        // Arrange
+        var cliente = ClienteEntity.Criar("Cliente 1", "632.582.650-70", "cliente1@example.com", "31999999999", true).Value;
+
+        // Act
+        cliente.Desativar();
+
+        // Assert
+        Assert.False(cliente.Ativo);
+    }
 }
 
