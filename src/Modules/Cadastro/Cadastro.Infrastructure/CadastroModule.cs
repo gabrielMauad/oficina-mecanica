@@ -15,7 +15,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel.Application;
-using SharedKernel.Application.Behaviors;
 
 namespace Cadastro.Infrastructure;
 
@@ -60,9 +59,9 @@ public static class CadastroModule
         services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(applicationAssembly);
-            cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
-            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
-            cfg.AddOpenBehavior(typeof(TransactionBehavior<,>));
+            cfg.AddOpenBehavior(typeof(SharedKernel.Application.Behaviors.LoggingBehavior<,>));
+            cfg.AddOpenBehavior(typeof(SharedKernel.Application.Behaviors.ValidationBehavior<,>));
+            cfg.AddOpenBehavior(typeof(SharedKernel.Application.Behaviors.TransactionBehavior<,>));
         });
 
         services.AddValidatorsFromAssembly(applicationAssembly);

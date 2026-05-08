@@ -18,7 +18,7 @@ public sealed class AdicionarServicoValidator : AbstractValidator<AdicionarServi
             .When(x => x.Descricao is not null);
 
         RuleFor(x => x.Preco)
-            .GreaterThan(0)
-            .WithMessage("O preço do serviço deve ser maior que zero.");
+            .GreaterThanOrEqualTo(0)
+            .WithMessage("O preço do serviço não deve ser negativo.");
     }
 }

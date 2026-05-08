@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -14,6 +14,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Modules\Cadastro\Cadastro.Infrastructure\Cadastro.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Cadastro\Cadastro.Presentation\Cadastro.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\PecasInsumos\PecasInsumos.Infrastructure\PecasInsumos.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\PecasInsumos\PecasInsumos.Presentation\PecasInsumos.Presentation.csproj" />
     <ProjectReference Include="..\..\SharedKernel\SharedKernel.Application\SharedKernel.Application.csproj" />
   </ItemGroup>
 
