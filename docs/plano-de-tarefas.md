@@ -288,7 +288,6 @@ Implementar todos os commands do event storming, um por pasta:
 | Command | O que faz |
 |---|---|
 | `GerarOrdemServico` | Valida que cliente e veículo existem via ACL; cria a OS com status `Recebida` |
-| `ReceberOrdemServico` | Transição de status (policy automática) |
 | `IniciarDiagnostico` | Muda status para `EmDiagnostico` |
 | `RegistrarDiagnostico` | Registra serviços e peças com snapshot de preço; verifica disponibilidade das peças via ACL |
 | `GerarOrcamento` | Calcula valor total a partir dos itens; cria o `Orcamento` com status `Pendente` |
@@ -328,7 +327,6 @@ Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
 `OrdensServicoController` com todos os endpoints do ciclo de vida:
 
 - `POST /ordens-servico` — criar OS
-- `PATCH /ordens-servico/{id}/receber`
 - `PATCH /ordens-servico/{id}/iniciar-diagnostico`
 - `PATCH /ordens-servico/{id}/registrar-diagnostico` (body com serviços e peças)
 - `PATCH /ordens-servico/{id}/gerar-orcamento`
