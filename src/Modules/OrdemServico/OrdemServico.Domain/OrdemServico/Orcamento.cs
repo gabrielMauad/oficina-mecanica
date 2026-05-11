@@ -4,23 +4,21 @@ namespace OrdemServico.Domain.OrdemServico;
 
 public sealed class Orcamento : Entity<OrcamentoId>
 {
-    public OrdemServicoId OrdemServicoId { get; private set; }
     public decimal ValorTotal { get; private set; }
     public StatusOrcamento Status { get; private set; }
     public DateTime DataGeracao { get; private set; }
     public DateTime? DataEnvio { get; private set; }
     public DateTime? DataAprovacao { get; private set; }
 
-    private Orcamento(OrcamentoId id, OrdemServicoId ordemServicoId, decimal valorTotal) : base(id)
+    private Orcamento(OrcamentoId id, decimal valorTotal) : base(id)
     {
-        OrdemServicoId = ordemServicoId;
         ValorTotal = valorTotal;
         Status = StatusOrcamento.Pendente;
         DataGeracao = DateTime.UtcNow;
     }
 
-    internal static Orcamento Criar(OrdemServicoId ordemServicoId, decimal valorTotal)
-        => new(OrcamentoId.Novo(), ordemServicoId, valorTotal);
+    internal static Orcamento Criar(decimal valorTotal)
+        => new(OrcamentoId.Novo(), valorTotal);
 
     internal Result<Orcamento> Enviar(DateTime dataEnvio)
     {

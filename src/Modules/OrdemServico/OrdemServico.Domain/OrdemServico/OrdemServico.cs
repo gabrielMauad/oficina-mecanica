@@ -204,7 +204,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         var precoTotalServicos = _itensServico.Sum(x => x.Quantidade * x.PrecoUnitarioSnapshot);
         var precoTotal = precoTotalPecas + precoTotalServicos;
 
-        var orcamento = Orcamento.Criar(Id, precoTotal);
+        var orcamento = Orcamento.Criar(precoTotal);
         _orcamentos.Add(orcamento);
         AtualizadoEm = DateTime.UtcNow;
         AddDomainEvent(new OrcamentoGerado(Id, orcamento.Id, orcamento.ValorTotal, DateTime.UtcNow));
