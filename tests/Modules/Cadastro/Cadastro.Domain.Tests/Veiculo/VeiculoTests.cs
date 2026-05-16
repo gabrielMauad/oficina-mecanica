@@ -29,7 +29,6 @@ public class VeiculoTests
         Assert.Equal(clienteId, veiculoResult.Value.ClienteId);
         Assert.InRange(veiculoResult.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(veiculoResult.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
-        Assert.NotEmpty(veiculoResult.Value.DomainEvents);
         Assert.NotEqual(Guid.Empty, veiculoResult.Value.Id.Value);
     }
 

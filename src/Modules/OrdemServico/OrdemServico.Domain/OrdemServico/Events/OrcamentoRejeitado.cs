@@ -1,11 +1,10 @@
-﻿using SharedKernel.Domain;
+using SharedKernel.Domain;
 
 namespace OrdemServico.Domain.OrdemServico.Events;
 
-public sealed record OrcamentoEnviado(
+public sealed record OrcamentoRejeitado(
     OrdemServicoId OrdemServicoId,
     OrcamentoId OrcamentoId,
-    DateTime DataEnvio,
+    IReadOnlyList<ItemPecaSnapshot> Pecas,
     DateTime OcorridoEm
 ) : IDomainEvent;
-

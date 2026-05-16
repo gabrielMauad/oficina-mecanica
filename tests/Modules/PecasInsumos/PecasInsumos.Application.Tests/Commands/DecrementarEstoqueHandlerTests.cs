@@ -1,8 +1,6 @@
 using Moq;
 using PecasInsumos.Application.Commands.DecrementarEstoque;
-using PecasInsumos.Contracts.IntegrationEvents;
 using PecasInsumos.Domain;
-using SharedKernel.Application;
 using SharedKernel.Domain;
 using PecaInsumoEntity = PecasInsumos.Domain.PecaInsumo;
 
@@ -11,20 +9,12 @@ namespace PecasInsumos.Application.Tests.Commands;
 public class DecrementarEstoqueHandlerTests
 {
     private readonly Mock<IPecaInsumoRepository> _repositoryMock;
-    private readonly Mock<IIntegrationEventBus> _busMock;
-    private readonly Mock<IPendingIntegrationEvents> _pendingEventsMock;
     private readonly DecrementarEstoqueHandler _handler;
 
     public DecrementarEstoqueHandlerTests()
     {
         _repositoryMock = new Mock<IPecaInsumoRepository>();
-        _busMock = new Mock<IIntegrationEventBus>();
-        _pendingEventsMock = new Mock<IPendingIntegrationEvents>();
-        _handler = new DecrementarEstoqueHandler(
-            _repositoryMock.Object,
-            _busMock.Object,
-            _pendingEventsMock.Object
-        );
+        _handler = new DecrementarEstoqueHandler(_repositoryMock.Object);
     }
 
     [Fact(DisplayName = "Cenário feliz")]
@@ -41,14 +31,8 @@ public class DecrementarEstoqueHandlerTests
 
         _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
-        Func<CancellationToken, Task>? enqueuedAction = null;
-        _pendingEventsMock
-            .Setup(x => x.Enqueue(It.IsAny<Func<CancellationToken, Task>>()))
-            .Callback<Func<CancellationToken, Task>>(action => enqueuedAction = action);
-
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
-        await enqueuedAction!(CancellationToken.None);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -62,8 +46,6 @@ public class DecrementarEstoqueHandlerTests
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
         _repositoryMock.Verify(x => x.Atualizar(It.Is<PecaInsumoEntity>(p => p.QuantidadeEmEstoque == quantidadeEsperada), It.IsAny<CancellationToken>()), Times.Once);
-        _busMock.Verify(x => x.Publish(It.Is<EstoqueDecrementadoIntegrationEvent>(e => e.QuantidadeDecrementada == command.Quantidade && e.QuantidadeRestante == quantidadeEsperada), It.IsAny<CancellationToken>()), Times.Once);
-        _pendingEventsMock.Verify(x => x.Enqueue(It.IsAny<Func<CancellationToken, Task>>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Peça/insumo não encontrada")]

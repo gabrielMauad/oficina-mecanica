@@ -1,4 +1,3 @@
-﻿using PecasInsumos.Domain.Events;
 using SharedKernel.Domain;
 
 namespace PecasInsumos.Domain;
@@ -47,8 +46,6 @@ public sealed class PecaInsumo : AggregateRoot<PecaInsumoId>
 
         var pecaInsumo = new PecaInsumo(PecaInsumoId.Novo(), nome, descricao, precoUnitario, quantidadeEmEstoque, unidadeDeMedida);
 
-        pecaInsumo.AddDomainEvent(new PecaInsumoAdicionada(pecaInsumo.Id, nome, quantidadeEmEstoque, DateTime.UtcNow));
-
         return pecaInsumo;
     }
 
@@ -58,7 +55,6 @@ public sealed class PecaInsumo : AggregateRoot<PecaInsumoId>
             return Error.Validation("PecaInsumo.QuantidadeInvalida", "Quantidade a incrementar deve ser positiva.");
         QuantidadeEmEstoque += quantidade;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new EstoqueAtualizado(Id, Nome, QuantidadeEmEstoque, DateTime.UtcNow));
         return this;
     }
 
@@ -71,10 +67,6 @@ public sealed class PecaInsumo : AggregateRoot<PecaInsumoId>
             return Error.Validation("PecaInsumo.EstoqueInsuficiente", "Quantidade em estoque não pode ficar negativa.");
         QuantidadeEmEstoque = novaQuantidade;
         AtualizadoEm = DateTime.UtcNow;
-        if (novaQuantidade == 0)
-            AddDomainEvent(new EstoqueEsgotado(Id, Nome, DateTime.UtcNow));
-        else
-            AddDomainEvent(new EstoqueAtualizado(Id, Nome, QuantidadeEmEstoque, DateTime.UtcNow));
         return this;
     }
 
@@ -100,4 +92,3 @@ public sealed class PecaInsumo : AggregateRoot<PecaInsumoId>
         AtualizadoEm = DateTime.UtcNow;
     }
 }
-

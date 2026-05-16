@@ -1,5 +1,4 @@
-﻿using Cadastro.Domain.Servico.Events;
-using SharedKernel.Domain;
+﻿using SharedKernel.Domain;
 
 namespace Cadastro.Domain.Servico;
 
@@ -33,8 +32,6 @@ public sealed class Servico : AggregateRoot<ServicoId>
         Dinheiro precoBase = precoBaseResult.Value;
 
         var servico = new Servico(ServicoId.Novo(), nome, descricao, precoBase);
-
-        servico.AddDomainEvent(new ServicoCadastrado(servico.Id, nome, DateTime.UtcNow));
 
         return servico;
     }

@@ -1,5 +1,4 @@
 ﻿using Cadastro.Domain.Cliente;
-using Cadastro.Domain.Veiculo.Events;
 using SharedKernel.Domain;
 
 namespace Cadastro.Domain.Veiculo;
@@ -42,8 +41,6 @@ public sealed class Veiculo : AggregateRoot<VeiculoId>
         Placa placa = placaResult.Value;
 
         var veiculo = new Veiculo(VeiculoId.Novo(), placa, modelo, marca, ano, clienteId);
-
-        veiculo.AddDomainEvent(new VeiculoCadastrado(veiculo.Id, marca, modelo, DateTime.UtcNow));
 
         return veiculo;
     }

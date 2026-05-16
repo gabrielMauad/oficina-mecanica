@@ -26,7 +26,6 @@ public class ClienteTests
         Assert.True(clienteResult.Value.Ativo);
         Assert.InRange(clienteResult.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(clienteResult.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
-        Assert.NotEmpty(clienteResult.Value.DomainEvents);
         Assert.NotEqual(Guid.Empty, clienteResult.Value.Id.Value);
     }
 

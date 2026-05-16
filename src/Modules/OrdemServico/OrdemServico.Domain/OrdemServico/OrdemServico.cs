@@ -43,7 +43,6 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
             return Error.Validation("OrdemServico.VeiculoIdVazio", "VeiculoId é obrigatório.");
 
         var ordemServico = new OrdemServico(OrdemServicoId.Novo(), clienteId, veiculoId);
-        ordemServico.AddDomainEvent(new OrdemServicoGerada(ordemServico.Id, clienteId, veiculoId, DateTime.UtcNow));
         return ordemServico;
     }
 
@@ -54,160 +53,63 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         Status = StatusOrdemServico.EmDiagnostico;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new DiagnosticoIniciado(Id, DateTime.UtcNow));
         return this;
     }
 
-    public Result<OrdemServico> RegistrarDiagnostico(string descricaoDiagnostico)
+    public Result<OrdemServico> RegistrarDiagnostico(
+        string descricaoDiagnostico,
+        IEnumerable<ItemServicoInput> servicos,
+        IEnumerable<ItemPecaInput> pecas)
     {
-        if (Status != StatusOrdemServico.EmDiagnostico)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode registrar diagnóstico quando está Em Diagnóstico.");
+        if (Status != StatusOrdemServico.EmDiagnostico && Status != StatusOrdemServico.AguardandoAprovacao)
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode registrar diagnóstico quando está Em Diagnóstico ou Aguardando Aprovação.");
+        if (_orcamentos.Any(x => x.Status != StatusOrcamento.Rejeitado))
+            return Error.Validation("OrdemServico.OrcamentoExistente", "Já existe um orçamento ativo para esta ordem de serviço.");
+        if (string.IsNullOrWhiteSpace(descricaoDiagnostico))
+            return Error.Validation("OrdemServico.DiagnosticoVazio", "Descrição do diagnóstico é obrigatória.");
+
+        var servicosList = servicos.ToList();
+        var pecasList = pecas.ToList();
+
+        if (!servicosList.Any())
+            return Error.Validation("OrdemServico.OrcamentoSemServicos", "Não é possível gerar orçamento sem itens de serviços.");
+        if (!pecasList.Any())
+            return Error.Validation("OrdemServico.OrcamentoSemPecas", "Não é possível gerar orçamento sem itens de peças.");
+
+        _itensServico.Clear();
+        _itensPeca.Clear();
+
+        foreach (var input in servicosList)
+        {
+            var itemResult = ItemServico.Criar(input.ServicoId, input.Quantidade, input.PrecoUnitario);
+            if (itemResult.IsFailure) return itemResult.Error;
+            _itensServico.Add(itemResult.Value);
+        }
+
+        foreach (var input in pecasList)
+        {
+            var itemResult = ItemPeca.Criar(input.PecaInsumoId, input.Quantidade, input.PrecoUnitario);
+            if (itemResult.IsFailure) return itemResult.Error;
+            _itensPeca.Add(itemResult.Value);
+        }
+
+        var valorTotal = _itensPeca.Sum(x => x.Quantidade * x.PrecoUnitarioSnapshot)
+                       + _itensServico.Sum(x => x.Quantidade * x.PrecoUnitarioSnapshot);
+
+        var orcamento = Orcamento.Criar(valorTotal);
+        _orcamentos.Add(orcamento);
 
         DescricaoDiagnostico = descricaoDiagnostico;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new DiagnosticoRegistrado(Id, DescricaoDiagnostico, DateTime.UtcNow));
-        return this;
-    }
 
-    public Result<OrdemServico> AdicionarPecaInsumo(Guid pecaInsumoId, int quantidade, decimal precoUnitario)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Peças e insumos só podem ser adicionados quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
+        var servicosSnapshot = _itensServico
+            .Select(x => new ItemServicoSnapshot(x.ServicoId, x.Quantidade, x.PrecoUnitarioSnapshot))
+            .ToList();
+        var pecasSnapshot = _itensPeca
+            .Select(x => new ItemPecaSnapshot(x.PecaInsumoId, x.Quantidade, x.PrecoUnitarioSnapshot))
+            .ToList();
 
-        var itemPecaResult = ItemPeca.Criar(pecaInsumoId, quantidade, precoUnitario);
-        if (itemPecaResult.IsFailure)
-            return itemPecaResult.Error;
-
-        _itensPeca.Add(itemPecaResult.Value);
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> AtualizarQuantidadePecaInsumo(Guid itemPecaId, int novaQuantidade)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Peças e insumos só podem ser atualizadas quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
-
-        var itemPeca = _itensPeca.FirstOrDefault(x => x.Id.Value == itemPecaId);
-        if (itemPeca == null)
-            return Error.Validation("OrdemServico.ItemPecaNaoEncontrado", "Item de peça não encontrado.");
-
-        var resultado = itemPeca.AtualizarQuantidade(novaQuantidade);
-        if (resultado.IsFailure) return resultado.Error;
-
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> AtualizarPrecoUnitarioPecaInsumo(Guid itemPecaId, decimal novoPrecoUnitario)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Peças e insumos só podem ser atualizadas quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
-
-        var itemPeca = _itensPeca.FirstOrDefault(x => x.Id.Value == itemPecaId);
-        if (itemPeca == null)
-            return Error.Validation("OrdemServico.ItemPecaNaoEncontrado", "Item de peça não encontrado.");
-
-        var resultado = itemPeca.AtualizarPrecoUnitarioSnapshot(novoPrecoUnitario);
-        if (resultado.IsFailure) return resultado.Error;
-
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> RemoverPecaInsumo(Guid itemPecaId)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Peças e insumos só podem ser removidas quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
-
-        var itemPeca = _itensPeca.FirstOrDefault(x => x.Id.Value == itemPecaId);
-        if (itemPeca == null)
-            return Error.Validation("OrdemServico.ItemPecaNaoEncontrado", "Item de peça não encontrado.");
-
-        _itensPeca.Remove(itemPeca);
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> AdicionarServico(Guid servicoId, int quantidade, decimal precoUnitario)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Serviços só podem ser adicionados quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
-
-        var itemServicoResult = ItemServico.Criar(servicoId, quantidade, precoUnitario);
-        if (itemServicoResult.IsFailure)
-            return itemServicoResult.Error;
-
-        _itensServico.Add(itemServicoResult.Value);
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> AtualizarQuantidadeServico(Guid itemServicoId, int novaQuantidade)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Serviços só podem ser atualizados quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
-
-        var itemServico = _itensServico.FirstOrDefault(x => x.Id.Value == itemServicoId);
-        if (itemServico == null)
-            return Error.Validation("OrdemServico.ItemServicoNaoEncontrado", "Item de serviço não encontrado.");
-
-        var resultado = itemServico.AtualizarQuantidade(novaQuantidade);
-        if (resultado.IsFailure) return resultado.Error;
-
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> AtualizarPrecoUnitarioServico(Guid itemServicoId, decimal novoPrecoUnitario)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Serviços só podem ser atualizados quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
-
-        var itemServico = _itensServico.FirstOrDefault(x => x.Id.Value == itemServicoId);
-        if (itemServico == null)
-            return Error.Validation("OrdemServico.ItemServicoNaoEncontrado", "Item de serviço não encontrado.");
-
-        var resultado = itemServico.AtualizarPrecoUnitarioSnapshot(novoPrecoUnitario);
-        if (resultado.IsFailure) return resultado.Error;
-
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> RemoverServico(Guid itemServicoId)
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico || DescricaoDiagnostico == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Serviços só podem ser removidos quando a ordem de serviço está Em Diagnóstico com diagnóstico registrado.");
-
-        var itemServico = _itensServico.FirstOrDefault(x => x.Id.Value == itemServicoId);
-        if (itemServico == null)
-            return Error.Validation("OrdemServico.ItemServicoNaoEncontrado", "Item de serviço não encontrado.");
-
-        _itensServico.Remove(itemServico);
-        AtualizadoEm = DateTime.UtcNow;
-        return this;
-    }
-
-    public Result<OrdemServico> GerarOrcamento()
-    {
-        if (Status != StatusOrdemServico.EmDiagnostico && Status != StatusOrdemServico.AguardandoAprovacao)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode gerar orçamento quando está Em Diagnóstico ou Aguardando Aprovação.");
-        if (_orcamentos.Any(x => x.Status != StatusOrcamento.Rejeitado))
-            return Error.Validation("OrdemServico.OrcamentoExistente", "Já existe um orçamento pendente ou aprovado para esta ordem de serviço.");
-        if (!_itensServico.Any())
-            return Error.Validation("OrdemServico.OrcamentoSemServicos", "Não é possível gerar orçamento sem itens de serviços.");
-        if (!_itensPeca.Any())
-            return Error.Validation("OrdemServico.OrcamentoSemPecas", "Não é possível gerar orçamento sem itens de peças.");
-
-        var precoTotalPecas = _itensPeca.Sum(x => x.Quantidade * x.PrecoUnitarioSnapshot);
-        var precoTotalServicos = _itensServico.Sum(x => x.Quantidade * x.PrecoUnitarioSnapshot);
-        var precoTotal = precoTotalPecas + precoTotalServicos;
-
-        var orcamento = Orcamento.Criar(precoTotal);
-        _orcamentos.Add(orcamento);
-        AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new OrcamentoGerado(Id, orcamento.Id, orcamento.ValorTotal, DateTime.UtcNow));
+        AddDomainEvent(new DiagnosticoConcluido(Id, orcamento.Id, descricaoDiagnostico, servicosSnapshot, pecasSnapshot, valorTotal, DateTime.UtcNow));
         return this;
     }
 
@@ -220,13 +122,11 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         if (orcamento == null)
             return Error.Validation("OrdemServico.OrcamentoNaoEncontrado", "Nenhum orçamento pendente encontrado para esta ordem de serviço.");
 
-        var resultadoEnvio = orcamento.Enviar(dataEnvio);
-        if (resultadoEnvio.IsFailure)
-            return resultadoEnvio.Error;
+        var resultado = orcamento.Enviar(dataEnvio);
+        if (resultado.IsFailure) return resultado.Error;
 
         Status = StatusOrdemServico.AguardandoAprovacao;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new OrcamentoEnviado(Id, orcamento.Id, dataEnvio, DateTime.UtcNow));
         return this;
     }
 
@@ -244,7 +144,6 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
             return resultado.Error;
 
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new OrcamentoAprovado(Id, orcamento.Id, DateTime.UtcNow));
         return this;
     }
 
@@ -261,7 +160,12 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         if (resultado.IsFailure)
             return resultado.Error;
 
+        var pecasSnapshot = _itensPeca
+            .Select(x => new ItemPecaSnapshot(x.PecaInsumoId, x.Quantidade, x.PrecoUnitarioSnapshot))
+            .ToList();
+
         AtualizadoEm = DateTime.UtcNow;
+        AddDomainEvent(new OrcamentoRejeitado(Id, orcamento.Id, pecasSnapshot, DateTime.UtcNow));
         return this;
     }
 
@@ -274,7 +178,6 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         Status = StatusOrdemServico.EmExecucao;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new OrdemServicoEmExecucao(Id, DateTime.UtcNow));
         return this;
     }
 
@@ -285,7 +188,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         Status = StatusOrdemServico.Finalizada;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new OrdemServicoFinalizada(Id, DateTime.UtcNow));
+        AddDomainEvent(new OrdemServicoFinalizada(Id, ClienteId, DateTime.UtcNow));
         return this;
     }
 
@@ -296,7 +199,6 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         NotificadoEm = dataNotificacao;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new ClienteNotificado(Id, dataNotificacao, DateTime.UtcNow));
         return this;
     }
 
@@ -308,7 +210,6 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         EntregueEm = dataEntrega;
         Status = StatusOrdemServico.Entregue;
         AtualizadoEm = DateTime.UtcNow;
-        AddDomainEvent(new OrdemServicoConcluida(Id, dataEntrega, DateTime.UtcNow));
         return this;
     }
 }

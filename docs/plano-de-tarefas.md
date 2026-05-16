@@ -20,9 +20,18 @@ Implementar os tipos-base que todos os módulos vão herdar e usar: `Entity<TId>
 
 Implementar as abstrações transversais: `IIntegrationEventBus`, `IIntegrationEventHandler<T>`, `InMemoryIntegrationEventBus` (via `IServiceProvider`), e os pipeline behaviors do MediatR: `ValidationBehavior`, `LoggingBehavior` e `TransactionBehavior`.
 
-> **Decisão de design — publicação de integration events:** handlers NÃO devem publicar eventos diretamente no corpo do handler, porque o `TransactionBehavior` chama `SaveChangesAsync` apenas após o handler retornar. Publicar antes do commit é um bug crítico (evento vai, commit falha).
+> **Decisão de design — fluxo pós-commit em duas etapas:**
 >
-> Solução adotada: criar a abstração `IPendingIntegrationEvents` (escopo de request — wrapper simples em torno de uma lista de `IIntegrationEvent`). Handlers enfileiram os eventos nessa lista via injeção de dependência. O `TransactionBehavior` é estendido para, após o `SaveChangesAsync` com sucesso, iterar a fila e publicar cada evento via `IIntegrationEventBus`. Isso garante que eventos só saem após o commit bem-sucedido.
+> O `TransactionBehavior` orquestra a seguinte sequência após o handler retornar com sucesso:
+> 1. Coleta os domain events acumulados nos agregados via `IUnitOfWork.CollectDomainEvents()`.
+> 2. Persiste com `SaveChangesAsync()` e limpa os domain events do agregado.
+> 3. Despacha cada domain event via `IPublisher` (MediatR) — os handlers de domain events são chamados aqui.
+> 4. Domain event handlers podem enfileirar integration events em `IPendingIntegrationEvents`.
+> 5. Itera `IPendingIntegrationEvents` e publica cada evento via `IIntegrationEventBus`.
+>
+> A separação entre etapas 3 e 5 garante: (a) nenhum evento sai antes do commit; (b) a lógica de publicação de integration events fica nos handlers de domain events, não nos command handlers.
+>
+> `IUnitOfWork` expõe `CollectDomainEvents()` e `ClearDomainEvents()` além do `SaveChangesAsync`. `IHasDomainEvents` é a interface que os agregados implementam (via `AggregateRoot`). `IDomainEvent` implementa `INotification` do MediatR para ser despachado via `IPublisher`.
 
 **Validação:** Projeto compila. `InMemoryIntegrationEventBus` consegue publicar para múltiplos handlers registrados.
 
@@ -52,13 +61,15 @@ Criar o `Dockerfile` multi-stage em `src/Bootstrap/Api/` (build no `sdk`, runtim
 
 Implementar os três agregados do bounded context:
 
-- `Cliente` — nome, documento (CPF ou CNPJ), email, telefone, ativo. Emite `ClienteCadastrado`.
-- `Veiculo` — placa (Mercosul `ABC1D23` ou padrão antigo `ABC-1234`), modelo, marca, ano, clienteId. Emite `VeiculoCadastrado`.
-- `Servico` — nome, descrição, preço base, ativo. Emite `ServicoCadastrado`.
+- `Cliente` — nome, documento (CPF ou CNPJ), email, telefone, ativo.
+- `Veiculo` — placa (Mercosul `ABC1D23` ou padrão antigo `ABC-1234`), modelo, marca, ano, clienteId.
+- `Servico` — nome, descrição, preço base, ativo.
 
 Value Objects com validação: `Cpf`, `Cnpj`, `Placa`, `Dinheiro`.
 
 Interfaces de repositório: `IClienteRepository`, `IVeiculoRepository`, `IServicoRepository`.
+
+> **Decisão de design — sem domain events em cadastro:** os agregados de Cadastro não emitem domain events. Nenhum consumidor existe (e nunca existirá dentro do monolito) para `ClienteCadastrado`, `VeiculoCadastrado` ou `ServicoCadastrado`. Evento sem consumidor é dead code: aumenta complexidade sem benefício. DDD real não exige events em todo agregado — apenas quando há reação real a modelar.
 
 **Validação:** Projeto compila sem referência a EF Core. CPF inválido, CNPJ inválido e placa fora dos dois formatos lançam erro ao tentar criar o value object.
 
@@ -72,8 +83,6 @@ Definir a interface pública do módulo (o que outros módulos podem consumir):
 - `ICadastroVeiculoQuery` — `ObterPorId(Guid)` retornando `VeiculoResumoDto`
 - `ICadastroServicoQuery` — `ObterPorId(Guid)` retornando `ServicoResumoDto`
 - DTOs correspondentes com os campos necessários para os outros módulos
-- Integration events: `ClienteCadastradoIntegrationEvent`, `VeiculoCadastradoIntegrationEvent`
-
 **Validação:** Projeto compila. Única referência de projeto permitida é `SharedKernel.Domain`.
 
 ---
@@ -93,9 +102,7 @@ Implementar os use cases com CQRS (MediatR v12), um por pasta (Command + Handler
 
 > **Decisão de design — AtualizarServico usa PATCH parcial:** O `Nome` é imutável após o cadastro (identifica o serviço no catálogo). Como o recurso nunca pode ser substituído por inteiro, `PUT /servicos/{id}` não se aplica. A atualização é exposta como dois endpoints `PATCH` independentes: `PATCH /servicos/{id}/descricao` e `PATCH /servicos/{id}/preco`. O command `AtualizarServicoCommand` declara `Descricao` e `Preco` como tipos anuláveis; campos `null` são ignorados pelo handler. O validator usa `.When(x => x.Campo is not null)` para só validar formato quando o campo é fornecido.
 
-> **Decisão de design — publicação de eventos:** handlers de comando NÃO publicam via `IIntegrationEventBus` diretamente. Em vez disso, enfileiram os eventos em `IPendingIntegrationEvents` (injetado por DI). A publicação efetiva ocorre no `TransactionBehavior`, após o `SaveChangesAsync` bem-sucedido. Ver nota em T02.
-
-> **Decisão de design — response DTOs:** `Cadastro.Application` referencia `Cadastro.Contracts` para instanciar eventos de integração via `IPendingIntegrationEvents`. DTOs de Contracts (ex.: `ClienteDto`) podem ser reutilizados como tipo de retorno de queries quando o shape bate exatamente. Quando o caso de uso precisa de mais campos, define-se um tipo próprio na Application (ex.: `ObterClientePorIdResponse`). Tipos de retorno de commands (ex.: `CadastrarClienteResponse`) são sempre definidos na Application.
+> **Decisão de design — response DTOs:** DTOs de Contracts (ex.: `ClienteDto`) podem ser reutilizados como tipo de retorno de queries quando o shape bate exatamente. Quando o caso de uso precisa de mais campos, define-se um tipo próprio na Application (ex.: `ObterClientePorIdResponse`). Tipos de retorno de commands (ex.: `CadastrarClienteResponse`) são sempre definidos na Application.
 
 > **Decisão de design — queries de listagem:** os métodos de listagem (`ListarClientes`, `ListarVeiculos`, `ListarServicos`, `ListarVeiculosPorCliente`) NÃO devem ser adicionados às interfaces de repositório de domínio (`IClienteRepository`, `IVeiculoRepository`, `IServicoRepository`). Repositórios de domínio existem para servir invariantes de agregado, não projeções de leitura. Em vez disso, definir interfaces de leitura dentro da própria camada Application (ex: em cada pasta de query ou em um subdiretório `ReadModel`). Infrastructure implementa essas interfaces com projeção direta via `DbContext` para DTOs planos.
 
@@ -134,9 +141,7 @@ Testes unitários sem IO e sem mocks:
 - CPF com dígitos verificadores válidos e inválidos
 - CNPJ com dígitos verificadores válidos e inválidos
 - Placa no formato Mercosul e no formato antigo (válidos e inválidos)
-- Criação de `Cliente` com dados válidos → domain event `ClienteCadastrado` gerado
-- Criação de `Veiculo` com dados válidos → domain event `VeiculoCadastrado` gerado
-- Criação de `Servico` → domain event `ServicoCadastrado` gerado
+- Criação de `Cliente`, `Veiculo` e `Servico` com dados válidos e inválidos
 
 **Validação:** `dotnet test` passa 100%. Cobertura de `Cadastro.Domain` >= 80%.
 
@@ -146,9 +151,9 @@ Testes unitários sem IO e sem mocks:
 
 Testes dos handlers com mocks dos repositórios (Moq):
 
-- `CadastrarClienteHandler` persiste e publica integration event
+- `CadastrarClienteHandler` persiste com sucesso
 - `CadastrarClienteHandler` retorna erro quando documento já existe
-- `CadastrarVeiculoHandler` persiste e publica integration event
+- `CadastrarVeiculoHandler` persiste com sucesso
 - `CadastrarVeiculoHandler` retorna erro quando placa já existe
 - Handlers de query retornam `null` (ou Result de erro) quando entidade não existe
 
@@ -172,7 +177,9 @@ Criar o método `AddSharedKernelServices(this IServiceCollection services)` em `
 
 ### T13 — PecasInsumos.Domain
 
-Implementar o agregado `PecaInsumo` (nome, descrição, preço unitário, quantidade em estoque, unidade de medida, ativo). Domain events: `PecaInsumoAdicionada`, `EstoqueAtualizado`, `EstoqueEsgotado`. Interface `IPecaInsumoRepository`.
+Implementar o agregado `PecaInsumo` (nome, descrição, preço unitário, quantidade em estoque, unidade de medida, ativo). Interface `IPecaInsumoRepository`.
+
+> **Decisão de design — sem domain events:** `PecaInsumo` não emite domain events. Os eventos de estoque (`EstoqueAtualizado`, `EstoqueEsgotado`) foram descartados por não terem consumidores dentro do monolito. O módulo PecasInsumos reage a integration events de outros módulos (ex.: `OrcamentoGeradoIntegrationEvent`) mas não gera events próprios.
 
 Regra de negócio crítica: estoque não pode ficar negativo — o método de decremento deve validar disponibilidade antes de alterar.
 
@@ -185,8 +192,6 @@ Regra de negócio crítica: estoque não pode ficar negativo — o método de de
 - `IPecasInsumosDisponibilidadeQuery` — `VerificarDisponibilidade(Guid pecaId, int quantidade)` retornando `DisponibilidadeDto`
 - `IPecaInsumoQuery` — `ObterPorId(Guid)` retornando `PecaInsumoResumoDto`
 - DTOs correspondentes
-- `EstoqueDecrementadoIntegrationEvent`
-
 **Validação:** Projeto compila. Única referência de projeto é `SharedKernel.Domain`.
 
 ---
@@ -198,9 +203,9 @@ Regra de negócio crítica: estoque não pode ficar negativo — o método de de
 - `IncrementarEstoque`, `DecrementarEstoque` (Commands separados)
 - `DesativarPecaInsumo`
 - Queries: `ObterPecaInsumoPorId`, `ListarPecasInsumos`
-> **Nota sobre o fluxo do event storming:** o event storming mostra o estoque sendo decrementado no momento em que as peças são vinculadas à OS (durante o diagnóstico). Para o MVP, simplificamos: o estoque é verificado em `RegistrarDiagnostico` via ACL port (sem decremento), e decrementado apenas quando o orçamento é aprovado (T27). Isso reduz a complexidade sem comprometer os requisitos do Tech Challenge.
+> **Nota sobre o fluxo de estoque:** o estoque é decrementado no momento em que o orçamento é gerado (ao concluir o diagnóstico). O domain event `DiagnosticoConcluido` dispara a publicação do `OrcamentoGeradoIntegrationEvent`, que o módulo PecasInsumos consome para decrementar o estoque. Se o orçamento for rejeitado, o `OrcamentoRejeitadoIntegrationEvent` aciona o estorno. A implementação do handler de decremento fica na T27.
 
-> **Nota sobre `DecrementarEstoqueQuandoOrcamentoAprovado`:** este handler depende de `OrcamentoAprovadoIntegrationEvent`, que só existirá após a T21 (`OrdemServico.Contracts`). A implementação foi movida para a T27, onde será criado junto com o registro no `PecasInsumosModule`.
+> **Nota sobre disponibilidade de peças:** verificar disponibilidade via ACL port (`IPecaDisponibilidadePort`) no handler de `RegistrarDiagnostico` antes de criar os itens — falha rápida se alguma peça não tem estoque suficiente.
 
 **Validação:** Projeto compila. Todos os commands e queries listados acima estão implementados.
 
@@ -233,7 +238,7 @@ Regra de negócio crítica: estoque não pode ficar negativo — o método de de
 
 ### T18 — Testes — PecasInsumos
 
-- `PecasInsumos.Domain.Tests`: decremento válido, decremento que esgota o estoque, tentativa de decremento abaixo de zero, criação com dados válidos gera domain event correto
+- `PecasInsumos.Domain.Tests`: decremento válido, decremento que esgota o estoque, tentativa de decremento abaixo de zero, criação com dados válidos e inválidos
 - `PecasInsumos.Application.Tests`: handlers com mocks do repositório
 
 **Validação:** `dotnet test` passa 100%. Cobertura de `PecasInsumos.Domain` >= 80%.
@@ -254,19 +259,36 @@ Regra de negócio crítica: estoque não pode ficar negativo — o método de de
 
 ### T20 — OrdemServico.Domain
 
-Agregado `OrdemServico` com o ciclo de vida completo mapeado no event storming:
+Agregado `OrdemServico` com o ciclo de vida completo mapeado no event storming.
 
-**Estados:** `Recebida → EmDiagnostico → OrcamentoPendente → OrcamentoEnviado → OrcamentoAprovado → EmExecucao → Finalizada → Entregue`
+**Estados:** `Recebida → EmDiagnostico → AguardandoAprovacao → EmExecucao → Finalizada → Entregue`
 
-Entidades filhas: `ItemServico` (snapshot de preço), `ItemPeca` (snapshot de preço). Agregado `Orcamento` (valor total, status: Pendente/Enviado/Aprovado/Rejeitado).
+Entidades filhas: `ItemServico` (snapshot de preço), `ItemPeca` (snapshot de preço). Entidade `Orcamento` (valor total, status: Pendente/Enviado/Aprovado/Rejeitado).
 
-Domain events para cada transição: `OrdemServicoGerada`, `DiagnosticoIniciado`, `DiagnosticoRegistrado`, `OrcamentoGerado`, `OrcamentoEnviado`, `OrcamentoAprovado`, `OrdemServicoEmExecucao`, `OrdemServicoFinalizada`, `ClienteNotificado`, `OrdemServicoConcluida`.
+**Métodos do agregado:**
+- `Criar(clienteId, veiculoId)` — cria OS com status `Recebida`.
+- `IniciarDiagnostico()` — transição para `EmDiagnostico`.
+- `RegistrarDiagnostico(string desc, IEnumerable<ItemServicoInput> servicos, IEnumerable<ItemPecaInput> pecas)` — registra todos os itens, calcula total, cria `Orcamento` com `Status = Pendente`. OS permanece em `EmDiagnostico`. Emite **`DiagnosticoConcluido`** com payload rico (desc, snapshots de itens, valorTotal, orcamentoId).
+- `EnviarOrcamento(dataEnvio)` — muda orçamento para `Enviado`, preenche `data_envio`, transita OS para `AguardandoAprovacao`. Sem evento. Chamado pelo handler `EnviarOrcamentoAoCliente` (T22).
+- `AprovarOrcamento()` — aprova o orçamento (sem event — sem consumidor imediato).
+- `RejeitarOrcamento()` — rejeita o orçamento. Emite **`OrcamentoRejeitado`** com lista de peças (para estorno de estoque).
+- `Executar()` — transição para `EmExecucao`.
+- `Finalizar()` — transição para `Finalizada`. Emite **`OrdemServicoFinalizada`** com `ClienteId` no payload.
+- `NotificarCliente(dataNotificacao)` — registra `notificado_em`.
+- `Concluir(dataEntrega)` — transição para `Entregue`, registra `entregue_em`.
+
+**Input types:** `ItemServicoInput(ServicoId, Quantidade, PrecoUnitario)` e `ItemPecaInput(PecaInsumoId, Quantidade, PrecoUnitario)`.
+
+**Domain events (apenas os que têm consumidores):**
+- `DiagnosticoConcluido` — payload: `OrdemServicoId`, `OrcamentoId`, `DescricaoDiagnostico`, `IReadOnlyList<ItemServicoSnapshot>`, `IReadOnlyList<ItemPecaSnapshot>`, `ValorTotal`, `OcorridoEm`.
+- `OrcamentoRejeitado` — payload: `OrdemServicoId`, `OrcamentoId`, `IReadOnlyList<ItemPecaSnapshot>`, `OcorridoEm`.
+- `OrdemServicoFinalizada` — payload: `OrdemServicoId`, `ClienteId`, `OcorridoEm`.
 
 Ports de ACL (interfaces no vocabulário deste módulo): `IClienteInfoPort`, `IVeiculoInfoPort`, `IServicoInfoPort`, `IPecaDisponibilidadePort`.
 
 Interfaces: `IOrdemServicoRepository`.
 
-**Validação:** Projeto compila. Transições inválidas (ex: tentar finalizar uma OS `Recebida`) lançam erro de domínio. Referências de projeto limitadas a `SharedKernel.Domain`.
+**Validação:** Projeto compila. Transições inválidas lançam erro de domínio. Referências de projeto limitadas a `SharedKernel.Domain`.
 
 ---
 
@@ -275,7 +297,10 @@ Interfaces: `IOrdemServicoRepository`.
 - `IOrdemServicoResumoQuery` — `ObterPorId(Guid)` retornando `OrdemServicoResumoDto`
 - `IListarOrdensPorClienteQuery` — `Listar(Guid clienteId)` retornando `IReadOnlyList<OrdemServicoResumoDto>`
 - DTOs: `OrdemServicoResumoDto`, `OrcamentoDto`, `ItemServicoDto`, `ItemPecaDto`
-- Integration events: `OrcamentoAprovadoIntegrationEvent` (com lista de itens e quantidades), `OrdemServicoFinalizadaIntegrationEvent`
+- DTO de evento: `ItemPecaEventDto(PecaInsumoId, Quantidade)`
+- Integration events:
+  - `OrcamentoGeradoIntegrationEvent(EventId, OcorridoEm, OrdemServicoId, OrcamentoId, IReadOnlyList<ItemPecaEventDto> Pecas)` — consumido por PecasInsumos para decrementar estoque.
+  - `OrcamentoRejeitadoIntegrationEvent(EventId, OcorridoEm, OrdemServicoId, OrcamentoId, IReadOnlyList<ItemPecaEventDto> Pecas)` — consumido por PecasInsumos para estornar estoque.
 
 **Validação:** Projeto compila. Única referência de projeto é `SharedKernel.Domain`.
 
@@ -283,23 +308,31 @@ Interfaces: `IOrdemServicoRepository`.
 
 ### T22 — OrdemServico.Application
 
-Implementar todos os commands do event storming, um por pasta:
+Implementar os commands do agregado, um por pasta:
 
 | Command | O que faz |
 |---|---|
 | `GerarOrdemServico` | Valida que cliente e veículo existem via ACL; cria a OS com status `Recebida` |
 | `IniciarDiagnostico` | Muda status para `EmDiagnostico` |
-| `RegistrarDiagnostico` | Registra serviços e peças com snapshot de preço; verifica disponibilidade das peças via ACL |
-| `GerarOrcamento` | Calcula valor total a partir dos itens; cria o `Orcamento` com status `Pendente` |
-| `EnviarOrcamento` | Muda status do orçamento para `Enviado`; preenche `data_envio` |
-| `AprovarOrcamento` | Muda status para `Aprovado`; publica `OrcamentoAprovadoIntegrationEvent` |
-| `RejeitarOrcamento` | Muda status do orçamento para `Rejeitado`; OS volta para `OrcamentoPendente` para permitir reenvio |
+| `RegistrarDiagnostico` | Verifica disponibilidade de todas as peças via ACL (`IPecaDisponibilidadePort`); chama `aggregate.RegistrarDiagnostico(desc, servicos, pecas)` — que registra itens e cria orçamento com `Status = Pendente`; OS permanece em `EmDiagnostico`. A transição para `AguardandoAprovacao` ocorre no handler `EnviarOrcamentoAoCliente` |
+| `AprovarOrcamento` | Muda status do orçamento para `Aprovado` |
+| `RejeitarOrcamento` | Muda status do orçamento para `Rejeitado` |
 | `ExecutarOrdemServico` | Muda status da OS para `EmExecucao` |
-| `FinalizarOrdemServico` | Muda status para `Finalizada`; publica `OrdemServicoFinalizadaIntegrationEvent` |
+| `FinalizarOrdemServico` | Muda status para `Finalizada` |
 | `NotificarCliente` | Preenche `notificado_em` |
 | `ConcluirOrdemServico` | Muda status para `Entregue`; preenche `entregue_em` |
 
 Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
+
+**Domain event handlers** (implementam `INotificationHandler<>`, ficam na pasta `DomainEventHandlers/`):
+
+| Handler | Reage a | O que faz |
+|---|---|---|
+| `DiagnosticoConcluidoHandler` | `DiagnosticoConcluido` | Enfileira `OrcamentoGeradoIntegrationEvent` em `IPendingIntegrationEvents` |
+| `OrcamentoRejeitadoHandler` | `OrcamentoRejeitado` | Enfileira `OrcamentoRejeitadoIntegrationEvent` em `IPendingIntegrationEvents` |
+| `OrdemServicoFinalizadaHandler` | `OrdemServicoFinalizada` | Loga notificação ao cliente (stub — implementação real na fase de notificações) |
+
+> **Por que handlers de domain event e não o command handler diretamente:** o command handler não deve saber quais integration events publicar — isso é responsabilidade de quem reage ao fato de domínio. Separar em handlers de domain event mantém o command handler focado em orquestração e isola a lógica de cross-BC communication.
 
 **Validação:** Projeto compila. Handlers usam apenas as ports de ACL definidas no Domain — nenhuma referência direta a `Cadastro.*` ou `PecasInsumos.*`.
 
@@ -328,10 +361,9 @@ Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
 
 - `POST /ordens-servico` — criar OS
 - `PATCH /ordens-servico/{id}/iniciar-diagnostico`
-- `PATCH /ordens-servico/{id}/registrar-diagnostico` (body com serviços e peças)
-- `PATCH /ordens-servico/{id}/gerar-orcamento`
-- `PATCH /ordens-servico/{id}/enviar-orcamento`
+- `PATCH /ordens-servico/{id}/registrar-diagnostico` (body com descrição + lista de serviços + lista de peças)
 - `PATCH /ordens-servico/{id}/aprovar-orcamento`
+- `PATCH /ordens-servico/{id}/rejeitar-orcamento`
 - `PATCH /ordens-servico/{id}/executar`
 - `PATCH /ordens-servico/{id}/finalizar`
 - `PATCH /ordens-servico/{id}/notificar-cliente`
@@ -345,8 +377,8 @@ Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
 
 ### T25 — Testes — OrdemServico
 
-- `OrdemServico.Domain.Tests`: cada transição de estado válida e inválida, cálculo de valor total do orçamento, geração dos domain events em cada transição, regra de snapshot de preço nos itens
-- `OrdemServico.Application.Tests`: handlers com mocks das ports ACL e repositórios, verificar que `OrcamentoAprovadoIntegrationEvent` é publicado no handler correto
+- `OrdemServico.Domain.Tests`: cada transição de estado válida e inválida; `RegistrarDiagnostico` com itens válidos → emite `DiagnosticoConcluido` com payload correto (lista de itens, valorTotal, orcamentoId); `RejeitarOrcamento` → emite `OrcamentoRejeitado` com lista de peças; `Finalizar` → emite `OrdemServicoFinalizada` com `ClienteId`; cálculo de valor total do orçamento; regra de snapshot de preço nos itens.
+- `OrdemServico.Application.Tests`: handlers com mocks das ports ACL e repositórios; `DiagnosticoConcluidoHandler` enfileira `OrcamentoGeradoIntegrationEvent`; `OrcamentoRejeitadoHandler` enfileira `OrcamentoRejeitadoIntegrationEvent`.
 
 **Validação:** `dotnet test` passa 100%. Cobertura de `OrdemServico.Domain` >= 80%.
 
@@ -362,17 +394,24 @@ Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
 
 ## Fase 5 — Integration Events
 
-### T27 — OrcamentoAprovado → DecrementarEstoque
+### T27 — OrcamentoGerado/Rejeitado → Estoque
 
-Implementar o handler `DecrementarEstoqueQuandoOrcamentoAprovado` em `PecasInsumos.Application/IntegrationEventHandlers/`. Ele deve implementar `IIntegrationEventHandler<OrcamentoAprovadoIntegrationEvent>` (do `OrdemServico.Contracts`, disponível após T21), iterar os itens do evento e chamar `DecrementarEstoque` para cada peça. Registrá-lo como `IIntegrationEventHandler<OrcamentoAprovadoIntegrationEvent>` no `AddPecasInsumosModule`. Verificar que o handler de `AprovarOrcamento` em OrdemServico está publicando o evento corretamente via `IPendingIntegrationEvents`.
+Implementar dois handlers em `PecasInsumos.Application/IntegrationEventHandlers/`:
 
-**Validação:** Aprovar um orçamento que contém peças decrementa o `quantidade_estoque` correspondente em `pecas_insumos.peca_insumo`. Verificar diretamente no banco após a aprovação.
+- `DecrementarEstoqueQuandoOrcamentoGerado` — implementa `IIntegrationEventHandler<OrcamentoGeradoIntegrationEvent>`, itera as peças do evento e chama `DecrementarEstoque` para cada uma.
+- `IncrementarEstoqueQuandoOrcamentoRejeitado` — implementa `IIntegrationEventHandler<OrcamentoRejeitadoIntegrationEvent>`, itera as peças do evento e chama `IncrementarEstoque` para cada uma (estorno).
+
+Registrar ambos no `AddPecasInsumosModule`. Os eventos são publicados pelo `DiagnosticoConcluidoHandler` e `OrcamentoRejeitadoHandler` em `OrdemServico.Application` (T22).
+
+**Validação:** Concluir diagnóstico com peças decrementa o `quantidade_estoque` em `pecas_insumos.peca_insumo`. Rejeitar o orçamento estorna as quantidades. Verificar diretamente no banco.
 
 ---
 
-### T28 — OSFinalizada → Notificação (stub)
+### T28 — Notificação de OS Finalizada (stub)
 
-Garantir que o handler de `FinalizarOrdemServico` publica `OrdemServicoFinalizadaIntegrationEvent`. Criar um handler stub que apenas loga a mensagem "OS {id} finalizada — cliente deve ser notificado" e registrá-lo no módulo.
+O `OrdemServicoFinalizadaHandler` (em `OrdemServico.Application/DomainEventHandlers/`) já reage ao domain event `OrdemServicoFinalizada` emitido pelo agregado. Nesta tarefa, implementar o corpo do handler como stub: apenas logar `"OS {id} finalizada — notificar cliente {clienteId}"`.
+
+Não há integration event para este fluxo: o módulo de notificação futuro será implementado dentro de `OrdemServico` (sem cruzar BC). Quando existir o serviço de notificação real, bastará substituir o log pelo envio efetivo dentro do próprio handler.
 
 **Validação:** Finalizar uma OS gera a mensagem de log. Nenhum erro lançado.
 

@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Cadastro.Domain.Cliente.Events;
 using SharedKernel.Domain;
 
 namespace Cadastro.Domain.Cliente;
@@ -54,8 +53,6 @@ public sealed class Cliente : AggregateRoot<ClienteId>
         }
 
         var cliente = new Cliente(ClienteId.Novo(), nome, doc, email, telefoneNormalizado);
-
-        cliente.AddDomainEvent(new ClienteCadastrado(cliente.Id, cliente.Nome, DateTime.UtcNow));
 
         return cliente;
     }

@@ -1,9 +1,7 @@
-﻿using Cadastro.Application.Veiculos.Commands.CadastrarVeiculo;
-using Cadastro.Contracts.IntegrationEvents;
+using Cadastro.Application.Veiculos.Commands.CadastrarVeiculo;
 using Cadastro.Domain.Cliente;
 using Cadastro.Domain.Veiculo;
 using Moq;
-using SharedKernel.Application;
 using SharedKernel.Domain;
 using ClienteEntity = Cadastro.Domain.Cliente.Cliente;
 using VeiculoEntity = Cadastro.Domain.Veiculo.Veiculo;
@@ -14,22 +12,13 @@ public class CadastrarVeiculoHandlerTests
 {
     private readonly Mock<IVeiculoRepository> _repositoryMock;
     private readonly Mock<IClienteRepository> _clienteRepositoryMock;
-    private readonly Mock<IIntegrationEventBus> _busMock;
-    private readonly Mock<IPendingIntegrationEvents> _pendingEventsMock;
     private readonly CadastrarVeiculoHandler _handler;
 
     public CadastrarVeiculoHandlerTests()
     {
         _repositoryMock = new Mock<IVeiculoRepository>();
         _clienteRepositoryMock = new Mock<IClienteRepository>();
-        _busMock = new Mock<IIntegrationEventBus>();
-        _pendingEventsMock = new Mock<IPendingIntegrationEvents>();
-        _handler = new CadastrarVeiculoHandler(
-            _repositoryMock.Object,
-            _clienteRepositoryMock.Object,
-            _busMock.Object,
-            _pendingEventsMock.Object
-        );
+        _handler = new CadastrarVeiculoHandler(_repositoryMock.Object, _clienteRepositoryMock.Object);
     }
 
     [Fact(DisplayName = "Cenário feliz")]
@@ -51,14 +40,8 @@ public class CadastrarVeiculoHandlerTests
         _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _clienteRepositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
-        Func<CancellationToken, Task>? enqueuedAction = null;
-        _pendingEventsMock
-            .Setup(x => x.Enqueue(It.IsAny<Func<CancellationToken, Task>>()))
-            .Callback<Func<CancellationToken, Task>>(action => enqueuedAction = action);
-
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
-        await enqueuedAction!(CancellationToken.None);
 
         // Assert
         Assert.True(result.IsSuccess);
@@ -75,8 +58,6 @@ public class CadastrarVeiculoHandlerTests
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
         _repositoryMock.Verify(x => x.Adicionar(It.Is<VeiculoEntity>(x => x.Placa.Numero == placaNormalizada), It.IsAny<CancellationToken>()), Times.Once);
-        _busMock.Verify(x => x.Publish(It.Is<VeiculoCadastradoIntegrationEvent>(x => x.Placa == placaNormalizada), It.IsAny<CancellationToken>()), Times.Once);
-        _pendingEventsMock.Verify(x => x.Enqueue(It.IsAny<Func<CancellationToken, Task>>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Documento ja existe")]
