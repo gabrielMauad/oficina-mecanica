@@ -12,11 +12,11 @@
     <Project Path="src/Modules/Cadastro/Cadastro.Presentation/Cadastro.Presentation.csproj" />
   </Folder>
   <Folder Name="/src/Modules/OrdensServico/">
-    <Project Path="src/Modules/OrdemServico/OrdensServico.Application/OrdensServico.Application.csproj" />
-    <Project Path="src/Modules/OrdemServico/OrdensServico.Contracts/OrdensServico.Contracts.csproj" />
-    <Project Path="src/Modules/OrdemServico/OrdensServico.Domain/OrdensServico.Domain.csproj" />
-    <Project Path="src/Modules/OrdemServico/OrdensServico.Infrastructure/OrdensServico.Infrastructure.csproj" />
-    <Project Path="src/Modules/OrdemServico/OrdensServico.Presentation/OrdensServico.Presentation.csproj" />
+    <Project Path="src/Modules/OrdensServico/OrdensServico.Application/OrdensServico.Application.csproj" />
+    <Project Path="src/Modules/OrdensServico/OrdensServico.Contracts/OrdensServico.Contracts.csproj" />
+    <Project Path="src/Modules/OrdensServico/OrdensServico.Domain/OrdensServico.Domain.csproj" />
+    <Project Path="src/Modules/OrdensServico/OrdensServico.Infrastructure/OrdensServico.Infrastructure.csproj" />
+    <Project Path="src/Modules/OrdensServico/OrdensServico.Presentation/OrdensServico.Presentation.csproj" />
   </Folder>
   <Folder Name="/src/Modules/PecasInsumos/">
     <Project Path="src/Modules/PecasInsumos/PecasInsumos.Application/PecasInsumos.Application.csproj" />
@@ -38,8 +38,8 @@
     <Project Path="tests/Modules/Cadastro/Cadastro.Domain.Tests/Cadastro.Domain.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/OrdensServico/">
-    <Project Path="tests/Modules/OrdemServico/OrdemServico.Application.Tests/OrdemServico.Application.Tests.csproj" />
-    <Project Path="tests/Modules/OrdemServico/OrdemServico.Domain.Tests/OrdemServico.Domain.Tests.csproj" />
+    <Project Path="tests/Modules/OrdensServico/OrdemServico.Application.Tests/OrdemServico.Application.Tests.csproj" />
+    <Project Path="tests/Modules/OrdensServico/OrdemServico.Domain.Tests/OrdemServico.Domain.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/PecasInsumos/">
     <Project Path="tests/Modules/PecasInsumos/PecasInsumos.Application.Tests/PecasInsumos.Application.Tests.csproj" />
