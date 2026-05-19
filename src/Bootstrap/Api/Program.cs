@@ -24,7 +24,7 @@ builder.Services.AddPecasInsumosModule(builder.Configuration);
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(CadastroAssemblyMarker).Assembly)
     .AddApplicationPart(typeof(PecasInsumosAssemblyMarker).Assembly);
-// .AddApplicationPart(typeof(OrdemServico.Presentation.OrdemServicoAssemblyMarker).Assembly)
+// .AddApplicationPart(typeof(OrdensServico.Presentation.OrdensServicoAssemblyMarker).Assembly)
 
 var app = builder.Build();
 

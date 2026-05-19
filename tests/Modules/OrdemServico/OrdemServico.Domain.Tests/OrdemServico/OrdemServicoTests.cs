@@ -1,7 +1,7 @@
-using OrdemServico.Domain.OrdemServico;
-using OrdemServico.Domain.OrdemServico.Events;
+﻿using OrdensServico.Domain.OrdemServico;
+using OrdensServico.Domain.OrdemServico.Events;
 
-namespace OrdemServico.Domain.Tests.OrdemServico;
+namespace OrdensServico.Domain.Tests.OrdemServico;
 
 public class OrdemServicoTests
 {
@@ -22,7 +22,7 @@ public class OrdemServicoTests
         var os = CriarOsEmDiagnostico();
         var servicos = new[] { new ItemServicoInput(ServicoId, 1, 100m) };
         var pecas = new[] { new ItemPecaInput(PecaId, 2, 50m) };
-        os.RegistrarDiagnostico("descrição original", servicos, pecas);
+        os.RegistrarDiagnostico("descriÃ§Ã£o original", servicos, pecas);
         os.EnviarOrcamento(DateTime.UtcNow);
         os.RejeitarOrcamento();
         os.ClearDomainEvents();
@@ -38,7 +38,7 @@ public class OrdemServicoTests
         var servicos = new[] { new ItemServicoInput(ServicoId, 1, 200m) };
         var pecas = new[] { new ItemPecaInput(PecaId, 1, 80m) };
 
-        var result = os.RegistrarDiagnostico("Novo diagnóstico", servicos, pecas);
+        var result = os.RegistrarDiagnostico("Novo diagnÃ³stico", servicos, pecas);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(StatusOrdemServico.AguardandoAprovacao, os.Status);
@@ -88,7 +88,7 @@ public class OrdemServicoTests
         var servicos = new[] { new ItemServicoInput(novoServicoId, 2, 150m) };
         var pecas = new[] { new ItemPecaInput(PecaId, 3, 40m) };
 
-        os.RegistrarDiagnostico("Novo diagnóstico", servicos, pecas);
+        os.RegistrarDiagnostico("Novo diagnÃ³stico", servicos, pecas);
 
         Assert.Single(os.ItensServico);
         Assert.Single(os.ItensPeca);
@@ -103,7 +103,7 @@ public class OrdemServicoTests
         var os = CriarOsAposRejeicao();
         var servicos = new[] { new ItemServicoInput(ServicoId, 1, 100m) };
         var pecas = new[] { new ItemPecaInput(PecaId, 1, 50m) };
-        os.RegistrarDiagnostico("Novo diagnóstico", servicos, pecas);
+        os.RegistrarDiagnostico("Novo diagnÃ³stico", servicos, pecas);
 
         var result = os.EnviarOrcamento(DateTime.UtcNow);
 
@@ -119,7 +119,7 @@ public class OrdemServicoTests
         var os = CriarOsAposRejeicao();
         var servicos = new[] { new ItemServicoInput(ServicoId, 1, 100m) };
         var pecas = new[] { new ItemPecaInput(PecaId, 1, 50m) };
-        os.RegistrarDiagnostico("Segundo diagnóstico", servicos, pecas);
+        os.RegistrarDiagnostico("Segundo diagnÃ³stico", servicos, pecas);
         os.EnviarOrcamento(DateTime.UtcNow);
 
         var aprovacao = os.AprovarOrcamento();
@@ -141,7 +141,7 @@ public class OrdemServicoTests
         var servicos = new[] { new ItemServicoInput(ServicoId, 1, 100m) };
         var pecas = new[] { new ItemPecaInput(PecaId, 2, 50m) };
 
-        var result = os.RegistrarDiagnostico("Diagnóstico de teste", servicos, pecas);
+        var result = os.RegistrarDiagnostico("DiagnÃ³stico de teste", servicos, pecas);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(StatusOrdemServico.EmDiagnostico, os.Status);
@@ -152,7 +152,7 @@ public class OrdemServicoTests
         Assert.Single(os.DomainEvents);
         var evt = Assert.IsType<DiagnosticoConcluido>(os.DomainEvents.Single());
         Assert.Equal(os.Id, evt.OrdemServicoId);
-        Assert.Equal("Diagnóstico de teste", evt.DescricaoDiagnostico);
+        Assert.Equal("DiagnÃ³stico de teste", evt.DescricaoDiagnostico);
         Assert.Single(evt.Servicos);
         Assert.Single(evt.Pecas);
         Assert.Equal(200m, evt.ValorTotal);

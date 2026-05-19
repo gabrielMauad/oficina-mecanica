@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Ordens\Commands\IniciarDiagnostico\" />
+    <Folder Include="Ordens\Commands\AprovarOrcamento\" />
+    <Folder Include="Ordens\Commands\ExecutarOrdemServico\" />
+    <Folder Include="Ordens\Commands\FinalizarOrdemServico\" />
+    <Folder Include="Ordens\Commands\ConcluirOrdemServico\" />
+    <Folder Include="Ordens\Commands\RejeitarOrcamento\" />
+    <Folder Include="Ordens\Commands\RegistrarDiagnostico\" />
+    <Folder Include="Ordens\Queries\ListarOrdensPorCliente\" />
+    <Folder Include="Ordens\Queries\ObterOrdemServicoPorId\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\SharedKernel\SharedKernel.Application\SharedKernel.Application.csproj" />
+    <ProjectReference Include="..\OrdensServico.Contracts\OrdensServico.Contracts.csproj" />
+    <ProjectReference Include="..\OrdensServico.Domain\OrdensServico.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

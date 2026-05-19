@@ -82,7 +82,7 @@ oficina-mecanica-v2/
 │   │   │   ├── Cadastro.Infrastructure/
 │   │   │   ├── Cadastro.Presentation/
 │   │   │   └── Cadastro.Contracts/
-│   │   ├── OrdemServico/
+│   │   ├── OrdensServico/
 │   │   │   ├── OrdemServico.Domain/
 │   │   │   ├── OrdemServico.Application/
 │   │   │   ├── OrdemServico.Infrastructure/
