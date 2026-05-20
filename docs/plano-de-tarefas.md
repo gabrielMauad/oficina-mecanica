@@ -344,14 +344,18 @@ Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
 - Migrations sem FKs cross-schema (apenas FKs entre `os_servico`, `os_peca`, `orcamento` → `ordem_servico`)
 - `OrdemServicoRepository`
 - ACL Adapters (implementam as ports do Domain consumindo os Contracts dos outros módulos):
-  - `ClienteInfoAdapter` consome `ICadastroClienteQuery`
-  - `VeiculoInfoAdapter` consome `ICadastroVeiculoQuery`
-  - `ServicoInfoAdapter` consome `ICadastroServicoQuery`
-  - `PecaDisponibilidadeAdapter` consome `IPecasInsumosDisponibilidadeQuery`
+  - `ClienteInfoAdapter` consome `ICadastroClienteQuery` — implementa `IClienteInfoPort` (`ExisteEAtivo` + `ObterInfo`)
+  - `VeiculoInfoAdapter` consome `ICadastroVeiculoQuery` — implementa `IVeiculoInfoPort` (`ExisteEPertenceAoCliente` + `ObterPlaca`)
+  - `ServicoInfoAdapter` consome `ICadastroServicoQuery` — implementa `IServicoInfoPort` (`ObterPreco` + `ObterNome`)
+  - `PecaDisponibilidadeAdapter` consome `IPecasInsumosDisponibilidadeQuery` — implementa `IPecaDisponibilidadePort`
+  - `PecaInsumoInfoAdapter` consome `IPecaInsumoQuery` de `PecasInsumos.Contracts` — implementa `IPecaInsumoInfoPort` (`Obter` retornando nome e unidade de medida)
+- Implementação de `INotificacaoClientePort` como stub de log (`LogNotificacaoClientePort`): apenas loga as informações recebidas sem envio real; será substituída por canal real em fase futura
 - Implementação de `IOrdemServicoResumoQuery` e `IListarOrdensPorClienteQuery`
 - `OrdemServicoModule.cs` com `AddOrdemServicoModule(IServiceCollection, IConfiguration)`
+  - Registrar `PecaInsumoInfoAdapter` como `IPecaInsumoInfoPort`
+  - Registrar `LogNotificacaoClientePort` como `INotificacaoClientePort`
 
-**Validação:** Migration cria as 4 tabelas sem FKs cross-schema. Adapters traduzem os DTOs externos para os tipos internos do módulo.
+**Validação:** Migration cria as 4 tabelas sem FKs cross-schema. Adapters traduzem os DTOs externos para os tipos internos do módulo. `LogNotificacaoClientePort` gera log ao enviar orçamento e ao finalizar OS.
 
 ---
 

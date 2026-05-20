@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\Modules\OrdemServico\OrdensServico.Domain\OrdensServico.Domain.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Modules\OrdensServico\OrdensServico.Domain\OrdensServico.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

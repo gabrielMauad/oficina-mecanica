@@ -13,7 +13,7 @@ public sealed class AtualizarPecaInsumoHandler : IRequestHandler<AtualizarPecaIn
         PecaInsumoId pecaInsumoId = new(command.PecaInsumoId);
         PecaInsumo? pecaInsumo = await _repository.ObterPorId(pecaInsumoId, cancellationToken);
         if (pecaInsumo is null)
-            return PecaInsumoErrors.NaoEncontrado;
+            return PecaInsumoErrors.NaoEncontrada;
         if (!pecaInsumo.Ativo)
             return PecaInsumoErrors.JaDesativado;
 

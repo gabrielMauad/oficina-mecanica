@@ -19,7 +19,7 @@ public sealed class IncrementarEstoqueHandler : IRequestHandler<IncrementarEstoq
         PecaInsumo? pecaInsumo = await _repository.ObterPorId(pecaInsumoId, cancellationToken);
 
         if (pecaInsumo == null)
-            return PecaInsumoErrors.NaoEncontrado;
+            return PecaInsumoErrors.NaoEncontrada;
         if (!pecaInsumo.Ativo)
             return PecaInsumoErrors.JaDesativado;
 

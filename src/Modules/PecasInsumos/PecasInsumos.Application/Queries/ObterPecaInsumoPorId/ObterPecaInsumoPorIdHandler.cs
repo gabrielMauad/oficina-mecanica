@@ -15,7 +15,7 @@ public sealed class ObterPecaInsumoPorIdHandler : IRequestHandler<ObterPecaInsum
         PecaInsumoId pecaInsumoId = new(request.PecaInsumoId);
         PecaInsumo? pecaInsumo = await _repository.ObterPorId(pecaInsumoId, cancellationToken);
         if (pecaInsumo is null)
-            return PecaInsumoErrors.NaoEncontrado;
+            return PecaInsumoErrors.NaoEncontrada;
         return ObterPecaInsumoPorIdResponse.FromPecaInsumo(pecaInsumo);
     }
 }

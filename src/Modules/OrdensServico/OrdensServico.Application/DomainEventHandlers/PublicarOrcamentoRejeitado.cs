@@ -1,0 +1,35 @@
+﻿using MediatR;
+using OrdensServico.Contracts.IntegrationEvents;
+using OrdensServico.Domain.OrdemServico.Events;
+using SharedKernel.Application;
+
+namespace OrdensServico.Application.DomainEventHandlers;
+
+public sealed class PublicarOrcamentoRejeitado : INotificationHandler<OrcamentoRejeitado>
+{
+    private readonly IIntegrationEventBus _bus;
+    private readonly IPendingIntegrationEvents _pendingEvents;
+
+    public PublicarOrcamentoRejeitado(
+        IIntegrationEventBus bus,
+        IPendingIntegrationEvents pendingEvents
+    )
+    {
+        _bus = bus;
+        _pendingEvents = pendingEvents;
+    }
+
+    public Task Handle(OrcamentoRejeitado notification, CancellationToken ct)
+    {
+        IReadOnlyList<ItemPecaEventDto> itensPecaEventDto = [.. notification.Pecas.Select(p => new ItemPecaEventDto(p.PecaInsumoId, p.Quantidade))];
+        OrcamentoRejeitadoIntegrationEvent integrationEvent = new(
+            Guid.NewGuid(),
+            DateTime.UtcNow,
+            notification.OrdemServicoId.Value,
+            notification.OrcamentoId.Value,
+            itensPecaEventDto
+        );
+        _pendingEvents.Enqueue(ct => _bus.Publish(integrationEvent, ct));
+        return Task.CompletedTask;
+    }
+}
