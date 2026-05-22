@@ -23,7 +23,7 @@ internal sealed class PecasInsumosDisponibilidadeQuery : IPecasInsumosDisponibil
             return new DisponibilidadeDto(false, 0);
 
         var disponivel = pecaInsumo.QuantidadeEmEstoque >= quantidade;
-        return new DisponibilidadeDto(disponivel, pecaInsumo.QuantidadeEmEstoque);
+        return new DisponibilidadeDto(disponivel, pecaInsumo.PrecoUnitario.Valor);
     }
 }
 

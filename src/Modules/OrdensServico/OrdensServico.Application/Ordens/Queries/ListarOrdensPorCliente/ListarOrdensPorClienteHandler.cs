@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using OrdensServico.Contracts.Dtos;
+using OrdensServico.Contracts.Queries;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
@@ -17,6 +18,7 @@ public sealed class ListarOrdensPorClienteHandler
         CancellationToken ct
     )
     {
-        return await _listarOrdensPorClienteQuery.Listar(request.ClienteId, ct);
+        var ordens = await _listarOrdensPorClienteQuery.Listar(request.ClienteId, ct);
+        return ordens.ToList();
     }
 }
