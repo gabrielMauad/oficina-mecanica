@@ -370,7 +370,6 @@ Queries: `ObterOrdemServicoPorId`, `ListarOrdensPorCliente`.
 - `PATCH /ordens-servico/{id}/rejeitar-orcamento`
 - `PATCH /ordens-servico/{id}/executar`
 - `PATCH /ordens-servico/{id}/finalizar`
-- `PATCH /ordens-servico/{id}/notificar-cliente`
 - `PATCH /ordens-servico/{id}/concluir`
 - `GET /ordens-servico/{id}`
 - `GET /ordens-servico?clienteId={id}`
