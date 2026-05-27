@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using OrdensServico.Application.DomainEventHandlers;
 using OrdensServico.Application.Ports;
 using OrdensServico.Domain.OrdemServico;
@@ -33,7 +34,8 @@ public class EnviarOrcamentoAoClienteHandlerTests
             _clienteMock.Object,
             _veiculoMock.Object,
             _servicoMock.Object,
-            _pecaInfoMock.Object);
+            _pecaInfoMock.Object,
+            NullLogger<EnviarOrcamentoAoCliente>.Instance);
     }
 
     private static OrdensServico.Domain.OrdemServico.OrdemServico CriarOsEmDiagnosticoComOrcamento()

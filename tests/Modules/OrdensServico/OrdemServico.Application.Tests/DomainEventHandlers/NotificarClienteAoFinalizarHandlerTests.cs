@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using OrdensServico.Application.DomainEventHandlers;
 using OrdensServico.Application.Ports;
 using OrdensServico.Domain.OrdemServico;
@@ -29,7 +30,8 @@ public class NotificarClienteAoFinalizarHandlerTests
             _uowMock.Object,
             _notificacaoMock.Object,
             _clienteMock.Object,
-            _veiculoMock.Object);
+            _veiculoMock.Object,
+            NullLogger<NotificarClienteAoFinalizar>.Instance);
     }
 
     private static OrdensServico.Domain.OrdemServico.OrdemServico CriarOsFinalizada()
