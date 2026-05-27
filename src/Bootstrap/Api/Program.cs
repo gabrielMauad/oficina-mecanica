@@ -1,8 +1,15 @@
 using Api.Middlewares;
+using Api.OpenApi;
+using Autenticacao.Infrastructure;
+using Autenticacao.Presentation;
 using Cadastro.Infrastructure;
 using Cadastro.Infrastructure.Persistence;
 using Cadastro.Presentation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using OrdensServico.Infrastructure;
 using OrdensServico.Infrastructure.Persistence;
 using OrdensServico.Presentation;
@@ -11,20 +18,73 @@ using PecasInsumos.Infrastructure.Persistence;
 using PecasInsumos.Presentation;
 using Scalar.AspNetCore;
 using SharedKernel.Application;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddOpenApi();
+var jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException(
+        "JWT secret não configurado.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddOperationTransformer((operation, context, cancellationToken) =>
+    {
+        var hasAuthorize = context.Description.ActionDescriptor.EndpointMetadata
+            .OfType<IAuthorizeData>()
+            .Any();
+
+        var hasAllowAnonymous = context.Description.ActionDescriptor.EndpointMetadata
+            .OfType<IAllowAnonymous>()
+            .Any();
+
+        if (hasAuthorize && !hasAllowAnonymous)
+        {
+            operation.Security =
+            [
+                new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecuritySchemeReference("Bearer"),
+                        new List<string>()
+                    }
+                }
+            ];
+        }
+
+        return Task.CompletedTask;
+    });
+});
+
+
 builder.Services.AddHealthChecks();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
+builder.Services.AddAutenticacaoModule(builder.Configuration);
 builder.Services.AddCadastroModule(builder.Configuration);
 builder.Services.AddSharedKernelServices();
 builder.Services.AddPecasInsumosModule(builder.Configuration);
 builder.Services.AddOrdensServicoModule(builder.Configuration);
 
 builder.Services.AddControllers()
+    .AddApplicationPart(typeof(AutenticacaoAssemblyMarker).Assembly)
     .AddApplicationPart(typeof(CadastroAssemblyMarker).Assembly)
     .AddApplicationPart(typeof(PecasInsumosAssemblyMarker).Assembly)
     .AddApplicationPart(typeof(OrdensServicoAssemblyMarker).Assembly);
@@ -33,9 +93,12 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-// app.UseAuthorization();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
-// Configure the HTTP request pipeline for DEVELOPMENT only
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -44,7 +107,6 @@ if (app.Environment.IsDevelopment())
         option.Title = "Oficina Mecanica API";
     });
 
-    // Automatically redirect to Scalar documentation
     app.MapGet("/", () => Results.Redirect("/scalar"));
 }
 app.MapHealthChecks("/healthz");

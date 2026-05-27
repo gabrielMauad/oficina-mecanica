@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdensServico.Application.Ordens.Commands.AprovarOrcamento;
 using OrdensServico.Application.Ordens.Commands.ConcluirOrdemServico;
@@ -14,6 +15,7 @@ using OrdensServico.Presentation.Models;
 
 namespace OrdensServico.Presentation.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/ordens-servico")]
 public class OrdensServicoController : ControllerBase
@@ -44,6 +46,8 @@ public class OrdensServicoController : ControllerBase
         return Ok(result.Value);
     }
 
+    /// <summary>Consulta pública — permite que o cliente acompanhe o status da OS sem autenticação.</summary>
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> ListarPorCliente([FromQuery] Guid clienteId)
     {

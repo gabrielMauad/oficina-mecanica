@@ -5,11 +5,12 @@ using Cadastro.Application.Servicos.Queries.ListarServicos;
 using Cadastro.Application.Servicos.Queries.ObterServicoPorId;
 using Cadastro.Presentation.Models;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cadastro.Presentation.Controllers;
 
-
+[Authorize]
 [ApiController]
 [Route("api/v1/servicos")]
 public class ServicosController : ControllerBase
