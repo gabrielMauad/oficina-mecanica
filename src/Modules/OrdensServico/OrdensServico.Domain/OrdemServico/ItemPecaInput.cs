@@ -1,0 +1,3 @@
+﻿namespace OrdensServico.Domain.OrdemServico;
+
+public sealed record ItemPecaInput(Guid PecaInsumoId, int Quantidade, decimal PrecoUnitario);

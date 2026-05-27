@@ -1,0 +1,651 @@
+opencollection: 1.0.0
+info:
+  name: Oficina Mecanica
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ''
+      port: ''
+      auth:
+        username: ''
+        password: ''
+      bypassProxy: ''
+  environments:
+    - name: Local
+      variables:
+        - name: url
+          value: http://localhost:8080
+items:
+  - info:
+      name: Cadastro
+      type: folder
+      seq: 1
+    request:
+      auth: inherit
+    items:
+      - info:
+          name: Clientes
+          type: folder
+          seq: 1
+        request:
+          auth: inherit
+          variables:
+            - name: route_prefix
+              value: '{{api_prefix}}/clientes'
+        items:
+          - info:
+              name: Atualizar nome
+              type: http
+              seq: 4
+            http:
+              method: PATCH
+              url: '{{url}}/{{route_prefix}}/{{clienteId}}/nome'
+              body:
+                type: json
+                data: |-
+                  {
+                    "nome": "Teste CNPJJ"
+                  }
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Atualizar telefone
+              type: http
+              seq: 5
+            http:
+              method: PATCH
+              url: '{{url}}/{{route_prefix}}/{{clienteId}}/telefone'
+              body:
+                type: json
+                data: |-
+                  {
+                    "telefone": "(31) 99999-9999"
+                  }
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Criar
+              type: http
+              seq: 1
+            http:
+              method: POST
+              url: '{{url}}/{{route_prefix}}'
+              body:
+                type: json
+                data: |-
+                  {
+                    "nome": "Teste CNPJ",
+                    "documento": "07.287.471/0001-71",
+                    "email": "testecpnj@email.com",
+                    "telefone": "31999999998",
+                    "pessoaFisica": false
+                  }
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Desativar
+              type: http
+              seq: 6
+            http:
+              method: DELETE
+              url: '{{url}}/{{route_prefix}}/{{clienteId}}'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Listar
+              type: http
+              seq: 2
+            http:
+              method: GET
+              url: '{{url}}/{{route_prefix}}'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Obter por ID
+              type: http
+              seq: 3
+            http:
+              method: GET
+              url: '{{url}}/{{route_prefix}}/{{clienteId}}'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+      - info:
+          name: Veiculos
+          type: folder
+          seq: 3
+        request:
+          auth: inherit
+          variables:
+            - name: route_prefix
+              value: api/v1
+        items:
+          - info:
+              name: Criar
+              type: http
+              seq: 1
+            http:
+              method: POST
+              url: '{{url}}/{{route_prefix}}/veiculos'
+              body:
+                type: json
+                data: |-
+                  {
+                    "placa": "HIJ1K25",
+                    "modelo": "Onix",
+                    "marca": "Chevrolet",
+                    "ano": 2027,
+                    "clienteId": "{{clienteId}}"
+                  }
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Listar
+              type: http
+              seq: 2
+            http:
+              method: GET
+              url: '{{url}}/{{route_prefix}}/veiculos'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Obter por cliente
+              type: http
+              seq: 4
+            http:
+              method: GET
+              url: '{{url}}/{{route_prefix}}/clientes/{{clienteId}}/veiculos'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Obter por ID
+              type: http
+              seq: 3
+            http:
+              method: GET
+              url: '{{url}}/{{route_prefix}}/veiculos/{{veiculoId}}'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+      - info:
+          name: Servicos
+          type: folder
+          seq: 2
+        request:
+          auth: inherit
+          variables:
+            - name: route_prefix
+              value: '{{api_prefix}}/servicos'
+        items:
+          - info:
+              name: Atualizar descricao
+              type: http
+              seq: 4
+            http:
+              method: PATCH
+              url: '{{url}}/{{route_prefix}}/{{servicoId}}/descricao'
+              body:
+                type: json
+                data: |-
+                  {
+                    "descricao": "Alinhamento"
+                  }
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Atualizar preco
+              type: http
+              seq: 5
+            http:
+              method: PATCH
+              url: '{{url}}/{{route_prefix}}/{{servicoId}}/preco'
+              body:
+                type: json
+                data: |-
+                  {
+                    "preco": 150
+                  }
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Criar
+              type: http
+              seq: 1
+            http:
+              method: POST
+              url: '{{url}}/{{route_prefix}}'
+              body:
+                type: json
+                data: |-
+                  {
+                    "nome": "Troca de óleo",
+                    "descricao": "Alinhamento de pneus",
+                    "preco": 120.99
+                  }
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Desativar
+              type: http
+              seq: 6
+            http:
+              method: DELETE
+              url: '{{url}}/{{route_prefix}}/{{servicoId}}'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Listar
+              type: http
+              seq: 2
+            http:
+              method: GET
+              url: '{{url}}/{{route_prefix}}'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+          - info:
+              name: Obter por ID
+              type: http
+              seq: 3
+            http:
+              method: GET
+              url: '{{url}}/{{route_prefix}}/{{servicoId}}'
+              auth: inherit
+            settings:
+              encodeUrl: true
+              timeout: 0
+              followRedirects: true
+              maxRedirects: 5
+  - info:
+      name: Peças e Insumos
+      type: folder
+      seq: 2
+    request:
+      auth: inherit
+      variables:
+        - name: route_prefix
+          value: '{{api_prefix}}/pecas-insumos'
+    items:
+      - info:
+          name: Atualizar descricao
+          type: http
+          seq: 4
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{pecasInsumoId}}/descricao'
+          body:
+            type: json
+            data: |-
+              {
+                "descricao": "Pneu aro 18"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Atualizar preco
+          type: http
+          seq: 5
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{pecasInsumoId}}/preco'
+          body:
+            type: json
+            data: |-
+              {
+                "preco": 150
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Criar
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: '{{url}}/{{route_prefix}}'
+          body:
+            type: json
+            data: |-
+              {
+                "nome": "Pneu",
+                "preco": 200,
+                "quantidadeEmEstoque": 0,
+                "unidadeDeMedida": "Unidade"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Decrementar estoque
+          type: http
+          seq: 7
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{pecasInsumoId}}/estoque/saida'
+          body:
+            type: json
+            data: |-
+              {
+                "quantidade": 1
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Desativar
+          type: http
+          seq: 8
+        http:
+          method: DELETE
+          url: '{{url}}/{{route_prefix}}/{{pecasInsumoId}}'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Incrementar estoque
+          type: http
+          seq: 6
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{pecasInsumoId}}/estoque/entrada'
+          body:
+            type: json
+            data: |-
+              {
+                "quantidade": 1
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Listar
+          type: http
+          seq: 2
+        http:
+          method: GET
+          url: '{{url}}/{{route_prefix}}'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Obter por ID
+          type: http
+          seq: 3
+        http:
+          method: GET
+          url: '{{url}}/{{route_prefix}}/{{pecasInsumoId}}'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+  - info:
+      name: Ordens de Serviço
+      type: folder
+      seq: 3
+    request:
+      auth: inherit
+      variables:
+        - name: route_prefix
+          value: '{{api_prefix}}/ordens-servico'
+    items:
+      - info:
+          name: Gerar
+          type: http
+          seq: 1
+        http:
+          method: POST
+          url: '{{url}}/{{route_prefix}}'
+          body:
+            type: json
+            data: |-
+              {
+                "clienteId": "{{clienteId}}",
+                "veiculoId": "{{veiculoId}}"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Listar por Cliente
+          type: http
+          seq: 2
+        http:
+          method: GET
+          url: '{{url}}/{{route_prefix}}?clienteId={{clienteId}}'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Obter por ID
+          type: http
+          seq: 3
+        http:
+          method: GET
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Iniciar Diagnóstico
+          type: http
+          seq: 4
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/iniciar-diagnostico'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Registrar Diagnóstico
+          type: http
+          seq: 5
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/registrar-diagnostico'
+          body:
+            type: json
+            data: |-
+              {
+                "descricaoDiagnostico": "Diagnóstico completo do veículo",
+                "servicos": [
+                  {
+                    "servicoId": "{{servicoId}}",
+                    "quantidade": 1
+                  }
+                ],
+                "pecas": [
+                  {
+                    "pecaInsumoId": "{{pecasInsumoId}}",
+                    "quantidade": 1
+                  }
+                ]
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Aprovar Orçamento
+          type: http
+          seq: 6
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/aprovar-orcamento'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Rejeitar Orçamento
+          type: http
+          seq: 7
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/rejeitar-orcamento'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Executar
+          type: http
+          seq: 8
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/executar'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Finalizar
+          type: http
+          seq: 9
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/finalizar'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Concluir
+          type: http
+          seq: 10
+        http:
+          method: PATCH
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/concluir'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+request:
+  variables:
+    - name: api_prefix
+      value: api/v1
+    - name: clienteId
+      value: 01fb6838-c929-4095-8da6-eece5d1876c6
+    - name: veiculoId
+      value: 65d1ac22-2b99-4e69-96a2-828270dac950
+    - name: servicoId
+      value: 3967b433-5e3e-409e-b5a4-43d6e723c067
+    - name: pecasInsumoId
+      value: 272ec4ba-81f9-4398-99d2-9bd29e0d9c50
+    - name: ordemServicoId
+      value: ''
+bundled: true
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+    exportedAt: '2026-05-27T01:22:17.466Z'
+    exportedUsing: Bruno

@@ -27,7 +27,6 @@ public class PecaInsumoTests
         Assert.True(pecaInsumoResult.Value.Ativo);
         Assert.InRange(pecaInsumoResult.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(pecaInsumoResult.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
-        Assert.NotEmpty(pecaInsumoResult.Value.DomainEvents);
         Assert.NotEqual(Guid.Empty, pecaInsumoResult.Value.Id.Value);
     }
 
@@ -137,18 +136,16 @@ public class PecaInsumoTests
     }
 
     [Fact]
-    public void Decrementar_AteZero_GeraEventoEstoqueEsgotado()
+    public void Decrementar_AteZero_ZeraEstoque()
     {
         // Arrange
         var pecaInsumo = PecaInsumoEntity.Criar("Parafuso", null, 1.0m, 5, UnidadeDeMedida.Unidade).Value;
-        pecaInsumo.ClearDomainEvents();
 
         // Act
         pecaInsumo.Decrementar(5);
 
         // Assert
         Assert.Equal(0, pecaInsumo.QuantidadeEmEstoque);
-        Assert.NotEmpty(pecaInsumo.DomainEvents);
     }
 
     [Theory]

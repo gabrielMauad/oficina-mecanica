@@ -82,7 +82,7 @@ oficina-mecanica-v2/
 │   │   │   ├── Cadastro.Infrastructure/
 │   │   │   ├── Cadastro.Presentation/
 │   │   │   └── Cadastro.Contracts/
-│   │   ├── OrdemServico/
+│   │   ├── OrdensServico/
 │   │   │   ├── OrdemServico.Domain/
 │   │   │   ├── OrdemServico.Application/
 │   │   │   ├── OrdemServico.Infrastructure/
@@ -142,12 +142,19 @@ Abstrações usadas por qualquer Application:
 - `IIntegrationEventHandler<T>` — interface dos handlers que consomem eventos de integração.
 - `InMemoryIntegrationEventBus` — implementação in-process padrão do bus, via `IServiceProvider.GetServices<IIntegrationEventHandler<T>>()`. (Alternativa: implementação pode ficar numa `SharedKernel.Infrastructure` separada; para o MVP, manter aqui simplifica.)
 - Pipeline behaviors do MediatR: `ValidationBehavior`, `LoggingBehavior`, `TransactionBehavior`. São pieces de cross-cutting registrados uma vez e aplicados a todo command/query.
-- `IPendingIntegrationEvents` — abstração scoped (wrapper sobre `List<IIntegrationEvent>`) que resolve o problema de ordenação entre commit e publicação de eventos de integração (ver decisão abaixo).
+- `IPendingIntegrationEvents` — abstração scoped (wrapper sobre fila de delegates) que resolve o problema de ordenação entre commit e publicação de eventos de integração (ver decisão abaixo).
+- `IUnitOfWork` — interface que os `DbContext` de cada módulo implementam, expondo `SaveChangesAsync`, `CollectDomainEvents` e `ClearDomainEvents`. Permite ao `TransactionBehavior` orquestrar domain events sem depender de EF Core diretamente.
 
-> **Decisão — `TransactionBehavior` com publicação pós-commit:** o pipeline do MediatR envolve o handler: `TransactionBehavior` chama `next()` (executa o handler) e só então chama `SaveChangesAsync()`. Se o handler publicasse eventos de integração diretamente via `IIntegrationEventBus` **dentro do seu corpo**, o evento seria despachado **antes** do commit — bug crítico caso o commit falhe. Solução adotada:
-> 1. Handlers injetam `IPendingIntegrationEvents` e chamam `Enqueue(evento)` em vez de publicar diretamente.
-> 2. `TransactionBehavior` é estendido para, **após** o `SaveChangesAsync()` bem-sucedido, iterar a fila e chamar `IIntegrationEventBus.Publish()` para cada evento pendente.
-> Essa ordem garante que eventos de integração só saem após um commit confirmado.
+> **Decisão — `TransactionBehavior` com fluxo pós-commit em duas etapas:**
+>
+> O `TransactionBehavior` orquestra a sequência após o handler retornar com sucesso:
+> 1. Coleta domain events acumulados nos agregados via `IUnitOfWork.CollectDomainEvents()`.
+> 2. Persiste com `SaveChangesAsync()` e limpa os events do agregado.
+> 3. Despacha cada domain event via `IPublisher` (MediatR) — handlers de domain event são chamados aqui.
+> 4. Domain event handlers podem enfileirar integration events em `IPendingIntegrationEvents`.
+> 5. Itera `IPendingIntegrationEvents` e publica cada evento via `IIntegrationEventBus`.
+>
+> Esta separação garante: (a) nenhum evento sai antes do commit; (b) command handlers não precisam saber sobre integration events — isso é responsabilidade dos handlers de domain event. `IDomainEvent` implementa `INotification` do MediatR para ser despachado na etapa 3.
 
 #### O que NÃO entra no SharedKernel
 
@@ -324,9 +331,9 @@ OrdemServico.Contracts/
 ├── Dtos/                             ← shapes retornados por Queries e payloads de Events
 │   └── OrdemServicoResumoDto.cs
 └── IntegrationEvents/                ← eventos publicados por este módulo
-    ├── OrdemServicoGeradaIntegrationEvent.cs
-    ├── OrcamentoAprovadoIntegrationEvent.cs
-    └── OrdemServicoFinalizadaIntegrationEvent.cs
+    ├── ItemPecaEventDto.cs
+    ├── OrcamentoGeradoIntegrationEvent.cs    ← PecasInsumos decrementa estoque
+    └── OrcamentoRejeitadoIntegrationEvent.cs ← PecasInsumos estorna estoque
 ```
 
 **Referências permitidas:** apenas `SharedKernel.Domain` (para usar `IIntegrationEvent`).
@@ -442,17 +449,18 @@ Usada quando é **fato consumado que outros podem querer saber** (ex.: orçament
 1. O **produtor** define o evento em seu `.Contracts`:
    ```csharp
    // OrdemServico.Contracts
-   public record OrcamentoAprovadoIntegrationEvent(
+   public record OrcamentoGeradoIntegrationEvent(
        Guid EventId, DateTime OcorridoEm,
-       Guid OrdemServicoId, IReadOnlyList<ItemOrcamentoDto> Itens
+       Guid OrdemServicoId, Guid OrcamentoId,
+       IReadOnlyList<ItemPecaEventDto> Pecas
    ) : IIntegrationEvent;
    ```
-2. O handler do produtor **enfileira** o evento via `IPendingIntegrationEvents.Enqueue(...)` em vez de publicar diretamente. O `TransactionBehavior` (em `SharedKernel.Application`) chama `SaveChangesAsync()` e, só após o commit bem-sucedido, itera a fila e despacha cada evento via `IIntegrationEventBus`. Isso garante que nenhum evento sai antes do commit. (Padrão descrito em detalhe na seção 5.1.)
+2. O agregado do produtor emite um **domain event** (ex.: `DiagnosticoConcluido`). O `TransactionBehavior` persiste, então despacha o domain event via `IPublisher`. Um **handler de domain event** no módulo produtor reage e enfileira o integration event via `IPendingIntegrationEvents`. Após todos os domain event handlers rodarem, o `TransactionBehavior` itera a fila e despacha via `IIntegrationEventBus`. Nenhum evento sai antes do commit.
 3. O **consumidor** implementa um handler em sua `Application`:
    ```csharp
    // PecasInsumos.Application.IntegrationEventHandlers
-   public class DecrementarEstoqueQuandoOrcamentoAprovado
-       : IIntegrationEventHandler<OrcamentoAprovadoIntegrationEvent> { ... }
+   public class DecrementarEstoqueQuandoOrcamentoGerado
+       : IIntegrationEventHandler<OrcamentoGeradoIntegrationEvent> { ... }
    ```
 4. O **consumidor** registra o handler em seu próprio `AddPecasInsumosModule` (ver seção 8).
 
@@ -464,10 +472,12 @@ Usada quando é **fato consumado que outros podem querer saber** (ex.: orçament
 
 Não confundir:
 
-- **Domain event** — fato relevante **dentro** do agregado/BC (`OrcamentoFoiGerado`). Reside em `<Modulo>.Domain`. Consumido pelo próprio módulo (tipicamente via `INotification` do MediatR). Não atravessa fronteira de BC.
-- **Integration event** — fato que **outros BCs** podem querer saber (`OrcamentoAprovadoIntegrationEvent`). Reside em `<Modulo>.Contracts`. Vai pelo `IIntegrationEventBus`.
+- **Domain event** — fato relevante **dentro** do agregado/BC (ex.: `DiagnosticoConcluido`). Reside em `<Modulo>.Domain`. Implementa `INotification` do MediatR. Despachado pelo `TransactionBehavior` pós-commit via `IPublisher`. Não atravessa fronteira de BC.
+- **Integration event** — fato que **outros BCs** podem querer saber (ex.: `OrcamentoGeradoIntegrationEvent`). Reside em `<Modulo>.Contracts`. Vai pelo `IIntegrationEventBus`.
 
-Padrão limpo: um domain event pode **disparar** um integration event. Um handler interno do módulo, reagindo ao domain event, traduz e publica no bus como integration event.
+Padrão adotado: um **handler de domain event** (implementa `INotificationHandler<TDomainEvent>`) reage ao domain event e enfileira o integration event em `IPendingIntegrationEvents`. O command handler não sabe nada sobre integration events.
+
+> **Critério de existência de domain events:** um domain event só deve existir se houver um consumidor real (handler de domain event dentro do módulo). Eventos sem consumidores são dead code. Nem toda transição de estado precisa de um domain event — apenas quando há uma reação real a modelar.
 
 ### 7.4 O que NÃO fazer
 
@@ -501,8 +511,11 @@ public static class PecasInsumosModule
 
         // Integration events que o módulo assina
         services.AddScoped<
-            IIntegrationEventHandler<OrcamentoAprovadoIntegrationEvent>,
-            DecrementarEstoqueQuandoOrcamentoAprovado>();
+            IIntegrationEventHandler<OrcamentoGeradoIntegrationEvent>,
+            DecrementarEstoqueQuandoOrcamentoGerado>();
+        services.AddScoped<
+            IIntegrationEventHandler<OrcamentoRejeitadoIntegrationEvent>,
+            IncrementarEstoqueQuandoOrcamentoRejeitado>();
 
         return services;
     }

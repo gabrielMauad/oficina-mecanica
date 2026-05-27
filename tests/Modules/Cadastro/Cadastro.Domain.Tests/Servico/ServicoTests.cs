@@ -25,7 +25,6 @@ public class ServicoTests
         Assert.True(servicoResult.Value.Ativo);
         Assert.InRange(servicoResult.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(servicoResult.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
-        Assert.NotEmpty(servicoResult.Value.DomainEvents);
         Assert.NotEqual(Guid.Empty, servicoResult.Value.Id.Value);
     }
 

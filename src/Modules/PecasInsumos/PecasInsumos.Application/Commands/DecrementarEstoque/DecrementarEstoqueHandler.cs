@@ -1,7 +1,5 @@
-﻿using MediatR;
-using PecasInsumos.Contracts.IntegrationEvents;
+using MediatR;
 using PecasInsumos.Domain;
-using SharedKernel.Application;
 using SharedKernel.Domain;
 
 namespace PecasInsumos.Application.Commands.DecrementarEstoque;
@@ -9,18 +7,10 @@ namespace PecasInsumos.Application.Commands.DecrementarEstoque;
 public sealed class DecrementarEstoqueHandler : IRequestHandler<DecrementarEstoqueCommand, Result<DecrementarEstoqueResponse>>
 {
     private readonly IPecaInsumoRepository _repository;
-    private readonly IIntegrationEventBus _bus;
-    private readonly IPendingIntegrationEvents _pendingEvents;
 
-    public DecrementarEstoqueHandler(
-        IPecaInsumoRepository repository,
-        IIntegrationEventBus bus,
-        IPendingIntegrationEvents pendingEvents
-    )
+    public DecrementarEstoqueHandler(IPecaInsumoRepository repository)
     {
         _repository = repository;
-        _bus = bus;
-        _pendingEvents = pendingEvents;
     }
 
     public async Task<Result<DecrementarEstoqueResponse>> Handle(DecrementarEstoqueCommand command, CancellationToken cancellationToken)
@@ -29,7 +19,7 @@ public sealed class DecrementarEstoqueHandler : IRequestHandler<DecrementarEstoq
         PecaInsumo? pecaInsumo = await _repository.ObterPorId(pecaInsumoId, cancellationToken);
 
         if (pecaInsumo == null)
-            return PecaInsumoErrors.NaoEncontrado;
+            return PecaInsumoErrors.NaoEncontrada;
         if (!pecaInsumo.Ativo)
             return PecaInsumoErrors.JaDesativado;
 
@@ -41,19 +31,6 @@ public sealed class DecrementarEstoqueHandler : IRequestHandler<DecrementarEstoq
 
         await _repository.Atualizar(pecaInsumo, cancellationToken);
 
-        _pendingEvents.Enqueue(ct =>
-            _bus.Publish(
-                new EstoqueDecrementadoIntegrationEvent(
-                    Guid.NewGuid(),
-                    DateTime.UtcNow,
-                    pecaInsumo.Id.Value,
-                    command.Quantidade,
-                    pecaInsumo.QuantidadeEmEstoque
-                )
-            , ct)
-        );
-
         return DecrementarEstoqueResponse.FromPecaInsumo(pecaInsumo);
     }
 }
-

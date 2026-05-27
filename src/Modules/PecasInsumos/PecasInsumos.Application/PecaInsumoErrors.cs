@@ -8,7 +8,7 @@ internal class PecaInsumoErrors
         "PecaInsumo.NomeJaExiste",
         "Já existe uma peça/insumo cadastrada com este nome.");
 
-    public static readonly Error NaoEncontrado = Error.NotFound(
+    public static readonly Error NaoEncontrada = Error.NotFound(
         "PecaInsumo.NaoEncontrada",
         "Peça/insumo não encontrada.");
 
