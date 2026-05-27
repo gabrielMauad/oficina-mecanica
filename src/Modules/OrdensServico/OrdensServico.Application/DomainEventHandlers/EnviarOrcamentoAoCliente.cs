@@ -50,12 +50,8 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
 
         await _unitOfWork.SaveChangesAsync(ct);
 
-        Task<ClienteInfo?> clienteTask = _clienteInfoPort.ObterInfo(ordemServico.ClienteId, ct);
-        Task<string?> placaTask = _veiculoInfoPort.ObterPlaca(ordemServico.VeiculoId, ct);
-        await Task.WhenAll(clienteTask, placaTask);
-
-        ClienteInfo? cliente = await clienteTask;
-        string? placa = await placaTask;
+        ClienteInfo? cliente = await _clienteInfoPort.ObterInfo(ordemServico.ClienteId, ct);
+        string? placa = await _veiculoInfoPort.ObterPlaca(ordemServico.VeiculoId, ct);
 
         if (cliente is null || placa is null)
             return;

@@ -1,4 +1,4 @@
-﻿using OrdensServico.Domain.OrdemServico.Events;
+using OrdensServico.Domain.OrdemServico.Events;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Domain.OrdemServico;
@@ -38,9 +38,9 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public static Result<OrdemServico> Criar(Guid clienteId, Guid veiculoId)
     {
         if (clienteId == Guid.Empty)
-            return Error.Validation("OrdemServico.ClienteIdVazio", "ClienteId Ã© obrigatÃ³rio.");
+            return Error.Validation("OrdemServico.ClienteIdVazio", "ClienteId é obrigatório.");
         if (veiculoId == Guid.Empty)
-            return Error.Validation("OrdemServico.VeiculoIdVazio", "VeiculoId Ã© obrigatÃ³rio.");
+            return Error.Validation("OrdemServico.VeiculoIdVazio", "VeiculoId é obrigatório.");
 
         var ordemServico = new OrdemServico(OrdemServicoId.Novo(), clienteId, veiculoId);
         return ordemServico;
@@ -49,7 +49,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> IniciarDiagnostico()
     {
         if (Status != StatusOrdemServico.Recebida)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode entrar em diagnÃ³stico quando estÃ¡ Recebida.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode entrar em diagnóstico quando está Recebida.");
 
         Status = StatusOrdemServico.EmDiagnostico;
         AtualizadoEm = DateTime.UtcNow;
@@ -62,19 +62,19 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         IEnumerable<ItemPecaInput> pecas)
     {
         if (Status != StatusOrdemServico.EmDiagnostico && Status != StatusOrdemServico.AguardandoAprovacao)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode registrar diagnÃ³stico quando estÃ¡ Em DiagnÃ³stico ou Aguardando AprovaÃ§Ã£o.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode registrar diagnóstico quando está Em Diagnóstico ou Aguardando Aprovação.");
         if (_orcamentos.Any(x => x.Status != StatusOrcamento.Rejeitado))
-            return Error.Validation("OrdemServico.OrcamentoExistente", "JÃ¡ existe um orÃ§amento ativo para esta ordem de serviÃ§o.");
+            return Error.Validation("OrdemServico.OrcamentoExistente", "Já existe um orçamento ativo para esta ordem de serviço.");
         if (string.IsNullOrWhiteSpace(descricaoDiagnostico))
-            return Error.Validation("OrdemServico.DiagnosticoVazio", "DescriÃ§Ã£o do diagnÃ³stico Ã© obrigatÃ³ria.");
+            return Error.Validation("OrdemServico.DiagnosticoVazio", "Descrição do diagnóstico é obrigatória.");
 
         var servicosList = servicos.ToList();
         var pecasList = pecas.ToList();
 
         if (!servicosList.Any())
-            return Error.Validation("OrdemServico.OrcamentoSemServicos", "NÃ£o Ã© possÃ­vel gerar orÃ§amento sem itens de serviÃ§os.");
+            return Error.Validation("OrdemServico.OrcamentoSemServicos", "Não é possível gerar orçamento sem itens de serviços.");
         if (!pecasList.Any())
-            return Error.Validation("OrdemServico.OrcamentoSemPecas", "NÃ£o Ã© possÃ­vel gerar orÃ§amento sem itens de peÃ§as.");
+            return Error.Validation("OrdemServico.OrcamentoSemPecas", "Não é possível gerar orçamento sem itens de peças.");
 
         _itensServico.Clear();
         _itensPeca.Clear();
@@ -116,11 +116,11 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> EnviarOrcamento(DateTime dataEnvio)
     {
         if (Status != StatusOrdemServico.EmDiagnostico && Status != StatusOrdemServico.AguardandoAprovacao)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode enviar orÃ§amento quando estÃ¡ Em DiagnÃ³stico ou Aguardando AprovaÃ§Ã£o.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode enviar orçamento quando está Em Diagnóstico ou Aguardando Aprovação.");
 
         var orcamento = _orcamentos.FirstOrDefault(x => x.Status == StatusOrcamento.Pendente);
         if (orcamento == null)
-            return Error.Validation("OrdemServico.OrcamentoNaoEncontrado", "Nenhum orÃ§amento pendente encontrado para esta ordem de serviÃ§o.");
+            return Error.Validation("OrdemServico.OrcamentoNaoEncontrado", "Nenhum orçamento pendente encontrado para esta ordem de serviço.");
 
         var resultado = orcamento.Enviar(dataEnvio);
         if (resultado.IsFailure) return resultado.Error;
@@ -133,11 +133,11 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> AprovarOrcamento()
     {
         if (Status != StatusOrdemServico.AguardandoAprovacao)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode aprovar orÃ§amento quando estÃ¡ Aguardando AprovaÃ§Ã£o.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode aprovar orçamento quando está Aguardando Aprovação.");
 
         var orcamento = _orcamentos.FirstOrDefault(x => x.Status == StatusOrcamento.Enviado);
         if (orcamento == null)
-            return Error.Validation("OrdemServico.OrcamentoNaoEncontrado", "Nenhum orÃ§amento enviado encontrado para esta ordem de serviÃ§o.");
+            return Error.Validation("OrdemServico.OrcamentoNaoEncontrado", "Nenhum orçamento enviado encontrado para esta ordem de serviço.");
 
         var resultado = orcamento.Aprovar();
         if (resultado.IsFailure)
@@ -150,11 +150,11 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> RejeitarOrcamento()
     {
         if (Status != StatusOrdemServico.AguardandoAprovacao)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode rejeitar orÃ§amento quando estÃ¡ Aguardando AprovaÃ§Ã£o.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode rejeitar orçamento quando está Aguardando Aprovação.");
 
         var orcamento = _orcamentos.FirstOrDefault(x => x.Status == StatusOrcamento.Enviado);
         if (orcamento == null)
-            return Error.Validation("OrdemServico.OrcamentoNaoEncontrado", "Nenhum orÃ§amento enviado encontrado para esta ordem de serviÃ§o.");
+            return Error.Validation("OrdemServico.OrcamentoNaoEncontrado", "Nenhum orçamento enviado encontrado para esta ordem de serviço.");
 
         var resultado = orcamento.Rejeitar();
         if (resultado.IsFailure)
@@ -172,9 +172,9 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> Executar()
     {
         if (Status != StatusOrdemServico.AguardandoAprovacao)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode iniciar execuÃ§Ã£o quando estÃ¡ Aguardando AprovaÃ§Ã£o.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode iniciar execução quando está Aguardando Aprovação.");
         if (!_orcamentos.Any(x => x.Status == StatusOrcamento.Aprovado))
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode iniciar execuÃ§Ã£o quando o orÃ§amento estÃ¡ Aprovado.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode iniciar execução quando o orçamento está Aprovado.");
 
         Status = StatusOrdemServico.EmExecucao;
         AtualizadoEm = DateTime.UtcNow;
@@ -184,7 +184,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> Finalizar()
     {
         if (Status != StatusOrdemServico.EmExecucao)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode finalizar quando estÃ¡ Em ExecuÃ§Ã£o.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode finalizar quando está Em Execução.");
 
         Status = StatusOrdemServico.Finalizada;
         AtualizadoEm = DateTime.UtcNow;
@@ -195,7 +195,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> NotificarCliente(DateTime dataNotificacao)
     {
         if (Status != StatusOrdemServico.Finalizada)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode notificar cliente quando estÃ¡ Finalizada.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode notificar cliente quando está Finalizada.");
 
         NotificadoEm = dataNotificacao;
         AtualizadoEm = DateTime.UtcNow;
@@ -205,7 +205,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public Result<OrdemServico> Concluir(DateTime dataEntrega)
     {
         if (Status != StatusOrdemServico.Finalizada || NotificadoEm == null)
-            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de ServiÃ§o sÃ³ pode ser concluÃ­da quando estÃ¡ Finalizada e o cliente foi notificado.");
+            return Error.Validation("OrdemServico.TransicaoInvalida", "Ordem de Serviço só pode ser concluída quando está Finalizada e o cliente foi notificado.");
 
         EntregueEm = dataEntrega;
         Status = StatusOrdemServico.Entregue;

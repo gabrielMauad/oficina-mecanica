@@ -1,4 +1,4 @@
-﻿using SharedKernel.Domain;
+using SharedKernel.Domain;
 
 namespace OrdensServico.Domain.OrdemServico;
 
@@ -23,7 +23,7 @@ public sealed class Orcamento : Entity<OrcamentoId>
     internal Result<Orcamento> Enviar(DateTime dataEnvio)
     {
         if (Status != StatusOrcamento.Pendente)
-            return Error.Validation("Orcamento.TransicaoInvalida", "OrÃ§amento sÃ³ pode ser enviado quando estÃ¡ Pendente.");
+            return Error.Validation("Orcamento.TransicaoInvalida", "Orçamento só pode ser enviado quando está Pendente.");
 
         Status = StatusOrcamento.Enviado;
         DataEnvio = dataEnvio;
@@ -33,7 +33,7 @@ public sealed class Orcamento : Entity<OrcamentoId>
     internal Result<Orcamento> Aprovar()
     {
         if (Status != StatusOrcamento.Enviado)
-            return Error.Validation("Orcamento.TransicaoInvalida", "OrÃ§amento sÃ³ pode ser aprovado quando estÃ¡ Enviado.");
+            return Error.Validation("Orcamento.TransicaoInvalida", "Orçamento só pode ser aprovado quando está Enviado.");
 
         Status = StatusOrcamento.Aprovado;
         DataAprovacao = DateTime.UtcNow;
@@ -43,7 +43,7 @@ public sealed class Orcamento : Entity<OrcamentoId>
     internal Result<Orcamento> Rejeitar()
     {
         if (Status != StatusOrcamento.Enviado)
-            return Error.Validation("Orcamento.TransicaoInvalida", "OrÃ§amento sÃ³ pode ser rejeitado quando estÃ¡ Enviado.");
+            return Error.Validation("Orcamento.TransicaoInvalida", "Orçamento só pode ser rejeitado quando está Enviado.");
 
         Status = StatusOrcamento.Rejeitado;
         return this;
