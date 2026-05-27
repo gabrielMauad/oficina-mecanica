@@ -3,6 +3,9 @@ using Cadastro.Infrastructure;
 using Cadastro.Infrastructure.Persistence;
 using Cadastro.Presentation;
 using Microsoft.EntityFrameworkCore;
+using OrdensServico.Infrastructure;
+using OrdensServico.Infrastructure.Persistence;
+using OrdensServico.Presentation;
 using PecasInsumos.Infrastructure;
 using PecasInsumos.Infrastructure.Persistence;
 using PecasInsumos.Presentation;
@@ -19,12 +22,12 @@ builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddCadastroModule(builder.Configuration);
 builder.Services.AddSharedKernelServices();
 builder.Services.AddPecasInsumosModule(builder.Configuration);
-// builder.Services.AddOrdemServicoModule(builder.Configuration);
+builder.Services.AddOrdensServicoModule(builder.Configuration);
 
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(CadastroAssemblyMarker).Assembly)
-    .AddApplicationPart(typeof(PecasInsumosAssemblyMarker).Assembly);
-// .AddApplicationPart(typeof(OrdensServico.Presentation.OrdensServicoAssemblyMarker).Assembly)
+    .AddApplicationPart(typeof(PecasInsumosAssemblyMarker).Assembly)
+    .AddApplicationPart(typeof(OrdensServicoAssemblyMarker).Assembly);
 
 var app = builder.Build();
 
@@ -55,6 +58,10 @@ using (var scope = app.Services.CreateScope())
     var pecasInsumoDb = scope.ServiceProvider.GetRequiredService<PecasInsumosDbContext>();
     if (pecasInsumoDb.Database.IsRelational())
         await pecasInsumoDb.Database.MigrateAsync();
+
+    var ordensServicoDb = scope.ServiceProvider.GetRequiredService<OrdensServicoDbContext>();
+    if (ordensServicoDb.Database.IsRelational())
+        await ordensServicoDb.Database.MigrateAsync();
 }
 
 await app.RunAsync();

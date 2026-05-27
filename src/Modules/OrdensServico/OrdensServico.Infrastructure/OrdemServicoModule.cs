@@ -17,7 +17,7 @@ namespace OrdensServico.Infrastructure;
 
 public static class OrdemServicoModule
 {
-    public static IServiceCollection AddOrdemServicoModule(
+    public static IServiceCollection AddOrdensServicoModule(
         this IServiceCollection services,
         IConfiguration configuration)
     {
