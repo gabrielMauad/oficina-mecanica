@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using OrdensServico.Application.Ports;
 using OrdensServico.Application.Ports.Dtos;
 using OrdensServico.Domain.OrdemServico;
@@ -19,6 +20,7 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
     private readonly IVeiculoInfoPort _veiculoInfoPort;
     private readonly IServicoInfoPort _servicoInfoPort;
     private readonly IPecaInsumoInfoPort _pecaInsumoInfoPort;
+    private readonly ILogger<EnviarOrcamentoAoCliente> _logger;
 
     public EnviarOrcamentoAoCliente(
         IOrdemServicoRepository ordemServicoRepository,
@@ -27,7 +29,8 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
         IClienteInfoPort clienteInfoPort,
         IVeiculoInfoPort veiculoInfoPort,
         IServicoInfoPort servicoInfoPort,
-        IPecaInsumoInfoPort pecaInsumoInfoPort)
+        IPecaInsumoInfoPort pecaInsumoInfoPort,
+        ILogger<EnviarOrcamentoAoCliente> logger)
     {
         _ordemServicoRepository = ordemServicoRepository;
         _unitOfWork = unitOfWork;
@@ -36,17 +39,29 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
         _veiculoInfoPort = veiculoInfoPort;
         _servicoInfoPort = servicoInfoPort;
         _pecaInsumoInfoPort = pecaInsumoInfoPort;
+        _logger = logger;
     }
 
     public async Task Handle(DiagnosticoConcluido notification, CancellationToken ct)
     {
         OrdemServico? ordemServico = await _ordemServicoRepository.ObterPorId(notification.OrdemServicoId, ct);
         if (ordemServico is null)
+        {
+            _logger.LogError(
+                "OS {OrdemServicoId} não encontrada ao tentar enviar orçamento após DiagnosticoConcluido.",
+                notification.OrdemServicoId);
             return;
+        }
 
         Result<OrdemServico> result = ordemServico.EnviarOrcamento(DateTime.UtcNow);
         if (result.IsFailure)
+        {
+            _logger.LogError(
+                "Falha ao chamar EnviarOrcamento na OS {OrdemServicoId}: {Erro}.",
+                notification.OrdemServicoId,
+                result.Error);
             return;
+        }
 
         await _unitOfWork.SaveChangesAsync(ct);
 
@@ -54,7 +69,14 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
         string? placa = await _veiculoInfoPort.ObterPlaca(ordemServico.VeiculoId, ct);
 
         if (cliente is null || placa is null)
+        {
+            _logger.LogWarning(
+                "Não foi possível notificar cliente da OS {OrdemServicoId}: cliente={ClienteEncontrado}, placa={PlacaEncontrada}.",
+                notification.OrdemServicoId,
+                cliente is not null,
+                placa is not null);
             return;
+        }
 
         List<ServicoEmailItem> servicos = [];
         foreach (ItemServico item in ordemServico.ItensServico)

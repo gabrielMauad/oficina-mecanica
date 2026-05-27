@@ -41,14 +41,15 @@ public class PublicarOrcamentoGeradoHandlerTests
 
         await _handler.Handle(notification, CancellationToken.None);
 
-        // 1 evento foi enfileirado
-        Assert.Single(_pendingEvents.GetPending());
+        // Captura os pendentes uma única vez — GetPending() drena a fila atomicamente
+        var pending = _pendingEvents.GetPending();
+        Assert.Single(pending);
 
         // Executar o evento e verificar que o bus foi chamado com o payload correto
         _busMock.Setup(x => x.Publish(It.IsAny<OrcamentoGeradoIntegrationEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        await _pendingEvents.GetPending()[0](CancellationToken.None);
+        await pending[0](CancellationToken.None);
 
         _busMock.Verify(x => x.Publish(
             It.Is<OrcamentoGeradoIntegrationEvent>(e =>

@@ -1,8 +1,10 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OrdensServico.Contracts.IntegrationEvents;
 using PecasInsumos.Application.Commands.AdicionarPecaInsumo;
+using PecasInsumos.Application.IntegrationEventHandlers;
 using PecasInsumos.Application.Queries.ListarPecasInsumos;
 using PecasInsumos.Contracts.Queries;
 using PecasInsumos.Domain;
@@ -39,6 +41,13 @@ public static class PecasInsumosModule
 
         services.AddScoped<IPecaInsumoQuery, PecaInsumoQuery>();
         services.AddScoped<IPecasInsumosDisponibilidadeQuery, PecasInsumosDisponibilidadeQuery>();
+
+        #endregion
+
+        #region Integration Events
+
+        services.AddScoped<IIntegrationEventHandler<OrcamentoGeradoIntegrationEvent>, DecrementarEstoqueQuandoOrcamentoGerado>();
+        services.AddScoped<IIntegrationEventHandler<OrcamentoRejeitadoIntegrationEvent>, IncrementarEstoqueQuandoOrcamentoRejeitado>();
 
         #endregion
 
