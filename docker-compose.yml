@@ -9,6 +9,9 @@ services:
       - ASPNETCORE_URLS=http://+:80
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__Default=Host=postgres;Username=postgres;Password=postgres;Database=oficina_mecanica;SSL Mode=Disable
+      - Jwt__Secret=docker-dev-secret-key-replace-in-prod-00
+      - Auth__AdminEmail=admin@oficina.com
+      - Auth__AdminSenha=admin123
     depends_on:
       postgres:
         condition: service_healthy

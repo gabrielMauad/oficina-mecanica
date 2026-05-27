@@ -3,11 +3,12 @@ using Cadastro.Application.Veiculos.Queries.ListarVeiculos;
 using Cadastro.Application.Veiculos.Queries.ListarVeiculosPorCliente;
 using Cadastro.Application.Veiculos.Queries.ObterVeiculoPorId;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cadastro.Presentation.Controllers;
 
-
+[Authorize]
 [ApiController]
 [Route("api/v1")]
 public class VeiculosController : ControllerBase

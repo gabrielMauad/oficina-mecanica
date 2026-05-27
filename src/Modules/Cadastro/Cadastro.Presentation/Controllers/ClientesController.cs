@@ -5,10 +5,12 @@ using Cadastro.Application.Clientes.Queries.ListarClientes;
 using Cadastro.Application.Clientes.Queries.ObterClientePorId;
 using Cadastro.Presentation.Models;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cadastro.Presentation.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/clientes")]
 public class ClientesController : ControllerBase

@@ -4,6 +4,11 @@
     <Project Path="src/Bootstrap/Api/Api.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Autenticacao/">
+    <Project Path="src/Modules/Autenticacao/Autenticacao.Application/Autenticacao.Application.csproj" />
+    <Project Path="src/Modules/Autenticacao/Autenticacao.Infrastructure/Autenticacao.Infrastructure.csproj" />
+    <Project Path="src/Modules/Autenticacao/Autenticacao.Presentation/Autenticacao.Presentation.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Cadastro/">
     <Project Path="src/Modules/Cadastro/Cadastro.Application/Cadastro.Application.csproj" />
     <Project Path="src/Modules/Cadastro/Cadastro.Contracts/Cadastro.Contracts.csproj" />
@@ -33,6 +38,9 @@
     <Project Path="tests/IntegrationTests/IntegrationTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/" />
+  <Folder Name="/tests/Modules/Autenticacao/">
+    <Project Path="tests/Modules/Autenticacao/Autenticacao.Application.Tests/Autenticacao.Application.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/Modules/Cadastro/">
     <Project Path="tests/Modules/Cadastro/Cadastro.Application.Tests/Cadastro.Application.Tests.csproj" />
     <Project Path="tests/Modules/Cadastro/Cadastro.Domain.Tests/Cadastro.Domain.Tests.csproj" />

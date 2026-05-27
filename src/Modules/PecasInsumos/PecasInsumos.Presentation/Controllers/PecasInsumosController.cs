@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PecasInsumos.Application.Commands.AdicionarPecaInsumo;
 using PecasInsumos.Application.Commands.AtualizarPecaInsumo;
@@ -11,6 +12,7 @@ using PecasInsumos.Presentation.Models;
 
 namespace PecasInsumos.Presentation.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/pecas-insumos")]
 public class PecasInsumosController : ControllerBase
