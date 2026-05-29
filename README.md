@@ -151,6 +151,12 @@ reportgenerator \
 
 Abra `coverage-report/index.html` para visualizar. Meta: **≥ 80% de cobertura de linha** nos projetos Domain e Application.
 
+### Resultado atual
+
+![Coverage Summary](docs/images/coverage-summary.png)
+
+![Coverage Detail](docs/images/coverage-detail.png)
+
 ---
 
 ## Arquitetura
