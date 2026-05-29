@@ -60,5 +60,9 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
+# Coverage reports
+coverage-report/
+coverage-results/
+
 # Claude Code
 .claude/

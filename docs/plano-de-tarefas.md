@@ -452,7 +452,7 @@ Implementar no projeto `tests/IntegrationTests`:
 
 Rodar Coverlet nos três projetos Domain. Gerar relatório HTML com ReportGenerator. Identificar e preencher as lacunas de cobertura com testes unitários adicionais até atingir 80% em cada Domain.
 
-**Validação:** Relatório mostra >= 80% de cobertura de linha em `Cadastro.Domain`, `OrdemServico.Domain` e `PecasInsumos.Domain`.
+**Validação:** Relatório mostra >= 80% de cobertura de linha nos projetos de aplicacao, domain e presentation (testes integrados cobrem o controller).
 
 ---
 
