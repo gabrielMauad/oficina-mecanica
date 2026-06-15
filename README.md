@@ -161,6 +161,12 @@ Abra `coverage-report/index.html` para visualizar. Meta: **≥ 80% de cobertura 
 
 ## Arquitetura
 
+### Aderência à Clean Architecture
+
+O projeto é **aderente à Clean Architecture** (Robert C. Martin): os quatro anéis estão representados por projetos físicos distintos — Domain (Entities), Application (Use Cases), Presentation/Infrastructure/Contracts (Interface Adapters) e Bootstrap (Frameworks & Drivers) — e a **Regra de Dependência é forçada em compile-time** pelas referências de projeto, com dependências apontando sempre para dentro.
+
+> Análise completa, camada por camada, em [`docs/arquitetura/analise-clean-architecture.md`](docs/arquitetura/analise-clean-architecture.md).
+
 ### Modular Monolith
 
 O projeto adota a arquitetura de **Modular Monolith** — não um monolito em camadas horizontais clássico, mas com Bounded Contexts físicos: cada BC possui 5 projetos próprios. A fronteira é enforcement em compile-time via referências de projeto.
@@ -303,6 +309,7 @@ GitHub Actions executa build + testes unitários em todo PR e push para `main`. 
 
 | Documento | Conteúdo |
 |---|---|
+| [`docs/arquitetura/analise-clean-architecture.md`](docs/arquitetura/analise-clean-architecture.md) | Análise de aderência à Clean Architecture, mapeamento de anéis e Regra de Dependência |
 | [`docs/arquitetura/estrutura-do-projeto.md`](docs/arquitetura/estrutura-do-projeto.md) | Decisões de arquitetura, papel de cada projeto, regras de referência |
 | [`docs/arquitetura/database-schema.md`](docs/arquitetura/database-schema.md) | Schema completo do banco com DDL e rastreabilidade event storming → coluna |
 | [`docs/spec/event-storming-contextos-delimitados.md`](docs/spec/event-storming-contextos-delimitados.md) | Event storming com todos os fluxos e CDs |
