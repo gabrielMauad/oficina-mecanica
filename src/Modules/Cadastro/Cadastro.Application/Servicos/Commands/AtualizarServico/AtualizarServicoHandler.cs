@@ -5,7 +5,7 @@ using SharedKernel.Domain;
 
 namespace Cadastro.Application.Servicos.Commands.AtualizarServico;
 
-public sealed class AtualizarServicoHandler : IRequestHandler<AtualizarServicoCommand, Result<AtualizarServicoResponse>>
+public sealed class AtualizarServicoHandler : IRequestHandler<AtualizarServicoCommand, Result<Servico>>
 {
     private readonly IServicoGateway _gateway;
 
@@ -14,7 +14,7 @@ public sealed class AtualizarServicoHandler : IRequestHandler<AtualizarServicoCo
         _gateway = gateway;
     }
 
-    public async Task<Result<AtualizarServicoResponse>> Handle(AtualizarServicoCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Servico>> Handle(AtualizarServicoCommand command, CancellationToken cancellationToken)
     {
         ServicoId servicoId = new(command.ServicoId);
         Servico? servico = await _gateway.ObterPorId(servicoId, cancellationToken);
@@ -44,7 +44,7 @@ public sealed class AtualizarServicoHandler : IRequestHandler<AtualizarServicoCo
         if (houveAlteracao)
             await _gateway.Atualizar(servico, cancellationToken);
 
-        return AtualizarServicoResponse.FromServico(servico);
+        return servico;
     }
 }
 

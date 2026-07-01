@@ -5,7 +5,7 @@ using SharedKernel.Domain;
 
 namespace Cadastro.Application.Servicos.Commands.AdicionarServico;
 
-public sealed class AdicionarServicoHandler : IRequestHandler<AdicionarServicoCommand, Result<AdicionarServicoResponse>>
+public sealed class AdicionarServicoHandler : IRequestHandler<AdicionarServicoCommand, Result<Servico>>
 {
     private readonly IServicoGateway _gateway;
 
@@ -13,7 +13,7 @@ public sealed class AdicionarServicoHandler : IRequestHandler<AdicionarServicoCo
         IServicoGateway gateway
     ) => _gateway = gateway;
 
-    public async Task<Result<AdicionarServicoResponse>> Handle(AdicionarServicoCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Servico>> Handle(AdicionarServicoCommand command, CancellationToken cancellationToken)
     {
         if (await _gateway.ExistePorNome(command.Nome, cancellationToken))
             return ServicoErrors.NomeJaExiste;
@@ -26,7 +26,7 @@ public sealed class AdicionarServicoHandler : IRequestHandler<AdicionarServicoCo
 
         await _gateway.Adicionar(servico, cancellationToken);
 
-        return AdicionarServicoResponse.FromServico(servico);
+        return servico;
     }
 }
 

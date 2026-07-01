@@ -40,10 +40,10 @@ public class AdicionarServicoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.ServicoId);
+        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
         Assert.Equal(command.Nome, result.Value.Nome);
         Assert.Equal(command.Descricao, result.Value.Descricao);
-        Assert.Equal(command.Preco, result.Value.PrecoBase);
+        Assert.Equal(command.Preco, result.Value.PrecoBase.Valor);
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);

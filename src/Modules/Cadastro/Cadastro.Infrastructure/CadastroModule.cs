@@ -49,6 +49,8 @@ public static class CadastroModule
         #region Controllers CA
 
         services.AddScoped<ClienteController>();
+        services.AddScoped<ServicoController>();
+        services.AddScoped<VeiculoController>();
 
         #endregion
 

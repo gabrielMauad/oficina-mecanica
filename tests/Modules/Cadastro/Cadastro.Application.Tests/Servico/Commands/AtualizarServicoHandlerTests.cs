@@ -48,9 +48,9 @@ public class AtualizarServicoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.ServicoId);
+        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
         Assert.Equal(descricaoEsperada, result.Value.Descricao);
-        Assert.Equal(precoEsperado, result.Value.Preco);
+        Assert.Equal(precoEsperado, result.Value.PrecoBase.Valor);
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 

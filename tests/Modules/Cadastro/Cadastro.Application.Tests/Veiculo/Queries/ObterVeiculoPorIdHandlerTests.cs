@@ -42,12 +42,12 @@ public class ObterVeiculoPorIdHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.Id);
-        Assert.Equal(veiculo.Placa.Numero, result.Value.Placa);
+        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
+        Assert.Equal(veiculo.Placa.Numero, result.Value.Placa.Numero);
         Assert.Equal(veiculo.Modelo, result.Value.Modelo);
         Assert.Equal(veiculo.Marca, result.Value.Marca);
         Assert.Equal(veiculo.Ano, result.Value.Ano);
-        Assert.Equal(veiculo.ClienteId.Value, result.Value.ClienteId);
+        Assert.Equal(veiculo.ClienteId.Value, result.Value.ClienteId.Value);
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
     }

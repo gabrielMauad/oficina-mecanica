@@ -38,10 +38,10 @@ public class ObterServicoPorIdHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.Equal(servico.Id.Value, result.Value.Id);
+        Assert.Equal(servico.Id.Value, result.Value.Id.Value);
         Assert.Equal("Servico", result.Value.Nome);
         Assert.Equal("Descricao inicial", result.Value.Descricao);
-        Assert.Equal(0, result.Value.Preco);
+        Assert.Equal(0, result.Value.PrecoBase.Valor);
         Assert.True(result.Value.Ativo);
         Assert.Equal(servico.CadastradoEm, result.Value.CadastradoEm);
         Assert.Equal(servico.AtualizadoEm, result.Value.AtualizadoEm);
