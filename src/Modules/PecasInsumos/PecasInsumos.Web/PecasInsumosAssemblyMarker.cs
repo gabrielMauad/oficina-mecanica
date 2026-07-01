@@ -1,3 +1,3 @@
-namespace PecasInsumos.Presentation;
+namespace PecasInsumos.Web;
 
 public sealed class PecasInsumosAssemblyMarker;

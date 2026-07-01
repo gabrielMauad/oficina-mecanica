@@ -1,6 +1,6 @@
 using Moq;
 using PecasInsumos.Application.Commands.AdicionarPecaInsumo;
-using PecasInsumos.Domain;
+using PecasInsumos.Application.Gateways;
 using SharedKernel.Domain;
 using PecaInsumoEntity = PecasInsumos.Domain.PecaInsumo;
 
@@ -8,15 +8,13 @@ namespace PecasInsumos.Application.Tests.Commands;
 
 public class AdicionarPecaInsumoHandlerTests
 {
-    private readonly Mock<IPecaInsumoRepository> _repositoryMock;
+    private readonly Mock<IPecaInsumoGateway> _gatewayMock;
     private readonly AdicionarPecaInsumoHandler _handler;
 
     public AdicionarPecaInsumoHandlerTests()
     {
-        _repositoryMock = new Mock<IPecaInsumoRepository>();
-        _handler = new AdicionarPecaInsumoHandler(
-            _repositoryMock.Object
-        );
+        _gatewayMock = new Mock<IPecaInsumoGateway>();
+        _handler = new AdicionarPecaInsumoHandler(_gatewayMock.Object);
     }
 
     [Fact(DisplayName = "Cenário feliz")]
@@ -31,7 +29,7 @@ public class AdicionarPecaInsumoHandlerTests
             UnidadeDeMedida: "Litro"
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -41,17 +39,17 @@ public class AdicionarPecaInsumoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.PecaInsumoId);
+        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
         Assert.Equal(command.Nome, result.Value.Nome);
         Assert.Equal(command.Descricao, result.Value.Descricao);
-        Assert.Equal(command.Preco, result.Value.PrecoUnitario);
+        Assert.Equal(command.Preco, result.Value.PrecoUnitario.Valor);
         Assert.Equal(command.QuantidadeEmEstoque, result.Value.QuantidadeEmEstoque);
-        Assert.Equal(command.UnidadeDeMedida, result.Value.UnidadeDeMedida);
+        Assert.Equal(command.UnidadeDeMedida, result.Value.UnidadeDeMedida.ToString());
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _repositoryMock.Verify(x => x.Adicionar(It.Is<PecaInsumoEntity>(p => p.Nome == command.Nome), It.IsAny<CancellationToken>()), Times.Once);
+        _gatewayMock.Verify(x => x.Adicionar(It.Is<PecaInsumoEntity>(p => p.Nome == command.Nome), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Peça/insumo já existe")]
@@ -66,7 +64,7 @@ public class AdicionarPecaInsumoHandlerTests
             UnidadeDeMedida: "Litro"
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -90,7 +88,7 @@ public class AdicionarPecaInsumoHandlerTests
             UnidadeDeMedida: "Litro"
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -114,7 +112,7 @@ public class AdicionarPecaInsumoHandlerTests
             UnidadeDeMedida: "Litro"
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -138,7 +136,7 @@ public class AdicionarPecaInsumoHandlerTests
             UnidadeDeMedida: "Litro"
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

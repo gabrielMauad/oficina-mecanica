@@ -1,4 +1,5 @@
-﻿using SharedKernel.Application;
+﻿using PecasInsumos.Domain;
+using SharedKernel.Application;
 
 namespace PecasInsumos.Application.Commands.AdicionarPecaInsumo;
 
@@ -8,4 +9,4 @@ public sealed record AdicionarPecaInsumoCommand(
     decimal Preco,
     int QuantidadeEmEstoque,
     string UnidadeDeMedida
-) : ICommand<AdicionarPecaInsumoResponse>;
+) : ICommand<PecaInsumo>;
