@@ -1,6 +1,8 @@
-namespace Cadastro.Domain.Veiculo;
+using Cadastro.Domain.Veiculo;
 
-public interface IVeiculoRepository
+namespace Cadastro.Application.Gateways;
+
+public interface IVeiculoGateway
 {
     Task Adicionar(Veiculo veiculo, CancellationToken ct = default);
     Task<Veiculo?> ObterPorId(VeiculoId id, CancellationToken ct = default);

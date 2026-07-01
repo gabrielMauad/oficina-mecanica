@@ -1,5 +1,5 @@
 using Cadastro.Application.Clientes.Commands.CadastrarCliente;
-using Cadastro.Domain.Cliente;
+using Cadastro.Application.Gateways;
 using Moq;
 using SharedKernel.Domain;
 using ClienteEntity = Cadastro.Domain.Cliente.Cliente;
@@ -8,13 +8,13 @@ namespace Cadastro.Application.Tests.Cliente.Commands;
 
 public class CadastrarClienteHandlerTests
 {
-    private readonly Mock<IClienteRepository> _repositoryMock;
+    private readonly Mock<IClienteGateway> _gatewayMock;
     private readonly CadastrarClienteHandler _handler;
 
     public CadastrarClienteHandlerTests()
     {
-        _repositoryMock = new Mock<IClienteRepository>();
-        _handler = new CadastrarClienteHandler(_repositoryMock.Object);
+        _gatewayMock = new Mock<IClienteGateway>();
+        _handler = new CadastrarClienteHandler(_gatewayMock.Object);
     }
 
     [Fact(DisplayName = "Cenário feliz")]
@@ -29,7 +29,7 @@ public class CadastrarClienteHandlerTests
             PessoaFisica: true
         );
 
-        _repositoryMock.Setup(x => x.ExistePorDocumento(command.Documento, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorDocumento(command.Documento, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -39,16 +39,16 @@ public class CadastrarClienteHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.ClienteId);
+        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
         Assert.Equal(command.Nome, result.Value.Nome);
-        Assert.Equal(command.Documento, result.Value.Documento);
+        Assert.Equal(command.Documento, result.Value.Documento.Numero);
         Assert.Equal(command.Email, result.Value.Email);
         Assert.Equal(command.Telefone, result.Value.Telefone);
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _repositoryMock.Verify(x => x.Adicionar(It.Is<ClienteEntity>(x => x.Documento.Numero == command.Documento), It.IsAny<CancellationToken>()), Times.Once);
+        _gatewayMock.Verify(x => x.Adicionar(It.Is<ClienteEntity>(x => x.Documento.Numero == command.Documento), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Documento ja existe")]
@@ -63,7 +63,7 @@ public class CadastrarClienteHandlerTests
             PessoaFisica: true
         );
 
-        _repositoryMock.Setup(x => x.ExistePorDocumento(command.Documento, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _gatewayMock.Setup(x => x.ExistePorDocumento(command.Documento, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -87,7 +87,7 @@ public class CadastrarClienteHandlerTests
             PessoaFisica: true
         );
 
-        _repositoryMock.Setup(x => x.ExistePorDocumento(command.Documento, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorDocumento(command.Documento, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

@@ -16,7 +16,7 @@
     <ProjectReference Include="..\..\Modules\Autenticacao\Autenticacao.Infrastructure\Autenticacao.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Autenticacao\Autenticacao.Presentation\Autenticacao.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\Cadastro\Cadastro.Infrastructure\Cadastro.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\Cadastro\Cadastro.Presentation\Cadastro.Presentation.csproj" />
+    <ProjectReference Include="..\..\Modules\Cadastro\Cadastro.Web\Cadastro.Web.csproj" />
     <ProjectReference Include="..\..\Modules\PecasInsumos\PecasInsumos.Infrastructure\PecasInsumos.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\PecasInsumos\PecasInsumos.Web\PecasInsumos.Web.csproj" />
     <ProjectReference Include="..\..\Modules\OrdensServico\OrdensServico.Infrastructure\OrdensServico.Infrastructure.csproj" />
