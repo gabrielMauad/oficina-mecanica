@@ -1,4 +1,5 @@
 using OrdensServico.Adapters.Models.ViewModels;
+using OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
 using OrdensServico.Domain.OrdemServico;
 
 namespace OrdensServico.Adapters.Presenters;
@@ -20,4 +21,20 @@ public static class OrdemServicoPresenter
             [.. entity.ItensPeca.Select(x => new ItemPecaViewModel(x.PecaInsumoId, x.Quantidade, x.PrecoUnitarioSnapshot))],
             [.. entity.Orcamentos.Select(x => new OrcamentoViewModel(x.ValorTotal, x.Status.ToString(), x.DataGeracao, x.DataEnvio, x.DataAprovacao))]
         );
+
+    public static List<OrdemServicoViewModel> PresentListar(List<OrdemServicoListItem> readModels) =>
+        [.. readModels.Select(x => new OrdemServicoViewModel(
+            x.Id,
+            x.ClienteId,
+            x.VeiculoId,
+            x.Status,
+            x.DescricaoDiagnostico,
+            x.NotificadoEm,
+            x.EntregueEm,
+            x.CriadoEm,
+            x.AtualizadoEm,
+            [.. x.ItensServico.Select(i => new ItemServicoViewModel(i.ServicoId, i.Quantidade, i.PrecoUnitarioSnapshot))],
+            [.. x.ItensPeca.Select(i => new ItemPecaViewModel(i.PecaInsumoId, i.Quantidade, i.PrecoUnitarioSnapshot))],
+            [.. x.Orcamentos.Select(o => new OrcamentoViewModel(o.ValorTotal, o.Status, o.DataGeracao, o.DataEnvio, o.DataAprovacao))]
+        ))];
 }

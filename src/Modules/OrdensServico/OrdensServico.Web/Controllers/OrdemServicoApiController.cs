@@ -1,10 +1,7 @@
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrdensServico.Adapters.Controllers;
 using OrdensServico.Adapters.Models.Request;
-using OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
-using OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
 
 namespace OrdensServico.Web.Controllers;
 
@@ -14,13 +11,8 @@ namespace OrdensServico.Web.Controllers;
 public class OrdemServicoApiController : ControllerBase
 {
     private readonly OrdemServicoController _caController;
-    private readonly ISender _sender;
 
-    public OrdemServicoApiController(OrdemServicoController caController, ISender sender)
-    {
-        _caController = caController;
-        _sender = sender;
-    }
+    public OrdemServicoApiController(OrdemServicoController caController) => _caController = caController;
 
     [HttpPost]
     public async Task<IActionResult> Gerar([FromBody] GerarOrdemServicoRequest request)
@@ -36,7 +28,7 @@ public class OrdemServicoApiController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> ObterPorId(Guid id)
     {
-        var result = await _sender.Send(new ObterOrdemServicoPorIdQuery(id));
+        var result = await _caController.ObterPorId(id);
 
         if (result.IsFailure)
             return NotFound(result.Error);
@@ -49,7 +41,7 @@ public class OrdemServicoApiController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> ListarPorCliente([FromQuery] Guid clienteId)
     {
-        var result = await _sender.Send(new ListarOrdensPorClienteQuery(clienteId));
+        var result = await _caController.ListarPorCliente(clienteId);
 
         if (result.IsFailure)
             return NotFound(result.Error);
