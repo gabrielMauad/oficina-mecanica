@@ -1,24 +1,21 @@
 ﻿using MediatR;
-using OrdensServico.Contracts.Dtos;
-using OrdensServico.Contracts.Queries;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
 
 public sealed class ListarOrdensPorClienteHandler
-    : IRequestHandler<ListarOrdensPorClienteQuery, Result<List<OrdemServicoResumoDto>>>
+    : IRequestHandler<ListarOrdensPorClienteQuery, Result<List<OrdemServicoListItem>>>
 {
-    private readonly IListarOrdensPorClienteQuery _listarOrdensPorClienteQuery;
+    private readonly IListarOrdensPorClienteReadModel _readModel;
 
-    public ListarOrdensPorClienteHandler(IListarOrdensPorClienteQuery listarOrdensPorClienteQuery) =>
-        _listarOrdensPorClienteQuery = listarOrdensPorClienteQuery;
+    public ListarOrdensPorClienteHandler(IListarOrdensPorClienteReadModel readModel) =>
+        _readModel = readModel;
 
-    public async Task<Result<List<OrdemServicoResumoDto>>> Handle(
+    public async Task<Result<List<OrdemServicoListItem>>> Handle(
         ListarOrdensPorClienteQuery request,
         CancellationToken ct
     )
     {
-        var ordens = await _listarOrdensPorClienteQuery.Listar(request.ClienteId, ct);
-        return ordens.ToList();
+        return await _readModel.Listar(request.ClienteId, ct);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using OrdensServico.Contracts.Dtos;
+using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
 
-public sealed record ObterOrdemServicoPorIdQuery(Guid OrdemServicoId) : IRequest<Result<OrdemServicoResumoDto>>;
+public sealed record ObterOrdemServicoPorIdQuery(Guid OrdemServicoId) : IRequest<Result<OrdemServico>>;

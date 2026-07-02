@@ -10,6 +10,8 @@ using OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
 using OrdensServico.Application.Ordens.Commands.IniciarDiagnostico;
 using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 using OrdensServico.Application.Ordens.Commands.RejeitarOrcamento;
+using OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
+using OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Adapters.Controllers;
@@ -76,5 +78,19 @@ public sealed class OrdemServicoController
         var result = await _sender.Send(new ConcluirOrdemServicoCommand(id));
         if (result.IsFailure) return result.Error;
         return OrdemServicoPresenter.Present(result.Value);
+    }
+
+    public async Task<Result<OrdemServicoViewModel>> ObterPorId(Guid id)
+    {
+        var result = await _sender.Send(new ObterOrdemServicoPorIdQuery(id));
+        if (result.IsFailure) return result.Error;
+        return OrdemServicoPresenter.Present(result.Value);
+    }
+
+    public async Task<Result<List<OrdemServicoViewModel>>> ListarPorCliente(Guid clienteId)
+    {
+        var result = await _sender.Send(new ListarOrdensPorClienteQuery(clienteId));
+        if (result.IsFailure) return result.Error;
+        return OrdemServicoPresenter.PresentListar(result.Value);
     }
 }
