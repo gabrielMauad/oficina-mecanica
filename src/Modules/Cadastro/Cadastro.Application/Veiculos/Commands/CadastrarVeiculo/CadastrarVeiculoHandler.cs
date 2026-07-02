@@ -1,4 +1,3 @@
-using Cadastro.Application.Gateways;
 using Cadastro.Domain.Cliente;
 using Cadastro.Domain.Veiculo;
 using MediatR;
@@ -9,26 +8,26 @@ namespace Cadastro.Application.Veiculos.Commands.CadastrarVeiculo;
 public sealed class CadastrarVeiculoHandler
     : IRequestHandler<CadastrarVeiculoCommand, Result<CadastrarVeiculoResponse>>
 {
-    private readonly IVeiculoGateway _gateway;
-    private readonly IClienteGateway _clienteGateway;
+    private readonly IVeiculoRepository _repository;
+    private readonly IClienteRepository _clienteRepository;
 
     public CadastrarVeiculoHandler(
-        IVeiculoGateway gateway,
-        IClienteGateway clienteGateway)
+        IVeiculoRepository repository,
+        IClienteRepository clienteRepository)
     {
-        _gateway = gateway;
-        _clienteGateway = clienteGateway;
+        _repository = repository;
+        _clienteRepository = clienteRepository;
     }
 
     public async Task<Result<CadastrarVeiculoResponse>> Handle(CadastrarVeiculoCommand command, CancellationToken cancellationToken)
     {
         var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        if (await _gateway.ExistePorPlaca(placaNormalizada, cancellationToken))
+        if (await _repository.ExistePorPlaca(placaNormalizada, cancellationToken))
             return VeiculoErrors.PlacaJaExiste;
 
         ClienteId clienteId = new(command.ClienteId);
-        Cliente? cliente = await _clienteGateway.ObterPorId(clienteId, cancellationToken);
+        Cliente? cliente = await _clienteRepository.ObterPorId(clienteId, cancellationToken);
 
         if (cliente is null)
             return VeiculoErrors.ClienteNaoEncontrado;
@@ -43,7 +42,7 @@ public sealed class CadastrarVeiculoHandler
 
         Veiculo veiculo = veiculoResult.Value;
 
-        await _gateway.Adicionar(veiculo, cancellationToken);
+        await _repository.Adicionar(veiculo, cancellationToken);
 
         return CadastrarVeiculoResponse.FromVeiculo(veiculoResult.Value);
     }

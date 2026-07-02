@@ -4,7 +4,7 @@ using Autenticacao.Infrastructure;
 using Autenticacao.Presentation;
 using Cadastro.Infrastructure;
 using Cadastro.Infrastructure.Persistence;
-using Cadastro.Web;
+using Cadastro.Presentation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;

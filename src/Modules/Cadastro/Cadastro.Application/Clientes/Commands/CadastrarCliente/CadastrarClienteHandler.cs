@@ -1,4 +1,3 @@
-using Cadastro.Application.Gateways;
 using Cadastro.Domain.Cliente;
 using MediatR;
 using SharedKernel.Domain;
@@ -6,22 +5,22 @@ using SharedKernel.Domain;
 namespace Cadastro.Application.Clientes.Commands.CadastrarCliente;
 
 public sealed class CadastrarClienteHandler
-    : IRequestHandler<CadastrarClienteCommand, Result<Cliente>>
+    : IRequestHandler<CadastrarClienteCommand, Result<CadastrarClienteResponse>>
 {
-    private readonly IClienteGateway _gateway;
+    private readonly IClienteRepository _repository;
 
-    public CadastrarClienteHandler(IClienteGateway gateway)
+    public CadastrarClienteHandler(IClienteRepository repository)
     {
-        _gateway = gateway;
+        _repository = repository;
     }
 
-    public async Task<Result<Cliente>> Handle(
+    public async Task<Result<CadastrarClienteResponse>> Handle(
         CadastrarClienteCommand command,
         CancellationToken cancellationToken)
     {
         var documentoNormalizado = new string(command.Documento.Where(char.IsDigit).ToArray());
 
-        if (await _gateway.ExistePorDocumento(documentoNormalizado, cancellationToken))
+        if (await _repository.ExistePorDocumento(documentoNormalizado, cancellationToken))
             return ClienteErrors.DocumentoJaExiste;
 
         var result = Cliente.Criar(
@@ -36,8 +35,8 @@ public sealed class CadastrarClienteHandler
 
         var cliente = result.Value;
 
-        await _gateway.Adicionar(cliente, cancellationToken);
+        await _repository.Adicionar(cliente, cancellationToken);
 
-        return cliente;
+        return CadastrarClienteResponse.FromCliente(cliente);
     }
 }

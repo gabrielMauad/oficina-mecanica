@@ -1,4 +1,3 @@
-using Cadastro.Adapters.DataSources;
 using Cadastro.Domain.Veiculo;
 using Microsoft.EntityFrameworkCore;
 

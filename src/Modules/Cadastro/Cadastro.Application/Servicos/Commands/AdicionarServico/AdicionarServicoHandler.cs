@@ -1,5 +1,4 @@
-﻿using Cadastro.Application.Gateways;
-using Cadastro.Domain.Servico;
+﻿using Cadastro.Domain.Servico;
 using MediatR;
 using SharedKernel.Domain;
 
@@ -7,15 +6,15 @@ namespace Cadastro.Application.Servicos.Commands.AdicionarServico;
 
 public sealed class AdicionarServicoHandler : IRequestHandler<AdicionarServicoCommand, Result<AdicionarServicoResponse>>
 {
-    private readonly IServicoGateway _gateway;
+    private readonly IServicoRepository _repository;
 
     public AdicionarServicoHandler(
-        IServicoGateway gateway
-    ) => _gateway = gateway;
+        IServicoRepository repository
+    ) => _repository = repository;
 
     public async Task<Result<AdicionarServicoResponse>> Handle(AdicionarServicoCommand command, CancellationToken cancellationToken)
     {
-        if (await _gateway.ExistePorNome(command.Nome, cancellationToken))
+        if (await _repository.ExistePorNome(command.Nome, cancellationToken))
             return ServicoErrors.NomeJaExiste;
 
         Result<Servico> servicoResult = Servico.Criar(command.Nome, command.Descricao, command.Preco);
@@ -24,7 +23,7 @@ public sealed class AdicionarServicoHandler : IRequestHandler<AdicionarServicoCo
 
         Servico servico = servicoResult.Value;
 
-        await _gateway.Adicionar(servico, cancellationToken);
+        await _repository.Adicionar(servico, cancellationToken);
 
         return AdicionarServicoResponse.FromServico(servico);
     }

@@ -1,5 +1,4 @@
-using Cadastro.Application.Clientes.Queries.ObterClientePorId;
-using Cadastro.Application.Gateways;
+﻿using Cadastro.Application.Clientes.Queries.ObterClientePorId;
 using Cadastro.Domain.Cliente;
 using Moq;
 using SharedKernel.Domain;
@@ -9,14 +8,14 @@ namespace Cadastro.Application.Tests.Cliente.Queries;
 
 public class ObterClientePorIdHandlerTests
 {
-    private readonly Mock<IClienteGateway> _gatewayMock;
+    private readonly Mock<IClienteRepository> _repositoryMock;
     private readonly ObterClientePorIdHandler _handler;
 
     public ObterClientePorIdHandlerTests()
     {
-        _gatewayMock = new Mock<IClienteGateway>();
+        _repositoryMock = new Mock<IClienteRepository>();
         _handler = new ObterClientePorIdHandler(
-            _gatewayMock.Object
+            _repositoryMock.Object
         );
     }
 
@@ -30,7 +29,7 @@ public class ObterClientePorIdHandlerTests
         var clienteId = new ClienteId(query.ClienteId);
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
 
-        _gatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
@@ -40,9 +39,9 @@ public class ObterClientePorIdHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
+        Assert.NotEqual(Guid.Empty, result.Value.Id);
         Assert.Equal(cliente.Nome, result.Value.Nome);
-        Assert.Equal(cliente.Documento.Numero, result.Value.Documento.Numero);
+        Assert.Equal(cliente.Documento.Numero, result.Value.Documento);
         Assert.Equal(cliente.Email, result.Value.Email);
         Assert.Equal(cliente.Telefone, result.Value.Telefone);
         Assert.True(result.Value.Ativo);
@@ -68,3 +67,4 @@ public class ObterClientePorIdHandlerTests
         Assert.Equal("Cliente não encontrado.", result.Error.Message);
     }
 }
+

@@ -1,4 +1,3 @@
-using Cadastro.Application.Gateways;
 using Cadastro.Domain.Cliente;
 using MediatR;
 using SharedKernel.Domain;
@@ -6,26 +5,35 @@ using SharedKernel.Domain;
 namespace Cadastro.Application.Clientes.Queries.ObterClientePorId;
 
 public sealed class ObterClientePorIdHandler
-    : IRequestHandler<ObterClientePorIdQuery, Result<Cliente>>
+    : IRequestHandler<ObterClientePorIdQuery, Result<ObterClientePorIdResponse>>
 {
-    private readonly IClienteGateway _gateway;
+    private readonly IClienteRepository _repository;
 
-    public ObterClientePorIdHandler(IClienteGateway gateway)
+    public ObterClientePorIdHandler(IClienteRepository repository)
     {
-        _gateway = gateway;
+        _repository = repository;
     }
 
-    public async Task<Result<Cliente>> Handle(
+    public async Task<Result<ObterClientePorIdResponse>> Handle(
         ObterClientePorIdQuery query,
         CancellationToken cancellationToken)
     {
-        var cliente = await _gateway.ObterPorId(
+        var cliente = await _repository.ObterPorId(
             new ClienteId(query.ClienteId),
             cancellationToken);
 
         if (cliente is null)
             return ClienteErrors.NaoEncontrado;
 
-        return cliente;
+        return new ObterClientePorIdResponse(
+            Id: cliente.Id.Value,
+            Nome: cliente.Nome,
+            Documento: cliente.Documento.Numero,
+            Email: cliente.Email,
+            Telefone: cliente.Telefone,
+            Ativo: cliente.Ativo,
+            CadastradoEm: cliente.CadastradoEm,
+            AtualizadoEm: cliente.AtualizadoEm
+        );
     }
 }

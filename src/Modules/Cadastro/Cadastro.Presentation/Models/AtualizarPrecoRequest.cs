@@ -1,3 +1,3 @@
-namespace Cadastro.Web.Models;
+﻿namespace Cadastro.Presentation.Models;
 
 public record AtualizarPrecoRequest(decimal Preco);

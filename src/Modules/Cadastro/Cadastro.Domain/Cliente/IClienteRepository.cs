@@ -1,6 +1,4 @@
-using Cadastro.Domain.Cliente;
-
-namespace Cadastro.Adapters.DataSources;
+﻿namespace Cadastro.Domain.Cliente;
 
 public interface IClienteRepository
 {

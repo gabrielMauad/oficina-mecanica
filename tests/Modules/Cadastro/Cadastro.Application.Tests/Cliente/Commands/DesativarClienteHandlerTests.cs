@@ -1,5 +1,4 @@
-using Cadastro.Application.Clientes.Commands.DesativarCliente;
-using Cadastro.Application.Gateways;
+﻿using Cadastro.Application.Clientes.Commands.DesativarCliente;
 using Cadastro.Domain.Cliente;
 using Moq;
 using SharedKernel.Domain;
@@ -9,14 +8,14 @@ namespace Cadastro.Application.Tests.Cliente.Commands;
 
 public class DesativarClienteHandlerTests
 {
-    private readonly Mock<IClienteGateway> _gatewayMock;
+    private readonly Mock<IClienteRepository> _repositoryMock;
     private readonly DesativarClienteHandler _handler;
 
     public DesativarClienteHandlerTests()
     {
-        _gatewayMock = new Mock<IClienteGateway>();
+        _repositoryMock = new Mock<IClienteRepository>();
         _handler = new DesativarClienteHandler(
-            _gatewayMock.Object
+            _repositoryMock.Object
         );
     }
 
@@ -30,7 +29,7 @@ public class DesativarClienteHandlerTests
         var clienteId = new ClienteId(command.ClienteId);
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
 
-        _gatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -40,12 +39,12 @@ public class DesativarClienteHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
+        Assert.NotEqual(Guid.Empty, result.Value.ClienteId);
         Assert.Equal(cliente.Nome, result.Value.Nome);
         Assert.False(result.Value.Ativo);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _gatewayMock.Verify(x => x.Atualizar(It.Is<ClienteEntity>(x => x.Ativo == false), It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(x => x.Atualizar(It.Is<ClienteEntity>(x => x.Ativo == false), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Cliente nao encontrado")]
@@ -77,7 +76,7 @@ public class DesativarClienteHandlerTests
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
         cliente.Desativar();
 
-        _gatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -89,3 +88,4 @@ public class DesativarClienteHandlerTests
         Assert.Equal("O cliente já está desativado.", result.Error.Message);
     }
 }
+

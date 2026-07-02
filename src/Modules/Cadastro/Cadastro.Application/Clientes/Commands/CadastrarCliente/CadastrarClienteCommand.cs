@@ -1,4 +1,3 @@
-using Cadastro.Domain.Cliente;
 using SharedKernel.Application;
 
 namespace Cadastro.Application.Clientes.Commands.CadastrarCliente;
@@ -9,4 +8,4 @@ public sealed record CadastrarClienteCommand(
     string Email,
     string Telefone,
     bool PessoaFisica
-) : ICommand<Cliente>;
+) : ICommand<CadastrarClienteResponse>;

@@ -1,4 +1,3 @@
-using Cadastro.Application.Gateways;
 using Cadastro.Application.Veiculos.Commands.CadastrarVeiculo;
 using Cadastro.Domain.Cliente;
 using Cadastro.Domain.Veiculo;
@@ -11,15 +10,15 @@ namespace Cadastro.Application.Tests.Veiculo.Commands;
 
 public class CadastrarVeiculoHandlerTests
 {
-    private readonly Mock<IVeiculoGateway> _gatewayMock;
-    private readonly Mock<IClienteGateway> _clienteGatewayMock;
+    private readonly Mock<IVeiculoRepository> _repositoryMock;
+    private readonly Mock<IClienteRepository> _clienteRepositoryMock;
     private readonly CadastrarVeiculoHandler _handler;
 
     public CadastrarVeiculoHandlerTests()
     {
-        _gatewayMock = new Mock<IVeiculoGateway>();
-        _clienteGatewayMock = new Mock<IClienteGateway>();
-        _handler = new CadastrarVeiculoHandler(_gatewayMock.Object, _clienteGatewayMock.Object);
+        _repositoryMock = new Mock<IVeiculoRepository>();
+        _clienteRepositoryMock = new Mock<IClienteRepository>();
+        _handler = new CadastrarVeiculoHandler(_repositoryMock.Object, _clienteRepositoryMock.Object);
     }
 
     [Fact(DisplayName = "Cenário feliz")]
@@ -38,8 +37,8 @@ public class CadastrarVeiculoHandlerTests
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
         var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _gatewayMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        _clienteGatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _clienteRepositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -58,7 +57,7 @@ public class CadastrarVeiculoHandlerTests
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _gatewayMock.Verify(x => x.Adicionar(It.Is<VeiculoEntity>(x => x.Placa.Numero == placaNormalizada), It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(x => x.Adicionar(It.Is<VeiculoEntity>(x => x.Placa.Numero == placaNormalizada), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Documento ja existe")]
@@ -74,7 +73,7 @@ public class CadastrarVeiculoHandlerTests
         );
         var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _gatewayMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -99,7 +98,7 @@ public class CadastrarVeiculoHandlerTests
         );
         var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _gatewayMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -129,8 +128,8 @@ public class CadastrarVeiculoHandlerTests
 
         var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _gatewayMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        _clienteGatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _clienteRepositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -159,8 +158,8 @@ public class CadastrarVeiculoHandlerTests
 
         var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
-        _gatewayMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
-        _clienteGatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ExistePorPlaca(placaNormalizada, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _clienteRepositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

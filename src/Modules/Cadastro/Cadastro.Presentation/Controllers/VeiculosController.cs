@@ -1,4 +1,4 @@
-using Cadastro.Application.Veiculos.Commands.CadastrarVeiculo;
+﻿using Cadastro.Application.Veiculos.Commands.CadastrarVeiculo;
 using Cadastro.Application.Veiculos.Queries.ListarVeiculos;
 using Cadastro.Application.Veiculos.Queries.ListarVeiculosPorCliente;
 using Cadastro.Application.Veiculos.Queries.ObterVeiculoPorId;
@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Cadastro.Web.Controllers;
+namespace Cadastro.Presentation.Controllers;
 
 [Authorize]
 [ApiController]
@@ -65,4 +65,5 @@ public class VeiculosController : ControllerBase
     }
 
 }
+
 

@@ -1,5 +1,4 @@
-using Cadastro.Application.Clientes.Commands.AtualizarCliente;
-using Cadastro.Application.Gateways;
+﻿using Cadastro.Application.Clientes.Commands.AtualizarCliente;
 using Cadastro.Domain.Cliente;
 using Moq;
 using SharedKernel.Domain;
@@ -9,14 +8,14 @@ namespace Cadastro.Application.Tests.Cliente.Commands;
 
 public class AtualizarClienteHandlerTests
 {
-    private readonly Mock<IClienteGateway> _gatewayMock;
+    private readonly Mock<IClienteRepository> _repositoryMock;
     private readonly AtualizarClienteHandler _handler;
 
     public AtualizarClienteHandlerTests()
     {
-        _gatewayMock = new Mock<IClienteGateway>();
+        _repositoryMock = new Mock<IClienteRepository>();
         _handler = new AtualizarClienteHandler(
-            _gatewayMock.Object
+            _repositoryMock.Object
         );
     }
 
@@ -37,7 +36,7 @@ public class AtualizarClienteHandlerTests
         var nomeEsperado = nome ?? cliente.Nome;
         var telefoneEsperado = telefone ?? cliente.Telefone;
 
-        _gatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -47,13 +46,13 @@ public class AtualizarClienteHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
+        Assert.NotEqual(Guid.Empty, result.Value.ClienteId);
         Assert.Equal(nomeEsperado, result.Value.Nome);
         Assert.Equal(telefoneEsperado, result.Value.Telefone);
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _gatewayMock.Verify(x => x.Atualizar(It.Is<ClienteEntity>(x => x.Nome == nomeEsperado), It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(x => x.Atualizar(It.Is<ClienteEntity>(x => x.Nome == nomeEsperado), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Cliente nao encontrado")]
@@ -89,7 +88,7 @@ public class AtualizarClienteHandlerTests
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
         cliente.Desativar();
 
-        _gatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -113,7 +112,7 @@ public class AtualizarClienteHandlerTests
         var clienteId = new ClienteId(command.Id);
         ClienteEntity? cliente = ClienteEntity.Criar("nome", "01404238000", "email@exemplo.com", "11999999999", true).Value;
 
-        _gatewayMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
+        _repositoryMock.Setup(x => x.ObterPorId(clienteId, It.IsAny<CancellationToken>())).ReturnsAsync(cliente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -123,6 +122,7 @@ public class AtualizarClienteHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        _gatewayMock.Verify(x => x.Atualizar(It.Is<ClienteEntity>(x => x.Nome == "nome"), It.IsAny<CancellationToken>()), Times.Never);
+        _repositoryMock.Verify(x => x.Atualizar(It.Is<ClienteEntity>(x => x.Nome == "nome"), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
+

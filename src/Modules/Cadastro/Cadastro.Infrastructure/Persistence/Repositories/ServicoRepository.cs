@@ -1,4 +1,3 @@
-using Cadastro.Adapters.DataSources;
 using Cadastro.Domain.Servico;
 using Microsoft.EntityFrameworkCore;
 

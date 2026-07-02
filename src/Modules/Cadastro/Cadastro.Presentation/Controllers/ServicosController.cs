@@ -1,14 +1,14 @@
-using Cadastro.Application.Servicos.Commands.AdicionarServico;
+﻿using Cadastro.Application.Servicos.Commands.AdicionarServico;
 using Cadastro.Application.Servicos.Commands.AtualizarServico;
 using Cadastro.Application.Servicos.Commands.DesativarServico;
 using Cadastro.Application.Servicos.Queries.ListarServicos;
 using Cadastro.Application.Servicos.Queries.ObterServicoPorId;
-using Cadastro.Web.Models;
+using Cadastro.Presentation.Models;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Cadastro.Web.Controllers;
+namespace Cadastro.Presentation.Controllers;
 
 [Authorize]
 [ApiController]
@@ -88,3 +88,4 @@ public class ServicosController : ControllerBase
         return NoContent();
     }
 }
+

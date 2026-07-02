@@ -1,3 +1,3 @@
-namespace Cadastro.Web;
+namespace Cadastro.Presentation;
 
 public sealed class CadastroAssemblyMarker;

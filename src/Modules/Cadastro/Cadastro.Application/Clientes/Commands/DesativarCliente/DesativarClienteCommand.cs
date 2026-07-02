@@ -1,6 +1,5 @@
-﻿using Cadastro.Domain.Cliente;
-using SharedKernel.Application;
+﻿using SharedKernel.Application;
 
 namespace Cadastro.Application.Clientes.Commands.DesativarCliente;
 
-public sealed record DesativarClienteCommand(Guid ClienteId) : ICommand<Cliente>;
+public sealed record DesativarClienteCommand(Guid ClienteId) : ICommand<DesativarClienteResponse>;

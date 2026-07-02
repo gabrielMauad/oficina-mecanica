@@ -1,13 +1,12 @@
-using Cadastro.Adapters.Controllers;
-using Cadastro.Adapters.DataSources;
-using Cadastro.Adapters.Gateways;
 using Cadastro.Application.Clientes.Commands.CadastrarCliente;
 using Cadastro.Application.Clientes.Queries.ListarClientes;
-using Cadastro.Application.Gateways;
 using Cadastro.Application.Servicos.Queries.ListarServicos;
 using Cadastro.Application.Veiculos.Queries.ListarVeiculos;
 using Cadastro.Application.Veiculos.Queries.ListarVeiculosPorCliente;
 using Cadastro.Contracts.Queries;
+using Cadastro.Domain.Cliente;
+using Cadastro.Domain.Servico;
+using Cadastro.Domain.Veiculo;
 using Cadastro.Infrastructure.Persistence;
 using Cadastro.Infrastructure.Persistence.Repositories;
 using Cadastro.Infrastructure.Queries;
@@ -30,25 +29,11 @@ public static class CadastroModule
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<CadastroDbContext>());
 
-        #region DataSources (Repositórios EF)
+        #region Repositórios de domínio 
 
         services.AddScoped<IClienteRepository, ClienteRepository>();
         services.AddScoped<IVeiculoRepository, VeiculoRepository>();
         services.AddScoped<IServicoRepository, ServicoRepository>();
-
-        #endregion
-
-        #region Gateways (Interface Adapters)
-
-        services.AddScoped<IClienteGateway, ClienteGateway>();
-        services.AddScoped<IVeiculoGateway, VeiculoGateway>();
-        services.AddScoped<IServicoGateway, ServicoGateway>();
-
-        #endregion
-
-        #region Controllers CA
-
-        services.AddScoped<ClienteController>();
 
         #endregion
 
