@@ -1,23 +1,22 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using OrdensServico.Application.DomainEventHandlers;
-using OrdensServico.Application.Ports;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using OrdensServico.Domain.OrdemServico.Events;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
 using SharedKernel.Application;
 
 namespace OrdensServico.Application.Tests.DomainEventHandlers;
 
 public class EnviarOrcamentoAoClienteHandlerTests
 {
-    private readonly Mock<IOrdemServicoRepository> _repoMock = new();
+    private readonly Mock<IOrdemServicoGateway> _repoMock = new();
     private readonly Mock<IUnitOfWork> _uowMock = new();
-    private readonly Mock<INotificacaoClientePort> _notificacaoMock = new();
-    private readonly Mock<IClienteInfoPort> _clienteMock = new();
-    private readonly Mock<IVeiculoInfoPort> _veiculoMock = new();
-    private readonly Mock<IServicoInfoPort> _servicoMock = new();
-    private readonly Mock<IPecaInsumoInfoPort> _pecaInfoMock = new();
+    private readonly Mock<INotificacaoClienteGateway> _notificacaoMock = new();
+    private readonly Mock<IClienteGateway> _clienteMock = new();
+    private readonly Mock<IVeiculoGateway> _veiculoMock = new();
+    private readonly Mock<IServicoGateway> _servicoMock = new();
+    private readonly Mock<IPecaInsumoInfoGateway> _pecaInfoMock = new();
     private readonly EnviarOrcamentoAoCliente _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();
@@ -78,8 +77,8 @@ public class EnviarOrcamentoAoClienteHandlerTests
             "João Silva",
             "joao@email.com",
             "ABC1D23",
-            It.Is<IReadOnlyList<Application.Ports.Dtos.ServicoEmailItem>>(l => l.Count == 1),
-            It.Is<IReadOnlyList<Application.Ports.Dtos.PecaEmailItem>>(l => l.Count == 1),
+            It.Is<IReadOnlyList<Application.Gateways.Dtos.ServicoEmailItem>>(l => l.Count == 1),
+            It.Is<IReadOnlyList<Application.Gateways.Dtos.PecaEmailItem>>(l => l.Count == 1),
             notification.ValorTotal,
             It.IsAny<CancellationToken>()),
             Times.Once);
@@ -99,8 +98,8 @@ public class EnviarOrcamentoAoClienteHandlerTests
         _uowMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
         _notificacaoMock.Verify(x => x.NotificarOrcamentoPronto(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<IReadOnlyList<Application.Ports.Dtos.ServicoEmailItem>>(),
-            It.IsAny<IReadOnlyList<Application.Ports.Dtos.PecaEmailItem>>(),
+            It.IsAny<IReadOnlyList<Application.Gateways.Dtos.ServicoEmailItem>>(),
+            It.IsAny<IReadOnlyList<Application.Gateways.Dtos.PecaEmailItem>>(),
             It.IsAny<decimal>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -125,8 +124,8 @@ public class EnviarOrcamentoAoClienteHandlerTests
         _uowMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         _notificacaoMock.Verify(x => x.NotificarOrcamentoPronto(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<IReadOnlyList<Application.Ports.Dtos.ServicoEmailItem>>(),
-            It.IsAny<IReadOnlyList<Application.Ports.Dtos.PecaEmailItem>>(),
+            It.IsAny<IReadOnlyList<Application.Gateways.Dtos.ServicoEmailItem>>(),
+            It.IsAny<IReadOnlyList<Application.Gateways.Dtos.PecaEmailItem>>(),
             It.IsAny<decimal>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }

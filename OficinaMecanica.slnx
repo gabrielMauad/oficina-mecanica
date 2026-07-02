@@ -18,11 +18,12 @@
     <Project Path="src/Modules/Cadastro/Cadastro.Web/Cadastro.Web.csproj" />
   </Folder>
   <Folder Name="/src/Modules/OrdensServico/">
+    <Project Path="src/Modules/OrdensServico/OrdensServico.Adapters/OrdensServico.Adapters.csproj" />
     <Project Path="src/Modules/OrdensServico/OrdensServico.Application/OrdensServico.Application.csproj" />
     <Project Path="src/Modules/OrdensServico/OrdensServico.Contracts/OrdensServico.Contracts.csproj" />
     <Project Path="src/Modules/OrdensServico/OrdensServico.Domain/OrdensServico.Domain.csproj" />
     <Project Path="src/Modules/OrdensServico/OrdensServico.Infrastructure/OrdensServico.Infrastructure.csproj" />
-    <Project Path="src/Modules/OrdensServico/OrdensServico.Presentation/OrdensServico.Presentation.csproj" />
+    <Project Path="src/Modules/OrdensServico/OrdensServico.Web/OrdensServico.Web.csproj" />
   </Folder>
   <Folder Name="/src/Modules/PecasInsumos/">
     <Project Path="src/Modules/PecasInsumos/PecasInsumos.Adapters/PecasInsumos.Adapters.csproj" />

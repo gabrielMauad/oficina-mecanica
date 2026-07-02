@@ -1,10 +1,9 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using OrdensServico.Application.Ports;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using OrdensServico.Domain.OrdemServico.Events;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
 using SharedKernel.Application;
 using SharedKernel.Domain;
 
@@ -12,32 +11,32 @@ namespace OrdensServico.Application.DomainEventHandlers;
 
 public sealed class NotificarClienteAoFinalizar : INotificationHandler<OrdemServicoFinalizada>
 {
-    private readonly IOrdemServicoRepository _ordemServicoRepository;
+    private readonly IOrdemServicoGateway _ordemServicoGateway;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly INotificacaoClientePort _notificacaoClientePort;
-    private readonly IClienteInfoPort _clienteInfoPort;
-    private readonly IVeiculoInfoPort _veiculoInfoPort;
+    private readonly INotificacaoClienteGateway _notificacaoClienteGateway;
+    private readonly IClienteGateway _clienteGateway;
+    private readonly IVeiculoGateway _veiculoGateway;
     private readonly ILogger<NotificarClienteAoFinalizar> _logger;
 
     public NotificarClienteAoFinalizar(
-        IOrdemServicoRepository ordemServicoRepository,
+        IOrdemServicoGateway ordemServicoGateway,
         IUnitOfWork unitOfWork,
-        INotificacaoClientePort notificacaoClientePort,
-        IClienteInfoPort clienteInfoPort,
-        IVeiculoInfoPort veiculoInfoPort,
+        INotificacaoClienteGateway notificacaoClienteGateway,
+        IClienteGateway clienteGateway,
+        IVeiculoGateway veiculoGateway,
         ILogger<NotificarClienteAoFinalizar> logger)
     {
-        _ordemServicoRepository = ordemServicoRepository;
+        _ordemServicoGateway = ordemServicoGateway;
         _unitOfWork = unitOfWork;
-        _notificacaoClientePort = notificacaoClientePort;
-        _clienteInfoPort = clienteInfoPort;
-        _veiculoInfoPort = veiculoInfoPort;
+        _notificacaoClienteGateway = notificacaoClienteGateway;
+        _clienteGateway = clienteGateway;
+        _veiculoGateway = veiculoGateway;
         _logger = logger;
     }
 
     public async Task Handle(OrdemServicoFinalizada notification, CancellationToken ct)
     {
-        OrdemServico? ordemServico = await _ordemServicoRepository.ObterPorId(notification.OrdemServicoId, ct);
+        OrdemServico? ordemServico = await _ordemServicoGateway.ObterPorId(notification.OrdemServicoId, ct);
         if (ordemServico is null)
         {
             _logger.LogError(
@@ -58,8 +57,8 @@ public sealed class NotificarClienteAoFinalizar : INotificationHandler<OrdemServ
 
         await _unitOfWork.SaveChangesAsync(ct);
 
-        ClienteInfo? cliente = await _clienteInfoPort.ObterInfo(ordemServico.ClienteId, ct);
-        string? placa = await _veiculoInfoPort.ObterPlaca(ordemServico.VeiculoId, ct);
+        ClienteInfo? cliente = await _clienteGateway.ObterInfo(ordemServico.ClienteId, ct);
+        string? placa = await _veiculoGateway.ObterPlaca(ordemServico.VeiculoId, ct);
 
         if (cliente is null || placa is null)
         {
@@ -71,7 +70,7 @@ public sealed class NotificarClienteAoFinalizar : INotificationHandler<OrdemServ
             return;
         }
 
-        await _notificacaoClientePort.NotificarServicoFinalizado(
+        await _notificacaoClienteGateway.NotificarServicoFinalizado(
             cliente.Nome,
             cliente.Email,
             placa,

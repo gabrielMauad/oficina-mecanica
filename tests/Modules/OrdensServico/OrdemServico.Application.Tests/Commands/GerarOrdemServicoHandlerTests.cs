@@ -1,16 +1,16 @@
+using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
-using OrdensServico.Domain.Ports;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Tests.Commands;
 
 public class GerarOrdemServicoHandlerTests
 {
-    private readonly Mock<IClienteInfoPort> _clienteMock = new();
-    private readonly Mock<IVeiculoInfoPort> _veiculoMock = new();
-    private readonly Mock<IOrdemServicoRepository> _repoMock = new();
+    private readonly Mock<IClienteGateway> _clienteMock = new();
+    private readonly Mock<IVeiculoGateway> _veiculoMock = new();
+    private readonly Mock<IOrdemServicoGateway> _repoMock = new();
     private readonly GerarOrdemServicoHandler _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();

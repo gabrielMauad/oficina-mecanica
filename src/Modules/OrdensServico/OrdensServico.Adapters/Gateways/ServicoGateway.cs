@@ -1,15 +1,15 @@
-﻿using Cadastro.Contracts.Dtos;
+using Cadastro.Contracts.Dtos;
 using Cadastro.Contracts.Queries;
-using OrdensServico.Domain.Ports;
+using OrdensServico.Application.Gateways;
 
-namespace OrdensServico.Infrastructure.Acl;
+namespace OrdensServico.Adapters.Gateways;
 
-internal sealed class ServicoInfoAdapter : IServicoInfoPort
+public sealed class ServicoGateway : IServicoGateway
 {
     private readonly ICadastroServicoQuery _cadastroServicoQuery;
     private readonly Dictionary<Guid, ServicoDto?> _cache = new();
 
-    public ServicoInfoAdapter(ICadastroServicoQuery cadastroServicoQuery) =>
+    public ServicoGateway(ICadastroServicoQuery cadastroServicoQuery) =>
         _cadastroServicoQuery = cadastroServicoQuery;
 
     public async Task<decimal?> ObterPreco(Guid servicoId, CancellationToken ct)

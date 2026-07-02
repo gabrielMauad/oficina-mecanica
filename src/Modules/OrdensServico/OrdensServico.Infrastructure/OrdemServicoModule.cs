@@ -2,12 +2,11 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OrdensServico.Adapters.DataSources;
+using OrdensServico.Adapters.Gateways;
+using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
-using OrdensServico.Application.Ports;
 using OrdensServico.Contracts.Queries;
-using OrdensServico.Domain.OrdemServico;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Infrastructure.Acl;
 using OrdensServico.Infrastructure.Persistence;
 using OrdensServico.Infrastructure.Persistence.Repositories;
 using OrdensServico.Infrastructure.Queries;
@@ -26,20 +25,21 @@ public static class OrdemServicoModule
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<OrdensServicoDbContext>());
 
-        #region Repositórios de domínio
+        #region DataSources (Repositórios EF)
 
         services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
 
         #endregion
 
-        #region Adapters de ACL (ports → implementações externas)
+        #region Gateways (Interface Adapters)
 
-        services.AddScoped<IClienteInfoPort, ClienteInfoAdapter>();
-        services.AddScoped<IVeiculoInfoPort, VeiculoInfoAdapter>();
-        services.AddScoped<IServicoInfoPort, ServicoInfoAdapter>();
-        services.AddScoped<IPecaDisponibilidadePort, PecaDisponibilidadeAdapter>();
-        services.AddScoped<IPecaInsumoInfoPort, PecaInsumoInfoAdapter>();
-        services.AddScoped<INotificacaoClientePort, NotificacaoClienteAdapter>();
+        services.AddScoped<IOrdemServicoGateway, OrdemServicoGateway>();
+        services.AddScoped<IClienteGateway, ClienteGateway>();
+        services.AddScoped<IVeiculoGateway, VeiculoGateway>();
+        services.AddScoped<IServicoGateway, ServicoGateway>();
+        services.AddScoped<IPecaDisponibilidadeGateway, PecaDisponibilidadeGateway>();
+        services.AddScoped<IPecaInsumoInfoGateway, PecaInsumoInfoGateway>();
+        services.AddScoped<INotificacaoClienteGateway, NotificacaoClienteGateway>();
 
         #endregion
 

@@ -1,3 +1,3 @@
-namespace OrdensServico.Presentation;
+namespace OrdensServico.Web;
 
 public sealed class OrdensServicoAssemblyMarker;

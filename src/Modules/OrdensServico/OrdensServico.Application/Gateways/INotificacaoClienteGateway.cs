@@ -1,8 +1,8 @@
-using OrdensServico.Application.Ports.Dtos;
+using OrdensServico.Application.Gateways.Dtos;
 
-namespace OrdensServico.Application.Ports;
+namespace OrdensServico.Application.Gateways;
 
-public interface INotificacaoClientePort
+public interface INotificacaoClienteGateway
 {
     Task NotificarOrcamentoPronto(
         string nomeCliente,

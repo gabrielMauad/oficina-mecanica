@@ -1,6 +1,6 @@
 using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 
-namespace OrdensServico.Presentation.Models;
+namespace OrdensServico.Web.Models;
 
 public sealed record RegistrarDiagnosticoRequest(
     string DescricaoDiagnostico,

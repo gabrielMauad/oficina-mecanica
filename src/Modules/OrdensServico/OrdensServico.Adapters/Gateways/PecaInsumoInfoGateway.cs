@@ -1,15 +1,15 @@
-﻿using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using PecasInsumos.Contracts.Dtos;
 using PecasInsumos.Contracts.Queries;
 
-namespace OrdensServico.Infrastructure.Acl;
+namespace OrdensServico.Adapters.Gateways;
 
-internal sealed class PecaInsumoInfoAdapter : IPecaInsumoInfoPort
+public sealed class PecaInsumoInfoGateway : IPecaInsumoInfoGateway
 {
     private readonly IPecaInsumoQuery _pecaInsumoQuery;
 
-    public PecaInsumoInfoAdapter(IPecaInsumoQuery pecaInsumoQuery) =>
+    public PecaInsumoInfoGateway(IPecaInsumoQuery pecaInsumoQuery) =>
         _pecaInsumoQuery = pecaInsumoQuery;
 
     public async Task<PecaInsumoInfo?> Obter(Guid pecaInsumoId, CancellationToken ct)

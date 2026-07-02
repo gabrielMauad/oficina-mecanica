@@ -1,17 +1,17 @@
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Tests.Commands;
 
 public class RegistrarDiagnosticoHandlerTests
 {
-    private readonly Mock<IServicoInfoPort> _servicoMock = new();
-    private readonly Mock<IPecaDisponibilidadePort> _pecaMock = new();
-    private readonly Mock<IOrdemServicoRepository> _repoMock = new();
+    private readonly Mock<IServicoGateway> _servicoMock = new();
+    private readonly Mock<IPecaDisponibilidadeGateway> _pecaMock = new();
+    private readonly Mock<IOrdemServicoGateway> _repoMock = new();
     private readonly RegistrarDiagnosticoHandler _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();
@@ -73,7 +73,7 @@ public class RegistrarDiagnosticoHandlerTests
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);
     }
 
-    [Fact(DisplayName = "Erro: IServicoInfoPort retorna null → ServicoNaoEncontrado")]
+    [Fact(DisplayName = "Erro: IServicoGateway retorna null → ServicoNaoEncontrado")]
     public async Task Handle_ServicoNaoEncontrado_RetornaErroServicoNaoEncontrado()
     {
         var os = CriarOsEmDiagnostico();

@@ -11,9 +11,9 @@ using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 using OrdensServico.Application.Ordens.Commands.RejeitarOrcamento;
 using OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
 using OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
-using OrdensServico.Presentation.Models;
+using OrdensServico.Web.Models;
 
-namespace OrdensServico.Presentation.Controllers;
+namespace OrdensServico.Web.Controllers;
 
 [Authorize]
 [ApiController]

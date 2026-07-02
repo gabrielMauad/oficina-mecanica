@@ -1,15 +1,15 @@
-﻿using Microsoft.Extensions.Logging;
-using OrdensServico.Application.Ports;
-using OrdensServico.Application.Ports.Dtos;
+using Microsoft.Extensions.Logging;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using System.Text;
 
-namespace OrdensServico.Infrastructure.Acl;
+namespace OrdensServico.Adapters.Gateways;
 
-internal sealed class NotificacaoClienteAdapter : INotificacaoClientePort
+public sealed class NotificacaoClienteGateway : INotificacaoClienteGateway
 {
-    private readonly ILogger<NotificacaoClienteAdapter> _logger;
+    private readonly ILogger<NotificacaoClienteGateway> _logger;
 
-    public NotificacaoClienteAdapter(ILogger<NotificacaoClienteAdapter> logger)
+    public NotificacaoClienteGateway(ILogger<NotificacaoClienteGateway> logger)
     {
         _logger = logger;
     }
