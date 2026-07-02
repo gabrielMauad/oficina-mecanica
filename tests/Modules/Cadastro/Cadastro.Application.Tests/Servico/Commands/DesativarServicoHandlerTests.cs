@@ -39,7 +39,7 @@ public class DesativarServicoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.ServicoId);
+        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
         Assert.Equal("Servico", result.Value.Nome);
         Assert.False(result.Value.Ativo);
         _gatewayMock.Verify(x => x.Atualizar(It.Is<ServicoEntity>(x => x.Nome == "Servico" && !x.Ativo), It.IsAny<CancellationToken>()), Times.Once);

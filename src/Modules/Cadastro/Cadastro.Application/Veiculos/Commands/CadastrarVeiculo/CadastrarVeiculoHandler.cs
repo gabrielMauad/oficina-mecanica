@@ -7,7 +7,7 @@ using SharedKernel.Domain;
 namespace Cadastro.Application.Veiculos.Commands.CadastrarVeiculo;
 
 public sealed class CadastrarVeiculoHandler
-    : IRequestHandler<CadastrarVeiculoCommand, Result<CadastrarVeiculoResponse>>
+    : IRequestHandler<CadastrarVeiculoCommand, Result<Veiculo>>
 {
     private readonly IVeiculoGateway _gateway;
     private readonly IClienteGateway _clienteGateway;
@@ -20,7 +20,7 @@ public sealed class CadastrarVeiculoHandler
         _clienteGateway = clienteGateway;
     }
 
-    public async Task<Result<CadastrarVeiculoResponse>> Handle(CadastrarVeiculoCommand command, CancellationToken cancellationToken)
+    public async Task<Result<Veiculo>> Handle(CadastrarVeiculoCommand command, CancellationToken cancellationToken)
     {
         var placaNormalizada = command.Placa.ToUpperInvariant().Replace("-", "");
 
@@ -45,6 +45,6 @@ public sealed class CadastrarVeiculoHandler
 
         await _gateway.Adicionar(veiculo, cancellationToken);
 
-        return CadastrarVeiculoResponse.FromVeiculo(veiculoResult.Value);
+        return veiculo;
     }
 }

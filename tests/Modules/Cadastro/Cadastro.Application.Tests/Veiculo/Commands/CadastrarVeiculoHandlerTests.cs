@@ -49,12 +49,12 @@ public class CadastrarVeiculoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.VeiculoId);
-        Assert.Equal(placaNormalizada, result.Value.Placa);
+        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
+        Assert.Equal(placaNormalizada, result.Value.Placa.Numero);
         Assert.Equal(command.Modelo, result.Value.Modelo);
         Assert.Equal(command.Marca, result.Value.Marca);
         Assert.Equal(command.Ano, result.Value.Ano);
-        Assert.Equal(command.ClienteId, result.Value.ClienteId);
+        Assert.Equal(command.ClienteId, result.Value.ClienteId.Value);
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
