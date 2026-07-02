@@ -15,7 +15,7 @@ using OrdensServico.Infrastructure.Persistence;
 using OrdensServico.Presentation;
 using PecasInsumos.Infrastructure;
 using PecasInsumos.Infrastructure.Persistence;
-using PecasInsumos.Presentation;
+using PecasInsumos.Web;
 using Scalar.AspNetCore;
 using SharedKernel.Application;
 using System.Text;
