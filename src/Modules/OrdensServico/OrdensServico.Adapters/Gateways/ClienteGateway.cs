@@ -1,14 +1,14 @@
 using Cadastro.Contracts.Queries;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 
-namespace OrdensServico.Infrastructure.Acl;
+namespace OrdensServico.Adapters.Gateways;
 
-internal sealed class ClienteInfoAdapter : IClienteInfoPort
+public sealed class ClienteGateway : IClienteGateway
 {
     private readonly ICadastroClienteQuery _cadastroClienteQuery;
 
-    public ClienteInfoAdapter(ICadastroClienteQuery cadastroClienteQuery)
+    public ClienteGateway(ICadastroClienteQuery cadastroClienteQuery)
         => _cadastroClienteQuery = cadastroClienteQuery;
 
     public async Task<bool> ExisteEAtivo(Guid clienteId, CancellationToken ct)

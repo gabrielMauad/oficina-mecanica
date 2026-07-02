@@ -1,3 +1,4 @@
+using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
@@ -7,7 +8,7 @@ namespace OrdensServico.Application.Tests.Queries;
 
 public class ObterOrdemServicoPorIdHandlerTests
 {
-    private readonly Mock<IOrdemServicoRepository> _repoMock = new();
+    private readonly Mock<IOrdemServicoGateway> _repoMock = new();
     private readonly ObterOrdemServicoPorIdHandler _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();

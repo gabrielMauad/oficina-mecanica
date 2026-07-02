@@ -1,21 +1,20 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using OrdensServico.Application.DomainEventHandlers;
-using OrdensServico.Application.Ports;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using OrdensServico.Domain.OrdemServico.Events;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
 using SharedKernel.Application;
 
 namespace OrdensServico.Application.Tests.DomainEventHandlers;
 
 public class NotificarClienteAoFinalizarHandlerTests
 {
-    private readonly Mock<IOrdemServicoRepository> _repoMock = new();
+    private readonly Mock<IOrdemServicoGateway> _repoMock = new();
     private readonly Mock<IUnitOfWork> _uowMock = new();
-    private readonly Mock<INotificacaoClientePort> _notificacaoMock = new();
-    private readonly Mock<IClienteInfoPort> _clienteMock = new();
-    private readonly Mock<IVeiculoInfoPort> _veiculoMock = new();
+    private readonly Mock<INotificacaoClienteGateway> _notificacaoMock = new();
+    private readonly Mock<IClienteGateway> _clienteMock = new();
+    private readonly Mock<IVeiculoGateway> _veiculoMock = new();
     private readonly NotificarClienteAoFinalizar _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();

@@ -1,14 +1,14 @@
-﻿using Cadastro.Contracts.Dtos;
+using Cadastro.Contracts.Dtos;
 using Cadastro.Contracts.Queries;
-using OrdensServico.Domain.Ports;
+using OrdensServico.Application.Gateways;
 
-namespace OrdensServico.Infrastructure.Acl;
+namespace OrdensServico.Adapters.Gateways;
 
-internal sealed class VeiculoInfoAdapter : IVeiculoInfoPort
+public sealed class VeiculoGateway : IVeiculoGateway
 {
     private readonly ICadastroVeiculoQuery _cadastroVeiculoQuery;
 
-    public VeiculoInfoAdapter(ICadastroVeiculoQuery cadastroVeiculoQuery) =>
+    public VeiculoGateway(ICadastroVeiculoQuery cadastroVeiculoQuery) =>
         _cadastroVeiculoQuery = cadastroVeiculoQuery;
 
     public async Task<bool> ExisteEPertenceAoCliente(Guid veiculoId, Guid clienteId, CancellationToken ct)

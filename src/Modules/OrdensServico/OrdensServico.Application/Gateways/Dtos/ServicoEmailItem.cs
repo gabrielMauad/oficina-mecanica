@@ -1,3 +1,3 @@
-namespace OrdensServico.Application.Ports.Dtos;
+namespace OrdensServico.Application.Gateways.Dtos;
 
 public sealed record ServicoEmailItem(string Nome, int Quantidade, decimal PrecoUnitario);

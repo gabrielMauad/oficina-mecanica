@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using OrdensServico.Application.Gateways;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
@@ -7,15 +8,15 @@ namespace OrdensServico.Application.Ordens.Commands.AprovarOrcamento;
 
 public sealed class AprovarOrcamentoHandler : IRequestHandler<AprovarOrcamentoCommand, Result<OrdemServicoResumoDto>>
 {
-    private readonly IOrdemServicoRepository _ordemServicoRepository;
+    private readonly IOrdemServicoGateway _ordemServicoGateway;
 
-    public AprovarOrcamentoHandler(IOrdemServicoRepository ordemServicoRepository) =>
-        _ordemServicoRepository = ordemServicoRepository;
+    public AprovarOrcamentoHandler(IOrdemServicoGateway ordemServicoGateway) =>
+        _ordemServicoGateway = ordemServicoGateway;
 
     public async Task<Result<OrdemServicoResumoDto>> Handle(AprovarOrcamentoCommand command, CancellationToken ct)
     {
         OrdemServicoId ordemServicoId = new(command.OrdemServicoId);
-        OrdemServico? ordemServico = await _ordemServicoRepository.ObterPorId(ordemServicoId, ct);
+        OrdemServico? ordemServico = await _ordemServicoGateway.ObterPorId(ordemServicoId, ct);
 
         if (ordemServico is null)
             return OrdemServicoErrors.NaoEncontrada;
@@ -25,7 +26,7 @@ public sealed class AprovarOrcamentoHandler : IRequestHandler<AprovarOrcamentoCo
             return result.Error;
 
         OrdemServico os = result.Value;
-        await _ordemServicoRepository.Atualizar(os, ct);
+        await _ordemServicoGateway.Atualizar(os, ct);
 
         return new OrdemServicoResumoDto(
             os.Id.Value,

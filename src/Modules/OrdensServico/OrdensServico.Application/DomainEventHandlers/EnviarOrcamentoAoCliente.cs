@@ -1,11 +1,9 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using OrdensServico.Application.Ports;
-using OrdensServico.Application.Ports.Dtos;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using OrdensServico.Domain.OrdemServico.Events;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
 using SharedKernel.Application;
 using SharedKernel.Domain;
 
@@ -13,38 +11,38 @@ namespace OrdensServico.Application.DomainEventHandlers;
 
 public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoConcluido>
 {
-    private readonly IOrdemServicoRepository _ordemServicoRepository;
+    private readonly IOrdemServicoGateway _ordemServicoGateway;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly INotificacaoClientePort _notificacaoClientePort;
-    private readonly IClienteInfoPort _clienteInfoPort;
-    private readonly IVeiculoInfoPort _veiculoInfoPort;
-    private readonly IServicoInfoPort _servicoInfoPort;
-    private readonly IPecaInsumoInfoPort _pecaInsumoInfoPort;
+    private readonly INotificacaoClienteGateway _notificacaoClienteGateway;
+    private readonly IClienteGateway _clienteGateway;
+    private readonly IVeiculoGateway _veiculoGateway;
+    private readonly IServicoGateway _servicoGateway;
+    private readonly IPecaInsumoInfoGateway _pecaInsumoInfoGateway;
     private readonly ILogger<EnviarOrcamentoAoCliente> _logger;
 
     public EnviarOrcamentoAoCliente(
-        IOrdemServicoRepository ordemServicoRepository,
+        IOrdemServicoGateway ordemServicoGateway,
         IUnitOfWork unitOfWork,
-        INotificacaoClientePort notificacaoClientePort,
-        IClienteInfoPort clienteInfoPort,
-        IVeiculoInfoPort veiculoInfoPort,
-        IServicoInfoPort servicoInfoPort,
-        IPecaInsumoInfoPort pecaInsumoInfoPort,
+        INotificacaoClienteGateway notificacaoClienteGateway,
+        IClienteGateway clienteGateway,
+        IVeiculoGateway veiculoGateway,
+        IServicoGateway servicoGateway,
+        IPecaInsumoInfoGateway pecaInsumoInfoGateway,
         ILogger<EnviarOrcamentoAoCliente> logger)
     {
-        _ordemServicoRepository = ordemServicoRepository;
+        _ordemServicoGateway = ordemServicoGateway;
         _unitOfWork = unitOfWork;
-        _notificacaoClientePort = notificacaoClientePort;
-        _clienteInfoPort = clienteInfoPort;
-        _veiculoInfoPort = veiculoInfoPort;
-        _servicoInfoPort = servicoInfoPort;
-        _pecaInsumoInfoPort = pecaInsumoInfoPort;
+        _notificacaoClienteGateway = notificacaoClienteGateway;
+        _clienteGateway = clienteGateway;
+        _veiculoGateway = veiculoGateway;
+        _servicoGateway = servicoGateway;
+        _pecaInsumoInfoGateway = pecaInsumoInfoGateway;
         _logger = logger;
     }
 
     public async Task Handle(DiagnosticoConcluido notification, CancellationToken ct)
     {
-        OrdemServico? ordemServico = await _ordemServicoRepository.ObterPorId(notification.OrdemServicoId, ct);
+        OrdemServico? ordemServico = await _ordemServicoGateway.ObterPorId(notification.OrdemServicoId, ct);
         if (ordemServico is null)
         {
             _logger.LogError(
@@ -65,8 +63,8 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
 
         await _unitOfWork.SaveChangesAsync(ct);
 
-        ClienteInfo? cliente = await _clienteInfoPort.ObterInfo(ordemServico.ClienteId, ct);
-        string? placa = await _veiculoInfoPort.ObterPlaca(ordemServico.VeiculoId, ct);
+        ClienteInfo? cliente = await _clienteGateway.ObterInfo(ordemServico.ClienteId, ct);
+        string? placa = await _veiculoGateway.ObterPlaca(ordemServico.VeiculoId, ct);
 
         if (cliente is null || placa is null)
         {
@@ -81,7 +79,7 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
         List<ServicoEmailItem> servicos = [];
         foreach (ItemServico item in ordemServico.ItensServico)
         {
-            string? nome = await _servicoInfoPort.ObterNome(item.ServicoId, ct);
+            string? nome = await _servicoGateway.ObterNome(item.ServicoId, ct);
             if (nome is not null)
                 servicos.Add(new ServicoEmailItem(nome, item.Quantidade, item.PrecoUnitarioSnapshot));
         }
@@ -89,12 +87,12 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
         List<PecaEmailItem> pecas = [];
         foreach (ItemPeca item in ordemServico.ItensPeca)
         {
-            PecaInsumoInfo? info = await _pecaInsumoInfoPort.Obter(item.PecaInsumoId, ct);
+            PecaInsumoInfo? info = await _pecaInsumoInfoGateway.Obter(item.PecaInsumoId, ct);
             if (info is not null)
                 pecas.Add(new PecaEmailItem(info.Nome, item.Quantidade, info.UnidadeMedida, item.PrecoUnitarioSnapshot));
         }
 
-        await _notificacaoClientePort.NotificarOrcamentoPronto(
+        await _notificacaoClienteGateway.NotificarOrcamentoPronto(
             cliente.Nome,
             cliente.Email,
             placa,

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using OrdensServico.Application.Gateways;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
@@ -7,14 +8,14 @@ namespace OrdensServico.Application.Ordens.Commands.FinalizarOrdemServico;
 
 public sealed class FinalizarOrdemServicoHandler : IRequestHandler<FinalizarOrdemServicoCommand, Result<OrdemServicoResumoDto>>
 {
-    private readonly IOrdemServicoRepository _ordemServicoRepository;
-    public FinalizarOrdemServicoHandler(IOrdemServicoRepository ordemServicoRepository) =>
-    _ordemServicoRepository = ordemServicoRepository;
+    private readonly IOrdemServicoGateway _ordemServicoGateway;
+    public FinalizarOrdemServicoHandler(IOrdemServicoGateway ordemServicoGateway) =>
+    _ordemServicoGateway = ordemServicoGateway;
 
     public async Task<Result<OrdemServicoResumoDto>> Handle(FinalizarOrdemServicoCommand command, CancellationToken ct)
     {
         OrdemServicoId ordemServicoId = new(command.OrdemServicoId);
-        OrdemServico? ordemServico = await _ordemServicoRepository.ObterPorId(ordemServicoId, ct);
+        OrdemServico? ordemServico = await _ordemServicoGateway.ObterPorId(ordemServicoId, ct);
 
         if (ordemServico is null)
             return OrdemServicoErrors.NaoEncontrada;
@@ -24,7 +25,7 @@ public sealed class FinalizarOrdemServicoHandler : IRequestHandler<FinalizarOrde
             return result.Error;
 
         OrdemServico os = result.Value;
-        await _ordemServicoRepository.Atualizar(os, ct);
+        await _ordemServicoGateway.Atualizar(os, ct);
 
         return new OrdemServicoResumoDto(
             os.Id.Value,

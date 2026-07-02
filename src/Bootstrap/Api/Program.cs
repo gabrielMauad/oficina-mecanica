@@ -12,7 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OrdensServico.Infrastructure;
 using OrdensServico.Infrastructure.Persistence;
-using OrdensServico.Presentation;
+using OrdensServico.Web;
 using PecasInsumos.Infrastructure;
 using PecasInsumos.Infrastructure.Persistence;
 using PecasInsumos.Web;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OrdensServico.Adapters.DataSources;
 using OrdensServico.Domain.OrdemServico;
 
 namespace OrdensServico.Infrastructure.Persistence.Repositories;

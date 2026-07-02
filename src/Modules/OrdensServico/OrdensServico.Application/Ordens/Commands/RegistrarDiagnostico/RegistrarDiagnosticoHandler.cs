@@ -1,33 +1,33 @@
 ﻿using MediatR;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
-using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 
 public sealed class RegistrarDiagnosticoHandler : IRequestHandler<RegistrarDiagnosticoCommand, Result<OrdemServicoResumoDto>>
 {
-    private readonly IServicoInfoPort _servicoInfoPort;
-    private readonly IPecaDisponibilidadePort _pecaDisponibilidadePort;
-    private readonly IOrdemServicoRepository _repository;
+    private readonly IServicoGateway _servicoGateway;
+    private readonly IPecaDisponibilidadeGateway _pecaDisponibilidadeGateway;
+    private readonly IOrdemServicoGateway _gateway;
 
     public RegistrarDiagnosticoHandler(
-        IServicoInfoPort servicoInfoPort,
-        IPecaDisponibilidadePort pecaDisponibilidadePort,
-        IOrdemServicoRepository repository
+        IServicoGateway servicoGateway,
+        IPecaDisponibilidadeGateway pecaDisponibilidadeGateway,
+        IOrdemServicoGateway gateway
     )
     {
-        _servicoInfoPort = servicoInfoPort;
-        _pecaDisponibilidadePort = pecaDisponibilidadePort;
-        _repository = repository;
+        _servicoGateway = servicoGateway;
+        _pecaDisponibilidadeGateway = pecaDisponibilidadeGateway;
+        _gateway = gateway;
     }
 
     public async Task<Result<OrdemServicoResumoDto>> Handle(RegistrarDiagnosticoCommand command, CancellationToken ct)
     {
         OrdemServicoId ordemServicoId = new(command.OrdemServicoId);
-        OrdemServico? ordemServico = await _repository.ObterPorId(ordemServicoId, ct);
+        OrdemServico? ordemServico = await _gateway.ObterPorId(ordemServicoId, ct);
 
         if (ordemServico == null)
             return OrdemServicoErrors.NaoEncontrada;
@@ -54,7 +54,7 @@ public sealed class RegistrarDiagnosticoHandler : IRequestHandler<RegistrarDiagn
 
         OrdemServico os = resultado.Value;
 
-        await _repository.Atualizar(os, ct);
+        await _gateway.Atualizar(os, ct);
 
         return new OrdemServicoResumoDto(
             os.Id.Value,
@@ -79,7 +79,7 @@ public sealed class RegistrarDiagnosticoHandler : IRequestHandler<RegistrarDiagn
         List<ItemServicoInput> itemServicoList = [];
         foreach (var servico in servicos)
         {
-            decimal? snapshotPreco = await _servicoInfoPort.ObterPreco(servico.ServicoId, ct);
+            decimal? snapshotPreco = await _servicoGateway.ObterPreco(servico.ServicoId, ct);
             if (snapshotPreco == null)
                 return OrdemServicoErrors.ServicoNaoEncontrado;
             itemServicoList.Add(new ItemServicoInput(servico.ServicoId, servico.Quantidade, snapshotPreco.Value));
@@ -95,7 +95,7 @@ public sealed class RegistrarDiagnosticoHandler : IRequestHandler<RegistrarDiagn
         List<ItemPecaInput> itemPecaList = [];
         foreach (var peca in pecas)
         {
-            PecaDisponibilidade? disponibilidade = await _pecaDisponibilidadePort.Verificar(peca.PecaInsumoId, peca.Quantidade, ct);
+            PecaDisponibilidade? disponibilidade = await _pecaDisponibilidadeGateway.Verificar(peca.PecaInsumoId, peca.Quantidade, ct);
             if (disponibilidade == null)
                 return OrdemServicoErrors.PecaNaoEncontrada;
             if (!disponibilidade.Disponivel)

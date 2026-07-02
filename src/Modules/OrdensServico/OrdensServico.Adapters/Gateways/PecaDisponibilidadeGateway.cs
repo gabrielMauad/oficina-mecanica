@@ -1,14 +1,14 @@
-﻿using OrdensServico.Domain.Ports;
-using OrdensServico.Domain.Ports.Dtos;
+using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Gateways.Dtos;
 using PecasInsumos.Contracts.Queries;
 
-namespace OrdensServico.Infrastructure.Acl;
+namespace OrdensServico.Adapters.Gateways;
 
-internal sealed class PecaDisponibilidadeAdapter : IPecaDisponibilidadePort
+public sealed class PecaDisponibilidadeGateway : IPecaDisponibilidadeGateway
 {
     private readonly IPecasInsumosDisponibilidadeQuery _pecaDisponibilidadeQuery;
 
-    public PecaDisponibilidadeAdapter(IPecasInsumosDisponibilidadeQuery pecaDisponibilidadeQuery) =>
+    public PecaDisponibilidadeGateway(IPecasInsumosDisponibilidadeQuery pecaDisponibilidadeQuery) =>
         _pecaDisponibilidadeQuery = pecaDisponibilidadeQuery;
 
     public async Task<PecaDisponibilidade?> Verificar(Guid pecaInsumoId, int quantidade, CancellationToken ct)

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using OrdensServico.Application.Gateways;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
@@ -7,14 +8,14 @@ namespace OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
 
 public sealed class ObterOrdemServicoPorIdHandler : IRequestHandler<ObterOrdemServicoPorIdQuery, Result<OrdemServicoResumoDto>>
 {
-    private readonly IOrdemServicoRepository _ordemServicoRepository;
+    private readonly IOrdemServicoGateway _ordemServicoGateway;
 
-    public ObterOrdemServicoPorIdHandler(IOrdemServicoRepository ordemServicoRepository) =>
-        _ordemServicoRepository = ordemServicoRepository;
+    public ObterOrdemServicoPorIdHandler(IOrdemServicoGateway ordemServicoGateway) =>
+        _ordemServicoGateway = ordemServicoGateway;
 
     public async Task<Result<OrdemServicoResumoDto>> Handle(ObterOrdemServicoPorIdQuery request, CancellationToken ct)
     {
-        var ordemServico = await _ordemServicoRepository.ObterPorId(
+        var ordemServico = await _ordemServicoGateway.ObterPorId(
             new OrdemServicoId(request.OrdemServicoId),
             ct
         );

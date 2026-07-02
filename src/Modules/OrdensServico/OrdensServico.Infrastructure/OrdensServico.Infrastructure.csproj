@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\..\SharedKernel\SharedKernel.Application\SharedKernel.Application.csproj" />
     <ProjectReference Include="..\..\Cadastro\Cadastro.Contracts\Cadastro.Contracts.csproj" />
     <ProjectReference Include="..\..\PecasInsumos\PecasInsumos.Contracts\PecasInsumos.Contracts.csproj" />
+    <ProjectReference Include="..\OrdensServico.Adapters\OrdensServico.Adapters.csproj" />
     <ProjectReference Include="..\OrdensServico.Application\OrdensServico.Application.csproj" />
     <ProjectReference Include="..\OrdensServico.Contracts\OrdensServico.Contracts.csproj" />
     <ProjectReference Include="..\OrdensServico.Domain\OrdensServico.Domain.csproj" />
