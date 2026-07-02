@@ -1,7 +1,6 @@
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Gateways.Dtos;
 using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
-using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
@@ -48,13 +47,13 @@ public class RegistrarDiagnosticoHandlerTests
             [new ServicoItem(ServicoId, 1)],
             [new PecaItem(PecaId, 2)]);
 
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value.ItensServico);
         Assert.Single(result.Value.ItensPeca);
         Assert.Single(result.Value.Orcamentos);
-        Assert.Equal("Pendente", result.Value.Orcamentos[0].Status);
+        Assert.Equal("Pendente", result.Value.Orcamentos[0].Status.ToString());
         _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -67,7 +66,7 @@ public class RegistrarDiagnosticoHandlerTests
         var command = new RegistrarDiagnosticoCommand(
             Guid.NewGuid(), "desc", [new ServicoItem(ServicoId, 1)], [new PecaItem(PecaId, 1)]);
 
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);
@@ -87,7 +86,7 @@ public class RegistrarDiagnosticoHandlerTests
         var command = new RegistrarDiagnosticoCommand(
             os.Id.Value, "desc", [new ServicoItem(ServicoId, 1)], [new PecaItem(PecaId, 1)]);
 
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.ServicoNaoEncontrado", result.Error.Code);
@@ -107,7 +106,7 @@ public class RegistrarDiagnosticoHandlerTests
         var command = new RegistrarDiagnosticoCommand(
             os.Id.Value, "desc", [new ServicoItem(ServicoId, 1)], [new PecaItem(PecaId, 1)]);
 
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.PecaNaoEncontrada", result.Error.Code);
@@ -127,7 +126,7 @@ public class RegistrarDiagnosticoHandlerTests
         var command = new RegistrarDiagnosticoCommand(
             os.Id.Value, "desc", [new ServicoItem(ServicoId, 1)], [new PecaItem(PecaId, 5)]);
 
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.PecaIndisponivel", result.Error.Code);

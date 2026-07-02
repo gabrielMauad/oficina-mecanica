@@ -1,4 +1,4 @@
-using OrdensServico.Contracts.Dtos;
+using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Application;
 
 namespace OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
@@ -8,7 +8,7 @@ public sealed record RegistrarDiagnosticoCommand(
     string DescricaoDiagnostico,
     IReadOnlyList<ServicoItem> Servicos,
     IReadOnlyList<PecaItem> Pecas
-) : ICommand<OrdemServicoResumoDto>;
+) : ICommand<OrdemServico>;
 
 public sealed record ServicoItem(Guid ServicoId, int Quantidade);
 public sealed record PecaItem(Guid PecaInsumoId, int Quantidade);

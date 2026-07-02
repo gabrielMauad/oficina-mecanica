@@ -1,6 +1,5 @@
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
-using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
@@ -30,12 +29,12 @@ public class GerarOrdemServicoHandlerTests
             .ReturnsAsync(true);
 
         var command = new GerarOrdemServicoCommand(ClienteId, VeiculoId);
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(ClienteId, result.Value.ClienteId);
         Assert.Equal(VeiculoId, result.Value.VeiculoId);
-        Assert.Equal("Recebida", result.Value.Status);
+        Assert.Equal("Recebida", result.Value.Status.ToString());
         _repoMock.Verify(x => x.Adicionar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -46,7 +45,7 @@ public class GerarOrdemServicoHandlerTests
             .ReturnsAsync(false);
 
         var command = new GerarOrdemServicoCommand(ClienteId, VeiculoId);
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.ClienteInexistenteOuInativo", result.Error.Code);
@@ -62,7 +61,7 @@ public class GerarOrdemServicoHandlerTests
             .ReturnsAsync(false);
 
         var command = new GerarOrdemServicoCommand(ClienteId, VeiculoId);
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.VeiculoInexistenteOuNaoPertenceAoCliente", result.Error.Code);

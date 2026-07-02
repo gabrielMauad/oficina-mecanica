@@ -1,33 +1,31 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OrdensServico.Application.Ordens.Commands.AprovarOrcamento;
-using OrdensServico.Application.Ordens.Commands.ConcluirOrdemServico;
-using OrdensServico.Application.Ordens.Commands.ExecutarOrdemServico;
-using OrdensServico.Application.Ordens.Commands.FinalizarOrdemServico;
-using OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
-using OrdensServico.Application.Ordens.Commands.IniciarDiagnostico;
-using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
-using OrdensServico.Application.Ordens.Commands.RejeitarOrcamento;
+using OrdensServico.Adapters.Controllers;
+using OrdensServico.Adapters.Models.Request;
 using OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
 using OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
-using OrdensServico.Web.Models;
 
 namespace OrdensServico.Web.Controllers;
 
 [Authorize]
 [ApiController]
 [Route("api/v1/ordens-servico")]
-public class OrdensServicoController : ControllerBase
+public class OrdemServicoApiController : ControllerBase
 {
+    private readonly OrdemServicoController _caController;
     private readonly ISender _sender;
 
-    public OrdensServicoController(ISender sender) => _sender = sender;
+    public OrdemServicoApiController(OrdemServicoController caController, ISender sender)
+    {
+        _caController = caController;
+        _sender = sender;
+    }
 
     [HttpPost]
-    public async Task<IActionResult> Gerar([FromBody] GerarOrdemServicoCommand command)
+    public async Task<IActionResult> Gerar([FromBody] GerarOrdemServicoRequest request)
     {
-        var result = await _sender.Send(command);
+        var result = await _caController.Gerar(request);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -62,7 +60,7 @@ public class OrdensServicoController : ControllerBase
     [HttpPatch("{id}/iniciar-diagnostico")]
     public async Task<IActionResult> IniciarDiagnostico(Guid id)
     {
-        var result = await _sender.Send(new IniciarDiagnosticoCommand(id));
+        var result = await _caController.IniciarDiagnostico(id);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -73,8 +71,7 @@ public class OrdensServicoController : ControllerBase
     [HttpPatch("{id}/registrar-diagnostico")]
     public async Task<IActionResult> RegistrarDiagnostico(Guid id, [FromBody] RegistrarDiagnosticoRequest request)
     {
-        var command = new RegistrarDiagnosticoCommand(id, request.DescricaoDiagnostico, request.Servicos, request.Pecas);
-        var result = await _sender.Send(command);
+        var result = await _caController.RegistrarDiagnostico(id, request);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -85,7 +82,7 @@ public class OrdensServicoController : ControllerBase
     [HttpPatch("{id}/aprovar-orcamento")]
     public async Task<IActionResult> AprovarOrcamento(Guid id)
     {
-        var result = await _sender.Send(new AprovarOrcamentoCommand(id));
+        var result = await _caController.AprovarOrcamento(id);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -96,7 +93,7 @@ public class OrdensServicoController : ControllerBase
     [HttpPatch("{id}/rejeitar-orcamento")]
     public async Task<IActionResult> RejeitarOrcamento(Guid id)
     {
-        var result = await _sender.Send(new RejeitarOrcamentoCommand(id));
+        var result = await _caController.RejeitarOrcamento(id);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -107,7 +104,7 @@ public class OrdensServicoController : ControllerBase
     [HttpPatch("{id}/executar")]
     public async Task<IActionResult> Executar(Guid id)
     {
-        var result = await _sender.Send(new ExecutarOrdemServicoCommand(id));
+        var result = await _caController.Executar(id);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -118,7 +115,7 @@ public class OrdensServicoController : ControllerBase
     [HttpPatch("{id}/finalizar")]
     public async Task<IActionResult> Finalizar(Guid id)
     {
-        var result = await _sender.Send(new FinalizarOrdemServicoCommand(id));
+        var result = await _caController.Finalizar(id);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
@@ -129,7 +126,7 @@ public class OrdensServicoController : ControllerBase
     [HttpPatch("{id}/concluir")]
     public async Task<IActionResult> Concluir(Guid id)
     {
-        var result = await _sender.Send(new ConcluirOrdemServicoCommand(id));
+        var result = await _caController.Concluir(id);
 
         if (result.IsFailure)
             return UnprocessableEntity(result.Error);
