@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OrdensServico.Application\OrdensServico.Application.csproj" />
+    <ProjectReference Include="..\OrdensServico.Adapters\OrdensServico.Adapters.csproj" />
   </ItemGroup>
 
 </Project>

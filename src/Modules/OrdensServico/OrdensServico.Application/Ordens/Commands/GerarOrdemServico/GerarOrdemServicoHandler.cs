@@ -1,12 +1,11 @@
 ﻿using MediatR;
 using OrdensServico.Application.Gateways;
-using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
 
-public sealed class GerarOrdemServicoHandler : IRequestHandler<GerarOrdemServicoCommand, Result<OrdemServicoResumoDto>>
+public sealed class GerarOrdemServicoHandler : IRequestHandler<GerarOrdemServicoCommand, Result<OrdemServico>>
 {
     private readonly IClienteGateway _clienteGateway;
     private readonly IVeiculoGateway _veiculoGateway;
@@ -23,7 +22,7 @@ public sealed class GerarOrdemServicoHandler : IRequestHandler<GerarOrdemServico
         _ordemServicoGateway = ordemServicoGateway;
     }
 
-    public async Task<Result<OrdemServicoResumoDto>> Handle(GerarOrdemServicoCommand command, CancellationToken ct)
+    public async Task<Result<OrdemServico>> Handle(GerarOrdemServicoCommand command, CancellationToken ct)
     {
         if (!await _clienteGateway.ExisteEAtivo(command.ClienteId, ct))
             return OrdemServicoErrors.ClienteInexistenteOuInativo;
@@ -37,19 +36,6 @@ public sealed class GerarOrdemServicoHandler : IRequestHandler<GerarOrdemServico
         var os = result.Value;
         await _ordemServicoGateway.Adicionar(os, ct);
 
-        return new OrdemServicoResumoDto(
-            os.Id.Value,
-            os.ClienteId,
-            os.VeiculoId,
-            os.Status.ToString(),
-            os.DescricaoDiagnostico,
-            os.NotificadoEm,
-            os.EntregueEm,
-            os.CriadoEm,
-            os.AtualizadoEm,
-            [],
-            [],
-            []
-        );
+        return os;
     }
 }

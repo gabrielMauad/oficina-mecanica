@@ -1,6 +1,5 @@
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Ordens.Commands.ConcluirOrdemServico;
-using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
@@ -42,10 +41,10 @@ public class ConcluirOrdemServicoHandlerTests
             .ReturnsAsync(os);
 
         var command = new ConcluirOrdemServicoCommand(os.Id.Value);
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("Entregue", result.Value.Status);
+        Assert.Equal("Entregue", result.Value.Status.ToString());
         Assert.NotNull(result.Value.EntregueEm);
         _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -57,7 +56,7 @@ public class ConcluirOrdemServicoHandlerTests
             .ReturnsAsync((OrdensServico.Domain.OrdemServico.OrdemServico?)null);
 
         var command = new ConcluirOrdemServicoCommand(Guid.NewGuid());
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);

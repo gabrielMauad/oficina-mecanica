@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OrdensServico.Adapters.Controllers;
 using OrdensServico.Adapters.DataSources;
 using OrdensServico.Adapters.Gateways;
 using OrdensServico.Application.Gateways;
@@ -40,6 +41,12 @@ public static class OrdemServicoModule
         services.AddScoped<IPecaDisponibilidadeGateway, PecaDisponibilidadeGateway>();
         services.AddScoped<IPecaInsumoInfoGateway, PecaInsumoInfoGateway>();
         services.AddScoped<INotificacaoClienteGateway, NotificacaoClienteGateway>();
+
+        #endregion
+
+        #region Controllers CA
+
+        services.AddScoped<OrdemServicoController>();
 
         #endregion
 

@@ -1,6 +1,5 @@
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Ordens.Commands.IniciarDiagnostico;
-using OrdensServico.Contracts.Dtos;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
@@ -27,10 +26,10 @@ public class IniciarDiagnosticoHandlerTests
             .ReturnsAsync(os);
 
         var command = new IniciarDiagnosticoCommand(os.Id.Value);
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("EmDiagnostico", result.Value.Status);
+        Assert.Equal("EmDiagnostico", result.Value.Status.ToString());
         _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -41,7 +40,7 @@ public class IniciarDiagnosticoHandlerTests
             .ReturnsAsync((OrdensServico.Domain.OrdemServico.OrdemServico?)null);
 
         var command = new IniciarDiagnosticoCommand(Guid.NewGuid());
-        Result<OrdemServicoResumoDto> result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);
