@@ -3,14 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OrdensServico.Contracts.IntegrationEvents;
-using PecasInsumos.Adapters.Controllers;
-using PecasInsumos.Adapters.DataSources;
-using PecasInsumos.Adapters.Gateways;
 using PecasInsumos.Application.Commands.AdicionarPecaInsumo;
-using PecasInsumos.Application.Gateways;
 using PecasInsumos.Application.IntegrationEventHandlers;
 using PecasInsumos.Application.Queries.ListarPecasInsumos;
 using PecasInsumos.Contracts.Queries;
+using PecasInsumos.Domain;
 using PecasInsumos.Infrastructure.Persistence;
 using PecasInsumos.Infrastructure.Queries;
 using SharedKernel.Application;
@@ -28,21 +25,9 @@ public static class PecasInsumosModule
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<PecasInsumosDbContext>());
 
-        #region DataSources (Repositórios EF)
+        #region Repositórios de domínio 
 
         services.AddScoped<IPecaInsumoRepository, PecaInsumoRepository>();
-
-        #endregion
-
-        #region Gateways (Interface Adapters)
-
-        services.AddScoped<IPecaInsumoGateway, PecaInsumoGateway>();
-
-        #endregion
-
-        #region Controllers CA
-
-        services.AddScoped<PecaInsumoController>();
 
         #endregion
 

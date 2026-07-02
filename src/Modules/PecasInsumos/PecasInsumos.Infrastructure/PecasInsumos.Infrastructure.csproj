@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\SharedKernel\SharedKernel.Application\SharedKernel.Application.csproj" />
-    <ProjectReference Include="..\PecasInsumos.Adapters\PecasInsumos.Adapters.csproj" />
     <ProjectReference Include="..\PecasInsumos.Application\PecasInsumos.Application.csproj" />
     <ProjectReference Include="..\PecasInsumos.Contracts\PecasInsumos.Contracts.csproj" />
     <ProjectReference Include="..\PecasInsumos.Domain\PecasInsumos.Domain.csproj" />

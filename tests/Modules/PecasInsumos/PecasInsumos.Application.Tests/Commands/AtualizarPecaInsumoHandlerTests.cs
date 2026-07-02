@@ -1,6 +1,5 @@
 using Moq;
 using PecasInsumos.Application.Commands.AtualizarPecaInsumo;
-using PecasInsumos.Application.Gateways;
 using PecasInsumos.Domain;
 using SharedKernel.Domain;
 using PecaInsumoEntity = PecasInsumos.Domain.PecaInsumo;
@@ -9,13 +8,15 @@ namespace PecasInsumos.Application.Tests.Commands;
 
 public class AtualizarPecaInsumoHandlerTests
 {
-    private readonly Mock<IPecaInsumoGateway> _gatewayMock;
+    private readonly Mock<IPecaInsumoRepository> _repositoryMock;
     private readonly AtualizarPecaInsumoHandler _handler;
 
     public AtualizarPecaInsumoHandlerTests()
     {
-        _gatewayMock = new Mock<IPecaInsumoGateway>();
-        _handler = new AtualizarPecaInsumoHandler(_gatewayMock.Object);
+        _repositoryMock = new Mock<IPecaInsumoRepository>();
+        _handler = new AtualizarPecaInsumoHandler(
+            _repositoryMock.Object
+        );
     }
 
     [Theory(DisplayName = "Cenário feliz")]
@@ -36,7 +37,7 @@ public class AtualizarPecaInsumoHandlerTests
         var descricaoEsperada = descricao ?? pecaInsumo.Descricao;
         var precoEsperado = precoDecimal ?? pecaInsumo.PrecoUnitario.Valor;
 
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -46,13 +47,13 @@ public class AtualizarPecaInsumoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
+        Assert.NotEqual(Guid.Empty, result.Value.PecaInsumoId);
         Assert.Equal(descricaoEsperada, result.Value.Descricao);
-        Assert.Equal(precoEsperado, result.Value.PrecoUnitario.Valor);
+        Assert.Equal(precoEsperado, result.Value.PrecoUnitario);
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _gatewayMock.Verify(x => x.Atualizar(It.Is<PecaInsumoEntity>(p => p.Descricao == descricaoEsperada && p.PrecoUnitario.Valor == precoEsperado), It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(x => x.Atualizar(It.Is<PecaInsumoEntity>(p => p.Descricao == descricaoEsperada && p.PrecoUnitario.Valor == precoEsperado), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Peça/insumo não encontrada")]
@@ -87,7 +88,7 @@ public class AtualizarPecaInsumoHandlerTests
         var pecaInsumoId = new PecaInsumoId(command.PecaInsumoId);
         PecaInsumoEntity pecaInsumo = PecaInsumoEntity.Criar("Filtro de Óleo", command.Descricao, 0, 5, UnidadeDeMedida.Unidade).Value;
         pecaInsumo.Desativar();
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -110,7 +111,7 @@ public class AtualizarPecaInsumoHandlerTests
         );
         var pecaInsumoId = new PecaInsumoId(command.PecaInsumoId);
         PecaInsumoEntity pecaInsumo = PecaInsumoEntity.Criar("Filtro de Óleo", command.Descricao, 0, 5, UnidadeDeMedida.Unidade).Value;
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -133,7 +134,7 @@ public class AtualizarPecaInsumoHandlerTests
         );
         var pecaInsumoId = new PecaInsumoId(command.PecaInsumoId);
         PecaInsumoEntity pecaInsumo = PecaInsumoEntity.Criar("Filtro de Óleo", command.Descricao, 100, 5, UnidadeDeMedida.Unidade).Value;
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -143,6 +144,6 @@ public class AtualizarPecaInsumoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        _gatewayMock.Verify(x => x.Atualizar(It.Is<PecaInsumoEntity>(p => p.Nome == "Filtro de Óleo"), It.IsAny<CancellationToken>()), Times.Never);
+        _repositoryMock.Verify(x => x.Atualizar(It.Is<PecaInsumoEntity>(p => p.Nome == "Filtro de Óleo"), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

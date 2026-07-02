@@ -1,19 +1,20 @@
-using MediatR;
-using PecasInsumos.Application.Gateways;
+﻿using MediatR;
 using PecasInsumos.Domain;
 using SharedKernel.Domain;
 
 namespace PecasInsumos.Application.Commands.AdicionarPecaInsumo;
 
-public sealed class AdicionarPecaInsumoHandler : IRequestHandler<AdicionarPecaInsumoCommand, Result<PecaInsumo>>
+public sealed class AdicionarPecaInsumoHandler : IRequestHandler<AdicionarPecaInsumoCommand, Result<AdicionarPecaInsumoResponse>>
 {
-    private readonly IPecaInsumoGateway _gateway;
+    private readonly IPecaInsumoRepository _repository;
 
-    public AdicionarPecaInsumoHandler(IPecaInsumoGateway gateway) => _gateway = gateway;
+    public AdicionarPecaInsumoHandler(
+        IPecaInsumoRepository repository
+    ) => _repository = repository;
 
-    public async Task<Result<PecaInsumo>> Handle(AdicionarPecaInsumoCommand command, CancellationToken cancellationToken)
+    public async Task<Result<AdicionarPecaInsumoResponse>> Handle(AdicionarPecaInsumoCommand command, CancellationToken cancellationToken)
     {
-        if (await _gateway.ExistePorNome(command.Nome, cancellationToken))
+        if (await _repository.ExistePorNome(command.Nome, cancellationToken))
             return PecaInsumoErrors.NomeJaExiste;
 
         UnidadeDeMedida unidadeDeMedida = Enum.Parse<UnidadeDeMedida>(command.UnidadeDeMedida);
@@ -29,8 +30,9 @@ public sealed class AdicionarPecaInsumoHandler : IRequestHandler<AdicionarPecaIn
 
         PecaInsumo pecaInsumo = pecaInsumoResult.Value;
 
-        await _gateway.Adicionar(pecaInsumo, cancellationToken);
+        await _repository.Adicionar(pecaInsumo, cancellationToken);
 
-        return pecaInsumo;
+        return AdicionarPecaInsumoResponse.FromPecaInsumo(pecaInsumo);
     }
 }
+

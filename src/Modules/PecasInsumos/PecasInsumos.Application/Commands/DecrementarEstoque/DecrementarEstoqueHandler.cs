@@ -1,20 +1,22 @@
 using MediatR;
-using PecasInsumos.Application.Gateways;
 using PecasInsumos.Domain;
 using SharedKernel.Domain;
 
 namespace PecasInsumos.Application.Commands.DecrementarEstoque;
 
-public sealed class DecrementarEstoqueHandler : IRequestHandler<DecrementarEstoqueCommand, Result<PecaInsumo>>
+public sealed class DecrementarEstoqueHandler : IRequestHandler<DecrementarEstoqueCommand, Result<DecrementarEstoqueResponse>>
 {
-    private readonly IPecaInsumoGateway _gateway;
+    private readonly IPecaInsumoRepository _repository;
 
-    public DecrementarEstoqueHandler(IPecaInsumoGateway gateway) => _gateway = gateway;
+    public DecrementarEstoqueHandler(IPecaInsumoRepository repository)
+    {
+        _repository = repository;
+    }
 
-    public async Task<Result<PecaInsumo>> Handle(DecrementarEstoqueCommand command, CancellationToken cancellationToken)
+    public async Task<Result<DecrementarEstoqueResponse>> Handle(DecrementarEstoqueCommand command, CancellationToken cancellationToken)
     {
         PecaInsumoId pecaInsumoId = new(command.PecaInsumoId);
-        PecaInsumo? pecaInsumo = await _gateway.ObterPorId(pecaInsumoId, cancellationToken);
+        PecaInsumo? pecaInsumo = await _repository.ObterPorId(pecaInsumoId, cancellationToken);
 
         if (pecaInsumo == null)
             return PecaInsumoErrors.NaoEncontrada;
@@ -27,8 +29,8 @@ public sealed class DecrementarEstoqueHandler : IRequestHandler<DecrementarEstoq
 
         pecaInsumo = pecaInsumoResult.Value;
 
-        await _gateway.Atualizar(pecaInsumo, cancellationToken);
+        await _repository.Atualizar(pecaInsumo, cancellationToken);
 
-        return pecaInsumo;
+        return DecrementarEstoqueResponse.FromPecaInsumo(pecaInsumo);
     }
 }

@@ -1,6 +1,5 @@
 using Moq;
 using PecasInsumos.Application.Commands.DecrementarEstoque;
-using PecasInsumos.Application.Gateways;
 using PecasInsumos.Domain;
 using SharedKernel.Domain;
 using PecaInsumoEntity = PecasInsumos.Domain.PecaInsumo;
@@ -9,13 +8,13 @@ namespace PecasInsumos.Application.Tests.Commands;
 
 public class DecrementarEstoqueHandlerTests
 {
-    private readonly Mock<IPecaInsumoGateway> _gatewayMock;
+    private readonly Mock<IPecaInsumoRepository> _repositoryMock;
     private readonly DecrementarEstoqueHandler _handler;
 
     public DecrementarEstoqueHandlerTests()
     {
-        _gatewayMock = new Mock<IPecaInsumoGateway>();
-        _handler = new DecrementarEstoqueHandler(_gatewayMock.Object);
+        _repositoryMock = new Mock<IPecaInsumoRepository>();
+        _handler = new DecrementarEstoqueHandler(_repositoryMock.Object);
     }
 
     [Fact(DisplayName = "Cenário feliz")]
@@ -30,7 +29,7 @@ public class DecrementarEstoqueHandlerTests
         PecaInsumoEntity pecaInsumo = PecaInsumoEntity.Criar("Filtro de Óleo", "Descrição", 10, 10, UnidadeDeMedida.Unidade).Value;
         var quantidadeEsperada = pecaInsumo.QuantidadeEmEstoque - command.Quantidade;
 
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -40,13 +39,13 @@ public class DecrementarEstoqueHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        Assert.NotEqual(Guid.Empty, result.Value.Id.Value);
+        Assert.NotEqual(Guid.Empty, result.Value.PecaInsumoId);
         Assert.Equal(pecaInsumo.Nome, result.Value.Nome);
         Assert.Equal(quantidadeEsperada, result.Value.QuantidadeEmEstoque);
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _gatewayMock.Verify(x => x.Atualizar(It.Is<PecaInsumoEntity>(p => p.QuantidadeEmEstoque == quantidadeEsperada), It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(x => x.Atualizar(It.Is<PecaInsumoEntity>(p => p.QuantidadeEmEstoque == quantidadeEsperada), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Peça/insumo não encontrada")]
@@ -79,7 +78,7 @@ public class DecrementarEstoqueHandlerTests
         var pecaInsumoId = new PecaInsumoId(command.PecaInsumoId);
         PecaInsumoEntity pecaInsumo = PecaInsumoEntity.Criar("Filtro de Óleo", "Descrição", 10, 10, UnidadeDeMedida.Unidade).Value;
         pecaInsumo.Desativar();
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -101,7 +100,7 @@ public class DecrementarEstoqueHandlerTests
         );
         var pecaInsumoId = new PecaInsumoId(command.PecaInsumoId);
         PecaInsumoEntity pecaInsumo = PecaInsumoEntity.Criar("Filtro de Óleo", "Descrição", 10, 10, UnidadeDeMedida.Unidade).Value;
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -123,7 +122,7 @@ public class DecrementarEstoqueHandlerTests
         );
         var pecaInsumoId = new PecaInsumoId(command.PecaInsumoId);
         PecaInsumoEntity pecaInsumo = PecaInsumoEntity.Criar("Filtro de Óleo", "Descrição", 10, 5, UnidadeDeMedida.Unidade).Value;
-        _gatewayMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
+        _repositoryMock.Setup(x => x.ObterPorId(pecaInsumoId, It.IsAny<CancellationToken>())).ReturnsAsync(pecaInsumo);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

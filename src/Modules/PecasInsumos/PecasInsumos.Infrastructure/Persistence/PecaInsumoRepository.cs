@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PecasInsumos.Adapters.DataSources;
 using PecasInsumos.Domain;
 
 namespace PecasInsumos.Infrastructure.Persistence;
