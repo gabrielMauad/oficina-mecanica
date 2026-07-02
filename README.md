@@ -163,7 +163,9 @@ Abra `coverage-report/index.html` para visualizar. Meta: **≥ 80% de cobertura 
 
 ### Aderência à Clean Architecture
 
-O projeto é **aderente à Clean Architecture** (Robert C. Martin): os quatro anéis estão representados por projetos físicos distintos — Domain (Entities), Application (Use Cases), Presentation/Infrastructure/Contracts (Interface Adapters) e Bootstrap (Frameworks & Drivers) — e a **Regra de Dependência é forçada em compile-time** pelas referências de projeto, com dependências apontando sempre para dentro.
+O projeto é **aderente à Clean Architecture** (Robert C. Martin): os quatro anéis estão representados por projetos físicos distintos — Domain (Entities), Application (Use Cases), Adapters/Contracts (Interface Adapters) e Web/Infrastructure/Bootstrap (Frameworks & Drivers) — e a **Regra de Dependência é forçada em compile-time** pelas referências de projeto, com dependências apontando sempre para dentro.
+
+O anel verde (Interface Adapters) tem assembly próprio por módulo (`{Module}.Adapters`), com os artefatos nomeados que o diagrama de Martin cobra: **Controller CA** (`Controllers/`), **Gateway** (`Gateways/`, delega ao `I{Entity}Repository` em `DataSources/`) e **Presenter** (`Presenters/`, monta a ViewModel a partir da entidade devolvida pelo Handler). O MediatR (`ISender.Send`) permanece como único seam de framework, vivendo dentro do Controller CA — decisão consciente, não uma lacuna.
 
 > Análise completa, camada por camada, em [`docs/arquitetura/analise-clean-architecture.md`](docs/arquitetura/analise-clean-architecture.md).
 
@@ -190,10 +192,10 @@ src/
 │   ├── SharedKernel.Domain/        ← Entity, AggregateRoot, ValueObject, Result<T>, IDomainEvent, IIntegrationEvent
 │   └── SharedKernel.Application/   ← IUnitOfWork, IPendingIntegrationEvents, IIntegrationEventBus, pipeline behaviors
 ├── Modules/
-│   ├── Autenticacao/               ← Application, Infrastructure, Presentation
-│   ├── Cadastro/                   ← Domain, Application, Infrastructure, Presentation, Contracts
-│   ├── OrdensServico/              ← Domain, Application, Infrastructure, Presentation, Contracts
-│   └── PecasInsumos/              ← Domain, Application, Infrastructure, Presentation, Contracts
+│   ├── Autenticacao/               ← Application, Adapters, Infrastructure, Web
+│   ├── Cadastro/                   ← Domain, Application, Adapters, Infrastructure, Web, Contracts
+│   ├── OrdensServico/              ← Domain, Application, Adapters, Infrastructure, Web, Contracts
+│   └── PecasInsumos/               ← Domain, Application, Adapters, Infrastructure, Web, Contracts
 └── Bootstrap/
     └── Api/                        ← Program.cs, Dockerfile, middlewares
 ```
@@ -202,11 +204,12 @@ src/
 
 | Camada | Responsabilidade | Referências permitidas |
 |---|---|---|
-| **Domain** | Agregados, VOs, domain events, interfaces de repositório, ACL ports | SharedKernel.Domain apenas |
-| **Application** | Use cases (Command/Query/Handler/Validator), domain event handlers | Domain, SharedKernel.*, Contracts próprios e de outros módulos |
+| **Domain** | Agregados, VOs, domain events | SharedKernel.Domain apenas |
+| **Application** | Use cases (Command/Query/Handler/Validator), domain event handlers, `Gateways/I{X}Gateway` (interfaces) | Domain, SharedKernel.*, Contracts próprios e de outros módulos |
+| **Adapters** | Controller CA (`Controllers/`), Gateway — impl de persistência e ACL (`Gateways/`), interface do repositório (`DataSources/I{Entity}Repository`), Presenter (`Presenters/`), Request/ViewModel (`Models/`) | Application, Domain, Contracts de outros módulos, MediatR — **sem ASP.NET/EF** |
 | **Contracts** | Interface pública do módulo: queries síncronas, DTOs, integration events | SharedKernel.Domain apenas |
-| **Infrastructure** | EF Core, repositórios, ACL adapters, module registration | Application (e Domain via transitivo), Contracts, SharedKernel.*, EF/Npgsql |
-| **Presentation** | Controllers REST, registrados via `AddApplicationPart` no Bootstrap | Application, SharedKernel.* |
+| **Infrastructure** | EF Core, repositórios (impl do DataSource), module registration (DI) | Application, Domain, Contracts, **Adapters**, SharedKernel.*, EF/Npgsql |
+| **Web** *(ex-Presentation)* | Controllers REST finos (`*ApiController`), status HTTP por endpoint, registrados via `AddApplicationPart` no Bootstrap | Adapters, SharedKernel.* |
 
 > Detalhes completos em [`docs/arquitetura/estrutura-do-projeto.md`](docs/arquitetura/estrutura-do-projeto.md).
 

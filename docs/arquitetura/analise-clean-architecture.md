@@ -237,3 +237,70 @@ acima da média, porque a Regra de Dependência não é apenas seguida, é *gara
 compilador*, e o projeto combina CA com DDD tático, Ports & Adapters e fronteiras de
 Bounded Context físicas. As ressalvas da §6 são de nomenclatura/estilo e não comprometem
 nenhum princípio.
+
+---
+
+## 8. Addendum (2026-07-02) — Refatoração: artefatos nomeados do anel Interface Adapters
+
+> A ressalva da §6 item 3 ("Presenter acoplado ao Controller") e a ausência de um
+> **Gateway** físico foram endereçadas por uma 2ª fase de refatoração, cuja fonte de
+> verdade é [`docs/arquitetura/refatoracao-clean-architecture/00-referencia.md`](refatoracao-clean-architecture/00-referencia.md).
+> Este addendum resume o estado final; o documento de referência traz o porquê completo
+> de cada decisão.
+
+### 8.1 O que mudou
+
+O anel verde (**Interface Adapters**) ganhou **assembly próprio por módulo**
+(`{Module}.Adapters`), antes "esfregado" entre `Presentation` e `Infrastructure`. Os
+três artefatos que o diagrama de Martin nomeia — **Controller, Gateway, Presenter** —
+agora existem como classes físicas, não mais implícitas dentro do Handler/Controller:
+
+```
+Endpoint → {Entity}ApiController (Web, MVC)        [azul]
+         → {Entity}Controller (Adapters, POCO)      [verde] — monta o Command, chama ISender.Send
+         → {Operacao}Handler (Application)          [vermelho] — Use Case Interactor, devolve a ENTIDADE
+         → {Entity}Gateway : I{Entity}Gateway (Adapters) → I{Entity}Repository (DataSource)
+         → {Entity}Repository (Infrastructure, EF)   [azul]
+   saída: Handler → {Entity}Presenter.Present(entidade) → ViewModel → {Entity}ApiController → status HTTP
+```
+
+### 8.2 Mapa de projetos → anéis (estado atual, todos os 4 módulos)
+
+| Anel | Projeto |
+|---|---|
+| 🟡 Entities | `{Module}.Domain` |
+| 🔴 Use Cases | `{Module}.Application` (Handlers, `Gateways/I{X}Gateway`) |
+| 🟢 Interface Adapters | `{Module}.Adapters` (`Controllers/`, `Gateways/`, `Presenters/`, `DataSources/I{Entity}Repository`, `Models/`) + `{Module}.Contracts` |
+| 🔵 Frameworks & Drivers | `{Module}.Infrastructure` (EF) + `{Module}.Web` (ex-`Presentation`) + `Bootstrap/Api` |
+
+`{Module}.Web` referencia **apenas** `{Module}.Adapters` (não mais `Application`
+diretamente) — o MVC `*ApiController` ficou fino: recebe HTTP, chama o Controller CA,
+traduz `Result` em status HTTP. `{Module}.Adapters` não referencia ASP.NET nem EF/Npgsql
+(garantido em compile-time, auditado nos `.csproj` de todos os módulos).
+
+### 8.3 Por que o MediatR permanece (decisão consciente)
+
+O `ISender.Send` continua sendo usado — e é o **único seam de framework** dentro do
+Controller CA (anel verde). Não foi removido porque CQRS + pipeline behaviors
+(`Validation`, `Logging`, `Transaction`) são pilar consciente do projeto, e o Handler
+`IRequestHandler<,>` já desempenha honestamente o papel de **Use Case Interactor**: um
+por operação, delegando a decisão de negócio ao agregado. O problema apontado
+originalmente não era o MediatR em si, mas a **ausência de artefatos nomeados**
+(Gateway, Presenter) — resolvida pela §8.1, sem trocar o mecanismo de despacho. Detalhe
+completo da análise de risco/mitigação em `00-referencia.md` §3.1.
+
+### 8.4 Módulo `Autenticacao`
+
+Segue o mesmo desenho por consistência — ganhou `Autenticacao.Adapters` (Controller CA +
+Presenter) e `Autenticacao.Presentation` foi renomeado para `Autenticacao.Web` — mesmo
+sem `Domain` nem Gateway de persistência (não há agregado nem repositório: a operação de
+`Login` apenas confere credenciais contra configuração e emite um JWT via
+`IJwtTokenService`, um *service port* análogo a um gateway de saída).
+
+### 8.5 O que **não** mudou
+
+Contratos HTTP (shape do JSON) e contratos cross-module (`Contracts`) permanecem
+idênticos — refatoração estrutural, nenhuma regra de negócio ou rota alterada. A
+ressalva da §6 item 1 (ports de ACL) também foi endereçada: migraram de `Domain.Ports`
+para `Application/Gateways` (consumidor) e `Adapters/Gateways` (implementação),
+eliminando a assimetria com a Clean Architecture estrita.

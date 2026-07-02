@@ -1,7 +1,7 @@
 using Api.Middlewares;
 using Api.OpenApi;
 using Autenticacao.Infrastructure;
-using Autenticacao.Presentation;
+using Autenticacao.Web;
 using Cadastro.Infrastructure;
 using Cadastro.Infrastructure.Persistence;
 using Cadastro.Web;
