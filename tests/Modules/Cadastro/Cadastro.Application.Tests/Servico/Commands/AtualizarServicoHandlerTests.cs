@@ -1,4 +1,5 @@
-﻿using Cadastro.Application.Servicos.Commands.AtualizarServico;
+﻿using Cadastro.Application.Gateways;
+using Cadastro.Application.Servicos.Commands.AtualizarServico;
 using Cadastro.Domain.Servico;
 using Moq;
 using SharedKernel.Domain;
@@ -8,14 +9,14 @@ namespace Cadastro.Application.Tests.Servico.Commands;
 
 public class AtualizarServicoHandlerTests
 {
-    private readonly Mock<IServicoRepository> _repositoryMock;
+    private readonly Mock<IServicoGateway> _gatewayMock;
     private readonly AtualizarServicoHandler _handler;
 
     public AtualizarServicoHandlerTests()
     {
-        _repositoryMock = new Mock<IServicoRepository>();
+        _gatewayMock = new Mock<IServicoGateway>();
         _handler = new AtualizarServicoHandler(
-            _repositoryMock.Object
+            _gatewayMock.Object
         );
     }
 
@@ -37,7 +38,7 @@ public class AtualizarServicoHandlerTests
         var descricaoEsperada = descricao ?? servico.Descricao;
         var precoEsperado = precoDecimal ?? servico.PrecoBase.Valor;
 
-        _repositoryMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
+        _gatewayMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -53,7 +54,7 @@ public class AtualizarServicoHandlerTests
         Assert.True(result.Value.Ativo);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _repositoryMock.Verify(x => x.Atualizar(It.Is<ServicoEntity>(x => x.Descricao == descricaoEsperada && x.PrecoBase.Valor == precoEsperado), It.IsAny<CancellationToken>()), Times.Once);
+        _gatewayMock.Verify(x => x.Atualizar(It.Is<ServicoEntity>(x => x.Descricao == descricaoEsperada && x.PrecoBase.Valor == precoEsperado), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Servico nao encontrado")]
@@ -88,7 +89,7 @@ public class AtualizarServicoHandlerTests
         var servicoId = new ServicoId(command.ServicoId);
         ServicoEntity? servico = ServicoEntity.Criar("Servico", command.Descricao, 0).Value;
         servico.Desativar();
-        _repositoryMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
+        _gatewayMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -111,7 +112,7 @@ public class AtualizarServicoHandlerTests
         );
         var servicoId = new ServicoId(command.ServicoId);
         ServicoEntity? servico = ServicoEntity.Criar("Servico", command.Descricao, 0).Value;
-        _repositoryMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
+        _gatewayMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -134,7 +135,7 @@ public class AtualizarServicoHandlerTests
         );
         var servicoId = new ServicoId(command.ServicoId);
         ServicoEntity? servico = ServicoEntity.Criar("Servico", command.Descricao, 100).Value;
-        _repositoryMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
+        _gatewayMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -144,7 +145,7 @@ public class AtualizarServicoHandlerTests
         Assert.False(result.IsFailure);
         Assert.Equal(Error.None, result.Error);
 
-        _repositoryMock.Verify(x => x.Atualizar(It.Is<ServicoEntity>(x => x.Nome == "Servico"), It.IsAny<CancellationToken>()), Times.Never);
+        _gatewayMock.Verify(x => x.Atualizar(It.Is<ServicoEntity>(x => x.Nome == "Servico"), It.IsAny<CancellationToken>()), Times.Never);
     }
 }
 

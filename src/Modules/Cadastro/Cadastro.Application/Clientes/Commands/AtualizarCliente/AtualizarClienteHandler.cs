@@ -1,26 +1,27 @@
-﻿using Cadastro.Domain.Cliente;
+﻿using Cadastro.Application.Gateways;
+using Cadastro.Domain.Cliente;
 using MediatR;
 using SharedKernel.Domain;
 
 namespace Cadastro.Application.Clientes.Commands.AtualizarCliente;
 
 public sealed class AtualizarClienteHandler
-        : IRequestHandler<AtualizarClienteCommand, Result<AtualizarClienteResponse>>
+        : IRequestHandler<AtualizarClienteCommand, Result<Cliente>>
 {
-    private readonly IClienteRepository _repository;
+    private readonly IClienteGateway _gateway;
 
-    public AtualizarClienteHandler(IClienteRepository repository)
+    public AtualizarClienteHandler(IClienteGateway gateway)
     {
-        _repository = repository;
+        _gateway = gateway;
     }
 
-    public async Task<Result<AtualizarClienteResponse>> Handle(
+    public async Task<Result<Cliente>> Handle(
         AtualizarClienteCommand command,
         CancellationToken cancellationToken
     )
     {
         ClienteId clienteId = new(command.Id);
-        Cliente? cliente = await _repository.ObterPorId(clienteId, cancellationToken);
+        Cliente? cliente = await _gateway.ObterPorId(clienteId, cancellationToken);
 
         if (cliente is null)
             return ClienteErrors.NaoEncontrado;
@@ -49,9 +50,9 @@ public sealed class AtualizarClienteHandler
         }
 
         if (houveAlteracao)
-            await _repository.Atualizar(cliente, cancellationToken);
+            await _gateway.Atualizar(cliente, cancellationToken);
 
-        return AtualizarClienteResponse.FromCliente(cliente);
+        return cliente;
     }
 
     private static bool StringHasChanges(string? newValue, string oldValue)

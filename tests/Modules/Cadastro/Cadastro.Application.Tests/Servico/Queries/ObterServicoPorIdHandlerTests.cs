@@ -1,4 +1,5 @@
-﻿using Cadastro.Application.Servicos.Queries.ObterServicoPorId;
+﻿using Cadastro.Application.Gateways;
+using Cadastro.Application.Servicos.Queries.ObterServicoPorId;
 using Cadastro.Domain.Servico;
 using Moq;
 using SharedKernel.Domain;
@@ -8,13 +9,13 @@ namespace Cadastro.Application.Tests.Servico.Queries;
 
 public class ObterServicoPorIdHandlerTests
 {
-    private readonly Mock<IServicoRepository> _repositoryMock;
+    private readonly Mock<IServicoGateway> _gatewayMock;
     private readonly ObterServicoPorIdHandler _handler;
 
     public ObterServicoPorIdHandlerTests()
     {
-        _repositoryMock = new Mock<IServicoRepository>();
-        _handler = new ObterServicoPorIdHandler(_repositoryMock.Object);
+        _gatewayMock = new Mock<IServicoGateway>();
+        _handler = new ObterServicoPorIdHandler(_gatewayMock.Object);
     }
 
     [Fact(DisplayName = "Cenário Feliz")]
@@ -27,7 +28,7 @@ public class ObterServicoPorIdHandlerTests
         var servicoId = new ServicoId(query.ServicoId);
         ServicoEntity? servico = ServicoEntity.Criar("Servico", "Descricao inicial", 0).Value;
 
-        _repositoryMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
+        _gatewayMock.Setup(x => x.ObterPorId(servicoId, It.IsAny<CancellationToken>())).ReturnsAsync(servico);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

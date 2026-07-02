@@ -1,4 +1,5 @@
-﻿using Cadastro.Application.Veiculos.Queries.ObterVeiculoPorId;
+﻿using Cadastro.Application.Gateways;
+using Cadastro.Application.Veiculos.Queries.ObterVeiculoPorId;
 using Cadastro.Domain.Cliente;
 using Cadastro.Domain.Veiculo;
 using Moq;
@@ -9,14 +10,14 @@ namespace Cadastro.Application.Tests.Veiculo.Queries;
 
 public class ObterVeiculoPorIdHandlerTests
 {
-    private readonly Mock<IVeiculoRepository> _repositoryMock;
+    private readonly Mock<IVeiculoGateway> _gatewayMock;
     private readonly ObterVeiculoPorIdHandler _handler;
 
     public ObterVeiculoPorIdHandlerTests()
     {
-        _repositoryMock = new Mock<IVeiculoRepository>();
+        _gatewayMock = new Mock<IVeiculoGateway>();
         _handler = new ObterVeiculoPorIdHandler(
-            _repositoryMock.Object
+            _gatewayMock.Object
         );
     }
 
@@ -31,7 +32,7 @@ public class ObterVeiculoPorIdHandlerTests
         var clienteId = new ClienteId(Guid.NewGuid());
 
         VeiculoEntity? veiculo = VeiculoEntity.Criar("ABC1234", "Modelo", "Marca", 2026, clienteId).Value;
-        _repositoryMock.Setup(x => x.ObterPorId(veiculoId, It.IsAny<CancellationToken>())).ReturnsAsync(veiculo);
+        _gatewayMock.Setup(x => x.ObterPorId(veiculoId, It.IsAny<CancellationToken>())).ReturnsAsync(veiculo);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

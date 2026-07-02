@@ -1,4 +1,5 @@
-﻿using Cadastro.Domain.Servico;
+﻿using Cadastro.Application.Gateways;
+using Cadastro.Domain.Servico;
 using MediatR;
 using SharedKernel.Domain;
 
@@ -6,17 +7,17 @@ namespace Cadastro.Application.Servicos.Commands.AtualizarServico;
 
 public sealed class AtualizarServicoHandler : IRequestHandler<AtualizarServicoCommand, Result<AtualizarServicoResponse>>
 {
-    private readonly IServicoRepository _repository;
+    private readonly IServicoGateway _gateway;
 
-    public AtualizarServicoHandler(IServicoRepository repository)
+    public AtualizarServicoHandler(IServicoGateway gateway)
     {
-        _repository = repository;
+        _gateway = gateway;
     }
 
     public async Task<Result<AtualizarServicoResponse>> Handle(AtualizarServicoCommand command, CancellationToken cancellationToken)
     {
         ServicoId servicoId = new(command.ServicoId);
-        Servico? servico = await _repository.ObterPorId(servicoId, cancellationToken);
+        Servico? servico = await _gateway.ObterPorId(servicoId, cancellationToken);
 
         if (servico is null)
             return ServicoErrors.NaoEncontrado;
@@ -41,7 +42,7 @@ public sealed class AtualizarServicoHandler : IRequestHandler<AtualizarServicoCo
         }
 
         if (houveAlteracao)
-            await _repository.Atualizar(servico, cancellationToken);
+            await _gateway.Atualizar(servico, cancellationToken);
 
         return AtualizarServicoResponse.FromServico(servico);
     }

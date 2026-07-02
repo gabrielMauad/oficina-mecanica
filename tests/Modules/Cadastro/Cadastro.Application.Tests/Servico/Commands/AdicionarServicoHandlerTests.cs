@@ -1,4 +1,5 @@
-﻿using Cadastro.Application.Servicos.Commands.AdicionarServico;
+﻿using Cadastro.Application.Gateways;
+using Cadastro.Application.Servicos.Commands.AdicionarServico;
 using Cadastro.Domain.Servico;
 using Moq;
 using SharedKernel.Domain;
@@ -8,14 +9,14 @@ namespace Cadastro.Application.Tests.Servico.Commands;
 
 public class AdicionarServicoHandlerTests
 {
-    private readonly Mock<IServicoRepository> _repositoryMock;
+    private readonly Mock<IServicoGateway> _gatewayMock;
     private readonly AdicionarServicoHandler _handler;
 
     public AdicionarServicoHandlerTests()
     {
-        _repositoryMock = new Mock<IServicoRepository>();
+        _gatewayMock = new Mock<IServicoGateway>();
         _handler = new AdicionarServicoHandler(
-            _repositoryMock.Object
+            _gatewayMock.Object
         );
     }
 
@@ -29,7 +30,7 @@ public class AdicionarServicoHandlerTests
             Preco: 100
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -47,7 +48,7 @@ public class AdicionarServicoHandlerTests
         Assert.InRange(result.Value.CadastradoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
         Assert.InRange(result.Value.AtualizadoEm, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow);
 
-        _repositoryMock.Verify(x => x.Adicionar(It.Is<ServicoEntity>(x => x.Nome == command.Nome), It.IsAny<CancellationToken>()), Times.Once);
+        _gatewayMock.Verify(x => x.Adicionar(It.Is<ServicoEntity>(x => x.Nome == command.Nome), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: Servico ja existe")]
@@ -60,7 +61,7 @@ public class AdicionarServicoHandlerTests
             Preco: 100
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -82,7 +83,7 @@ public class AdicionarServicoHandlerTests
             Preco: 100
         );
 
-        _repositoryMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _gatewayMock.Setup(x => x.ExistePorNome(command.Nome, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
