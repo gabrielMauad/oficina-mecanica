@@ -1,17 +1,20 @@
-﻿using MediatR;
+using MediatR;
+using PecasInsumos.Application.Gateways;
 using PecasInsumos.Domain;
 using SharedKernel.Domain;
 
 namespace PecasInsumos.Application.Commands.AtualizarPecaInsumo;
 
-public sealed class AtualizarPecaInsumoHandler : IRequestHandler<AtualizarPecaInsumoCommand, Result<AtualizarPecaInsumoResponse>>
+public sealed class AtualizarPecaInsumoHandler : IRequestHandler<AtualizarPecaInsumoCommand, Result<PecaInsumo>>
 {
-    private readonly IPecaInsumoRepository _repository;
-    public AtualizarPecaInsumoHandler(IPecaInsumoRepository repository) => _repository = repository;
-    public async Task<Result<AtualizarPecaInsumoResponse>> Handle(AtualizarPecaInsumoCommand command, CancellationToken cancellationToken)
+    private readonly IPecaInsumoGateway _gateway;
+
+    public AtualizarPecaInsumoHandler(IPecaInsumoGateway gateway) => _gateway = gateway;
+
+    public async Task<Result<PecaInsumo>> Handle(AtualizarPecaInsumoCommand command, CancellationToken cancellationToken)
     {
         PecaInsumoId pecaInsumoId = new(command.PecaInsumoId);
-        PecaInsumo? pecaInsumo = await _repository.ObterPorId(pecaInsumoId, cancellationToken);
+        PecaInsumo? pecaInsumo = await _gateway.ObterPorId(pecaInsumoId, cancellationToken);
         if (pecaInsumo is null)
             return PecaInsumoErrors.NaoEncontrada;
         if (!pecaInsumo.Ativo)
@@ -34,9 +37,8 @@ public sealed class AtualizarPecaInsumoHandler : IRequestHandler<AtualizarPecaIn
         }
 
         if (hasChanges)
-            await _repository.Atualizar(pecaInsumo, cancellationToken);
+            await _gateway.Atualizar(pecaInsumo, cancellationToken);
 
-        return AtualizarPecaInsumoResponse.FromPecaInsumo(pecaInsumo);
+        return pecaInsumo;
     }
 }
-

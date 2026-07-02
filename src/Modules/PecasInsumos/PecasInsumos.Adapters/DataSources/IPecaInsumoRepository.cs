@@ -1,4 +1,6 @@
-﻿namespace PecasInsumos.Domain;
+using PecasInsumos.Domain;
+
+namespace PecasInsumos.Adapters.DataSources;
 
 public interface IPecaInsumoRepository
 {
@@ -7,4 +9,3 @@ public interface IPecaInsumoRepository
     Task<bool> ExistePorNome(string nome, CancellationToken ct = default);
     Task Atualizar(PecaInsumo pecaInsumo, CancellationToken ct = default);
 }
-
