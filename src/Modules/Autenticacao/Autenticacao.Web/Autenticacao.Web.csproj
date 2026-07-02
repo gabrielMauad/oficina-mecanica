@@ -11,11 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="12.5.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Autenticacao.Application\Autenticacao.Application.csproj" />
+    <ProjectReference Include="..\Autenticacao.Adapters\Autenticacao.Adapters.csproj" />
   </ItemGroup>
 
 </Project>

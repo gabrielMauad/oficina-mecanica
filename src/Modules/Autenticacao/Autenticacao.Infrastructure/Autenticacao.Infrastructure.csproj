@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Autenticacao.Adapters\Autenticacao.Adapters.csproj" />
     <ProjectReference Include="..\Autenticacao.Application\Autenticacao.Application.csproj" />
     <ProjectReference Include="..\..\..\SharedKernel\SharedKernel.Application\SharedKernel.Application.csproj" />
   </ItemGroup>

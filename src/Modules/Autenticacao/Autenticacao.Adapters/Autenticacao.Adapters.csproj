@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OrdensServico.Adapters\OrdensServico.Adapters.csproj" />
+    <ProjectReference Include="..\Autenticacao.Application\Autenticacao.Application.csproj" />
   </ItemGroup>
 
 </Project>

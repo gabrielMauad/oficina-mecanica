@@ -5,9 +5,10 @@
   </Folder>
   <Folder Name="/src/Modules/" />
   <Folder Name="/src/Modules/Autenticacao/">
+    <Project Path="src/Modules/Autenticacao/Autenticacao.Adapters/Autenticacao.Adapters.csproj" />
     <Project Path="src/Modules/Autenticacao/Autenticacao.Application/Autenticacao.Application.csproj" />
     <Project Path="src/Modules/Autenticacao/Autenticacao.Infrastructure/Autenticacao.Infrastructure.csproj" />
-    <Project Path="src/Modules/Autenticacao/Autenticacao.Presentation/Autenticacao.Presentation.csproj" />
+    <Project Path="src/Modules/Autenticacao/Autenticacao.Web/Autenticacao.Web.csproj" />
   </Folder>
   <Folder Name="/src/Modules/Cadastro/">
     <Project Path="src/Modules/Cadastro/Cadastro.Adapters/Cadastro.Adapters.csproj" />

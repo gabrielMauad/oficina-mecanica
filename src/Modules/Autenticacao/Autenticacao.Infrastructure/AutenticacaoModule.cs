@@ -1,3 +1,4 @@
+using Autenticacao.Adapters.Controllers;
 using Autenticacao.Application.Commands.Login;
 using Autenticacao.Application.Options;
 using Autenticacao.Application.Services;
@@ -18,6 +19,12 @@ public static class AutenticacaoModule
             configuration.GetSection(AdminUserOptions.SectionName));
 
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
+        #region Controllers CA
+
+        services.AddScoped<AutenticacaoController>();
+
+        #endregion
 
         var applicationAssembly = typeof(LoginCommand).Assembly;
 
