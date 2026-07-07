@@ -1,19 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OrdensServico.Domain.OrdemServico;
+using OrdensServico.Adapters.DataSources.Records;
 
 namespace OrdensServico.Infrastructure.Persistence.Configurations;
 
-internal sealed class OrdemServicoConfiguration : IEntityTypeConfiguration<OrdemServico>
+internal sealed class OrdemServicoConfiguration : IEntityTypeConfiguration<OrdemServicoRecord>
 {
-    public void Configure(EntityTypeBuilder<OrdemServico> builder)
+    public void Configure(EntityTypeBuilder<OrdemServicoRecord> builder)
     {
         builder.ToTable("ordem_servico");
 
         builder.HasKey(os => os.Id);
         builder.Property(os => os.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new OrdemServicoId(value));
+            .HasColumnName("id");
 
         builder.Property(os => os.ClienteId)
             .HasColumnName("cliente_id")
@@ -25,7 +24,6 @@ internal sealed class OrdemServicoConfiguration : IEntityTypeConfiguration<Ordem
 
         builder.Property(os => os.Status)
             .HasColumnName("status")
-            .HasConversion<string>()
             .HasMaxLength(30)
             .IsRequired();
 
@@ -51,26 +49,14 @@ internal sealed class OrdemServicoConfiguration : IEntityTypeConfiguration<Ordem
             .HasForeignKey("ordem_servico_id")
             .IsRequired();
 
-        builder.Navigation(os => os.ItensServico)
-            .HasField("_itensServico")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
-
         builder.HasMany(os => os.ItensPeca)
             .WithOne()
             .HasForeignKey("ordem_servico_id")
             .IsRequired();
 
-        builder.Navigation(os => os.ItensPeca)
-            .HasField("_itensPeca")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
-
         builder.HasMany(os => os.Orcamentos)
             .WithOne()
             .HasForeignKey("ordem_servico_id")
             .IsRequired();
-
-        builder.Navigation(os => os.Orcamentos)
-            .HasField("_orcamentos")
-            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

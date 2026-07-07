@@ -1,23 +1,18 @@
-using System.Reflection;
-using Cadastro.Domain.Servico;
+using Cadastro.Adapters.DataSources.Records;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Cadastro.Infrastructure.Persistence.Configurations;
 
-internal sealed class ServicoConfiguration : IEntityTypeConfiguration<Servico>
+internal sealed class ServicoConfiguration : IEntityTypeConfiguration<ServicoRecord>
 {
-    private static readonly ConstructorInfo _dinheiroCtor =
-        typeof(Dinheiro).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(decimal) }, null)!;
-
-    public void Configure(EntityTypeBuilder<Servico> builder)
+    public void Configure(EntityTypeBuilder<ServicoRecord> builder)
     {
         builder.ToTable("servico");
 
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new ServicoId(value));
+            .HasColumnName("id");
 
         builder.Property(s => s.Nome)
             .HasColumnName("nome")
@@ -30,10 +25,7 @@ internal sealed class ServicoConfiguration : IEntityTypeConfiguration<Servico>
         builder.Property(s => s.PrecoBase)
             .HasColumnName("preco_base")
             .HasPrecision(10, 2)
-            .IsRequired()
-            .HasConversion(
-                d => d.Valor,
-                v => (Dinheiro)_dinheiroCtor.Invoke(new object[] { v }));
+            .IsRequired();
 
         builder.Property(s => s.Ativo)
             .HasColumnName("ativo")

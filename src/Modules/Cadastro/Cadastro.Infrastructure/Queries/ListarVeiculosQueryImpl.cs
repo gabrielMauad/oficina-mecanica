@@ -15,12 +15,12 @@ internal sealed class ListarVeiculosQueryImpl : IListarVeiculosQuery
         return await _context.Veiculos
             .AsNoTracking()
             .Select(v => new VeiculoListItem(
-                v.Id.Value,
-                v.Placa.Numero,
+                v.Id,
+                v.Placa,
                 v.Modelo,
                 v.Marca,
                 v.Ano,
-                v.ClienteId.Value,
+                v.ClienteId,
                 v.CadastradoEm,
                 v.AtualizadoEm))
             .ToListAsync(ct);

@@ -1,7 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PecasInsumos.Contracts.Dtos;
 using PecasInsumos.Contracts.Queries;
-using PecasInsumos.Domain;
 using PecasInsumos.Infrastructure.Persistence;
 
 namespace PecasInsumos.Infrastructure.Queries;
@@ -14,16 +13,14 @@ internal sealed class PecasInsumosDisponibilidadeQuery : IPecasInsumosDisponibil
 
     public async Task<DisponibilidadeDto> VerificarDisponibilidade(Guid pecaId, int quantidade, CancellationToken ct = default)
     {
-        var pecaInsumoId = new PecaInsumoId(pecaId);
         var pecaInsumo = await _context.PecasInsumos
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == pecaInsumoId, ct);
+            .FirstOrDefaultAsync(s => s.Id == pecaId, ct);
 
         if (pecaInsumo is null)
             return new DisponibilidadeDto(false, 0);
 
         var disponivel = pecaInsumo.QuantidadeEmEstoque >= quantidade;
-        return new DisponibilidadeDto(disponivel, pecaInsumo.PrecoUnitario.Valor);
+        return new DisponibilidadeDto(disponivel, pecaInsumo.PrecoUnitario);
     }
 }
-

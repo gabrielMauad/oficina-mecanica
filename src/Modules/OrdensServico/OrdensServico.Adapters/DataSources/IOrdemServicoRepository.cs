@@ -1,10 +1,10 @@
-using OrdensServico.Domain.OrdemServico;
+using OrdensServico.Adapters.DataSources.Records;
 
 namespace OrdensServico.Adapters.DataSources;
 
 public interface IOrdemServicoRepository
 {
-    Task Adicionar(OrdemServico ordemServico, CancellationToken ct = default);
-    Task<OrdemServico?> ObterPorId(OrdemServicoId id, CancellationToken ct = default);
-    Task Atualizar(OrdemServico ordemServico, CancellationToken ct = default);
+    Task Adicionar(OrdemServicoRecord ordemServico, CancellationToken ct = default);
+    Task<OrdemServicoRecord?> ObterPorId(Guid id, CancellationToken ct = default);
+    Task Atualizar(OrdemServicoRecord ordemServico, CancellationToken ct = default);
 }

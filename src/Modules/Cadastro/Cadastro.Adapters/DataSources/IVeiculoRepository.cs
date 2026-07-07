@@ -1,10 +1,10 @@
-using Cadastro.Domain.Veiculo;
+using Cadastro.Adapters.DataSources.Records;
 
 namespace Cadastro.Adapters.DataSources;
 
 public interface IVeiculoRepository
 {
-    Task Adicionar(Veiculo veiculo, CancellationToken ct = default);
-    Task<Veiculo?> ObterPorId(VeiculoId id, CancellationToken ct = default);
+    Task Adicionar(VeiculoRecord veiculo, CancellationToken ct = default);
+    Task<VeiculoRecord?> ObterPorId(Guid id, CancellationToken ct = default);
     Task<bool> ExistePorPlaca(string placa, CancellationToken ct = default);
 }

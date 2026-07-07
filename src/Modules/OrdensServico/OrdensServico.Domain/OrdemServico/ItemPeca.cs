@@ -16,6 +16,9 @@ public sealed class ItemPeca : Entity<ItemPecaId>
         PrecoUnitarioSnapshot = precoUnitarioSnapshot;
     }
 
+    public static ItemPeca Reconstituir(ItemPecaId id, Guid pecaInsumoId, int quantidade, decimal precoUnitarioSnapshot) =>
+        new(id, pecaInsumoId, quantidade, precoUnitarioSnapshot);
+
     internal static Result<ItemPeca> Criar(Guid pecaInsumoId, int quantidade, decimal precoUnitarioSnapshot)
     {
         if (pecaInsumoId == Guid.Empty)

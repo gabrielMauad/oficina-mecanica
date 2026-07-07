@@ -35,6 +35,50 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         AtualizadoEm = DateTime.UtcNow;
     }
 
+    private OrdemServico(
+        OrdemServicoId id,
+        Guid clienteId,
+        Guid veiculoId,
+        StatusOrdemServico status,
+        string? descricaoDiagnostico,
+        DateTime? notificadoEm,
+        DateTime? entregueEm,
+        DateTime criadoEm,
+        DateTime atualizadoEm,
+        IEnumerable<ItemServico> itensServico,
+        IEnumerable<ItemPeca> itensPeca,
+        IEnumerable<Orcamento> orcamentos
+    ) : base(id)
+    {
+        ClienteId = clienteId;
+        VeiculoId = veiculoId;
+        Status = status;
+        DescricaoDiagnostico = descricaoDiagnostico;
+        NotificadoEm = notificadoEm;
+        EntregueEm = entregueEm;
+        CriadoEm = criadoEm;
+        AtualizadoEm = atualizadoEm;
+        _itensServico.AddRange(itensServico);
+        _itensPeca.AddRange(itensPeca);
+        _orcamentos.AddRange(orcamentos);
+    }
+
+    public static OrdemServico Reconstituir(
+        OrdemServicoId id,
+        Guid clienteId,
+        Guid veiculoId,
+        StatusOrdemServico status,
+        string? descricaoDiagnostico,
+        DateTime? notificadoEm,
+        DateTime? entregueEm,
+        DateTime criadoEm,
+        DateTime atualizadoEm,
+        IEnumerable<ItemServico> itensServico,
+        IEnumerable<ItemPeca> itensPeca,
+        IEnumerable<Orcamento> orcamentos) =>
+        new(id, clienteId, veiculoId, status, descricaoDiagnostico, notificadoEm, entregueEm,
+            criadoEm, atualizadoEm, itensServico, itensPeca, orcamentos);
+
     public static Result<OrdemServico> Criar(Guid clienteId, Guid veiculoId)
     {
         if (clienteId == Guid.Empty)

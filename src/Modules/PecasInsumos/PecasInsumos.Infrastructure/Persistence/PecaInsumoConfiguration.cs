@@ -1,23 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PecasInsumos.Domain;
-using System.Reflection;
+using PecasInsumos.Adapters.DataSources.Records;
 
 namespace PecasInsumos.Infrastructure.Persistence;
 
-internal sealed class PecaInsumoConfiguration : IEntityTypeConfiguration<PecaInsumo>
+internal sealed class PecaInsumoConfiguration : IEntityTypeConfiguration<PecaInsumoRecord>
 {
-    private static readonly ConstructorInfo _dinheiroCtor =
-        typeof(Dinheiro).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(decimal) }, null)!;
-
-    public void Configure(EntityTypeBuilder<PecaInsumo> builder)
+    public void Configure(EntityTypeBuilder<PecaInsumoRecord> builder)
     {
         builder.ToTable("peca_insumo");
 
         builder.HasKey(pi => pi.Id);
         builder.Property(pi => pi.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new PecaInsumoId(value));
+            .HasColumnName("id");
 
         builder.Property(pi => pi.Nome)
             .HasColumnName("nome")
@@ -30,10 +25,7 @@ internal sealed class PecaInsumoConfiguration : IEntityTypeConfiguration<PecaIns
         builder.Property(pi => pi.PrecoUnitario)
             .HasColumnName("preco_unitario")
             .HasPrecision(10, 2)
-            .IsRequired()
-            .HasConversion(
-                v => v.Valor,
-                v => (Dinheiro)_dinheiroCtor.Invoke(new object[] { v }));
+            .IsRequired();
 
         builder.Property(pi => pi.QuantidadeEmEstoque)
             .HasColumnName("quantidade_estoque")
@@ -42,7 +34,6 @@ internal sealed class PecaInsumoConfiguration : IEntityTypeConfiguration<PecaIns
 
         builder.Property(pi => pi.UnidadeDeMedida)
             .HasColumnName("unidade_medida")
-            .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
 
@@ -60,4 +51,3 @@ internal sealed class PecaInsumoConfiguration : IEntityTypeConfiguration<PecaIns
             .IsRequired();
     }
 }
-

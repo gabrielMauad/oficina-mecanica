@@ -1,11 +1,11 @@
-using PecasInsumos.Domain;
+using PecasInsumos.Adapters.DataSources.Records;
 
 namespace PecasInsumos.Adapters.DataSources;
 
 public interface IPecaInsumoRepository
 {
-    Task Adicionar(PecaInsumo pecaInsumo, CancellationToken ct = default);
-    Task<PecaInsumo?> ObterPorId(PecaInsumoId id, CancellationToken ct = default);
+    Task Adicionar(PecaInsumoRecord pecaInsumo, CancellationToken ct = default);
+    Task<PecaInsumoRecord?> ObterPorId(Guid id, CancellationToken ct = default);
     Task<bool> ExistePorNome(string nome, CancellationToken ct = default);
-    Task Atualizar(PecaInsumo pecaInsumo, CancellationToken ct = default);
+    Task Atualizar(PecaInsumoRecord pecaInsumo, CancellationToken ct = default);
 }

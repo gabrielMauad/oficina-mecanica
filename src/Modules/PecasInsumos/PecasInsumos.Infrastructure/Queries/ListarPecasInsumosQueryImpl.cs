@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PecasInsumos.Application.Queries.ListarPecasInsumos;
 using PecasInsumos.Infrastructure.Persistence;
 
@@ -14,16 +14,15 @@ internal class ListarPecasInsumosQueryImpl : IListarPecasInsumosQuery
         return await _context.PecasInsumos
             .AsNoTracking()
             .Select(s => new PecaInsumoListItem(
-                s.Id.Value,
+                s.Id,
                 s.Nome,
                 s.Descricao,
-                s.PrecoUnitario.Valor,
+                s.PrecoUnitario,
                 s.QuantidadeEmEstoque,
-                s.UnidadeDeMedida.ToString(),
+                s.UnidadeDeMedida,
                 s.Ativo,
                 s.CadastradoEm,
                 s.AtualizadoEm))
             .ToListAsync(ct);
     }
 }
-

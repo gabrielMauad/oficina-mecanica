@@ -1,7 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PecasInsumos.Contracts.Dtos;
 using PecasInsumos.Contracts.Queries;
-using PecasInsumos.Domain;
 using PecasInsumos.Infrastructure.Persistence;
 
 namespace PecasInsumos.Infrastructure.Queries;
@@ -14,19 +13,18 @@ internal class PecaInsumoQuery : IPecaInsumoQuery
 
     public async Task<PecaInsumoResumoDto?> ObterPorId(Guid pecaId, CancellationToken ct = default)
     {
-        var pecaInsumoId = new PecaInsumoId(pecaId);
         var pecaInsumo = await _context.PecasInsumos
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == pecaInsumoId, ct);
+            .FirstOrDefaultAsync(s => s.Id == pecaId, ct);
 
         if (pecaInsumo is null)
             return null;
 
         return new PecaInsumoResumoDto(
-            pecaInsumo.Id.Value,
+            pecaInsumo.Id,
             pecaInsumo.Nome,
-            pecaInsumo.PrecoUnitario.Valor,
-            pecaInsumo.UnidadeDeMedida.ToString(),
+            pecaInsumo.PrecoUnitario,
+            pecaInsumo.UnidadeDeMedida,
             pecaInsumo.Ativo
         );
     }

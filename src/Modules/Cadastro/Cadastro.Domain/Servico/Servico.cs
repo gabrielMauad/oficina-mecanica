@@ -22,6 +22,21 @@ public sealed class Servico : AggregateRoot<ServicoId>
         AtualizadoEm = DateTime.UtcNow;
     }
 
+    private Servico(ServicoId id, string nome, string? descricao, Dinheiro precoBase,
+        bool ativo, DateTime cadastradoEm, DateTime atualizadoEm) : base(id)
+    {
+        Nome = nome;
+        Descricao = descricao;
+        PrecoBase = precoBase;
+        Ativo = ativo;
+        CadastradoEm = cadastradoEm;
+        AtualizadoEm = atualizadoEm;
+    }
+
+    public static Servico Reconstituir(ServicoId id, string nome, string? descricao, Dinheiro precoBase,
+        bool ativo, DateTime cadastradoEm, DateTime atualizadoEm) =>
+        new(id, nome, descricao, precoBase, ativo, cadastradoEm, atualizadoEm);
+
     public static Result<Servico> Criar(string nome, string? descricao, decimal preco)
     {
         if (string.IsNullOrWhiteSpace(nome))

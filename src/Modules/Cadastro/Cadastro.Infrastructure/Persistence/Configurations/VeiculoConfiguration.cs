@@ -1,32 +1,23 @@
-using Cadastro.Domain.Cliente;
-using Cadastro.Domain.Veiculo;
+using Cadastro.Adapters.DataSources.Records;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Reflection;
 
 namespace Cadastro.Infrastructure.Persistence.Configurations;
 
-internal sealed class VeiculoConfiguration : IEntityTypeConfiguration<Veiculo>
+internal sealed class VeiculoConfiguration : IEntityTypeConfiguration<VeiculoRecord>
 {
-    private static readonly ConstructorInfo _placaCtor =
-        typeof(Placa).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(string) }, null)!;
-
-    public void Configure(EntityTypeBuilder<Veiculo> builder)
+    public void Configure(EntityTypeBuilder<VeiculoRecord> builder)
     {
         builder.ToTable("veiculo");
 
         builder.HasKey(v => v.Id);
         builder.Property(v => v.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new VeiculoId(value));
+            .HasColumnName("id");
 
         builder.Property(v => v.Placa)
             .HasColumnName("placa")
             .HasMaxLength(8)
-            .IsRequired()
-            .HasConversion(
-                p => p.Numero,
-                n => (Placa)_placaCtor.Invoke(new object[] { n }));
+            .IsRequired();
 
         builder.HasIndex(v => v.Placa).IsUnique();
 
@@ -46,10 +37,9 @@ internal sealed class VeiculoConfiguration : IEntityTypeConfiguration<Veiculo>
 
         builder.Property(v => v.ClienteId)
             .HasColumnName("cliente_id")
-            .HasConversion(id => id.Value, value => new ClienteId(value))
             .IsRequired();
 
-        builder.HasOne<Cliente>()
+        builder.HasOne<ClienteRecord>()
             .WithMany()
             .HasForeignKey(v => v.ClienteId)
             .IsRequired();

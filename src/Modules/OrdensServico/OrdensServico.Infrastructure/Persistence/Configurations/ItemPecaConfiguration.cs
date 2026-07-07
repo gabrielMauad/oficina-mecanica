@@ -1,19 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OrdensServico.Domain.OrdemServico;
+using OrdensServico.Adapters.DataSources.Records;
 
 namespace OrdensServico.Infrastructure.Persistence.Configurations;
 
-internal sealed class ItemPecaConfiguration : IEntityTypeConfiguration<ItemPeca>
+internal sealed class ItemPecaConfiguration : IEntityTypeConfiguration<ItemPecaRecord>
 {
-    public void Configure(EntityTypeBuilder<ItemPeca> builder)
+    public void Configure(EntityTypeBuilder<ItemPecaRecord> builder)
     {
         builder.ToTable("os_peca");
 
         builder.HasKey(ip => ip.Id);
         builder.Property(ip => ip.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new ItemPecaId(value));
+            .HasColumnName("id");
 
         builder.Property(ip => ip.PecaInsumoId)
             .HasColumnName("peca_insumo_id")

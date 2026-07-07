@@ -6,7 +6,7 @@ namespace Cadastro.Domain.Cliente;
 public sealed class Cpf : Documento
 {
 
-    private Cpf(string numero) : base(numero) { }
+    internal Cpf(string numero) : base(numero) { }
 
     public static Result<Cpf> Criar(string numero)
     {

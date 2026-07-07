@@ -233,8 +233,10 @@ Portanto o status é escolhido **por endpoint** no MVC, exatamente como hoje (`O
 
 ## 6. Fora de escopo (explícito)
 
-- **DTO de persistência** (separar entidade do modelo EF): **NÃO** nesta refatoração. Só se sobrar tempo,
-  como trabalho posterior — e nascerá dentro do Gateway de persistência, sem tocar use case/controller.
+- ~~**DTO de persistência** (separar entidade do modelo EF)~~ — **feito** em `07-plano-dtos-persistencia.md`
+  (2026-07-07): Records em `{Module}.Adapters/DataSources/Records/`, `Reconstituir` no domínio,
+  `IDomainEventCollector` desacoplando eventos do `ChangeTracker`, reconciliação de agregado com filhos no
+  `OrdemServicoRepository`. Ver esse documento para detalhes.
 - **Renomear `Domain`/`Application`** (para `Entities`/`UseCases`): descartado (§3.4).
 - **Alterar `SharedKernel`**: intocado (Result, behaviors, Entity/AggregateRoot permanecem).
 - **Mudar comportamento, regras de negócio, rotas ou shape de resposta.**

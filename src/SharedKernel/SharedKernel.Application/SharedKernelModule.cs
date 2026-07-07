@@ -8,6 +8,7 @@ public static class SharedKernelModule
     {
         services.AddScoped<IPendingIntegrationEvents, PendingIntegrationEvents>();
         services.AddScoped<IIntegrationEventBus, InMemoryIntegrationEventBus>();
+        services.AddScoped<IDomainEventCollector, DomainEventCollector>();
 
         return services;
     }

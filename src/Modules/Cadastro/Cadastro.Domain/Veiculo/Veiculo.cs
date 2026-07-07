@@ -25,6 +25,22 @@ public sealed class Veiculo : AggregateRoot<VeiculoId>
         AtualizadoEm = DateTime.UtcNow;
     }
 
+    private Veiculo(VeiculoId id, Placa placa, string modelo, string marca, int ano, ClienteId clienteId,
+        DateTime cadastradoEm, DateTime atualizadoEm) : base(id)
+    {
+        Placa = placa;
+        Modelo = modelo;
+        Marca = marca;
+        Ano = ano;
+        ClienteId = clienteId;
+        CadastradoEm = cadastradoEm;
+        AtualizadoEm = atualizadoEm;
+    }
+
+    public static Veiculo Reconstituir(VeiculoId id, Placa placa, string modelo, string marca, int ano,
+        ClienteId clienteId, DateTime cadastradoEm, DateTime atualizadoEm) =>
+        new(id, placa, modelo, marca, ano, clienteId, cadastradoEm, atualizadoEm);
+
     public static Result<Veiculo> Criar(string numPlaca, string modelo, string marca, int ano, ClienteId clienteId)
     {
         if (string.IsNullOrWhiteSpace(modelo))

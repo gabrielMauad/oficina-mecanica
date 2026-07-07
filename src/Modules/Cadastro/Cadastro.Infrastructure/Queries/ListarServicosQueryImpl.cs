@@ -15,10 +15,10 @@ internal sealed class ListarServicosQueryImpl : IListarServicosQuery
         return await _context.Servicos
             .AsNoTracking()
             .Select(s => new ServicoListItem(
-                s.Id.Value,
+                s.Id,
                 s.Nome,
                 s.Descricao,
-                s.PrecoBase.Valor,
+                s.PrecoBase,
                 s.Ativo,
                 s.CadastradoEm,
                 s.AtualizadoEm))

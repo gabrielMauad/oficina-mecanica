@@ -55,6 +55,7 @@ public sealed class NotificarClienteAoFinalizar : INotificationHandler<OrdemServ
             return;
         }
 
+        await _ordemServicoGateway.Atualizar(ordemServico, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         ClienteInfo? cliente = await _clienteGateway.ObterInfo(ordemServico.ClienteId, ct);

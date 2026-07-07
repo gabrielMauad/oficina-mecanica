@@ -1,19 +1,12 @@
-using System.Reflection;
-using Cadastro.Domain.Cliente;
+using Cadastro.Adapters.DataSources.Records;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Cadastro.Infrastructure.Persistence.Configurations;
 
-internal sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
+internal sealed class ClienteConfiguration : IEntityTypeConfiguration<ClienteRecord>
 {
-    private static readonly ConstructorInfo _cpfCtor =
-        typeof(Cpf).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(string) }, null)!;
-
-    private static readonly ConstructorInfo _cnpjCtor =
-        typeof(Cnpj).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(string) }, null)!;
-
-    public void Configure(EntityTypeBuilder<Cliente> builder)
+    public void Configure(EntityTypeBuilder<ClienteRecord> builder)
     {
         builder.ToTable("cliente", t =>
             t.HasCheckConstraint("CK_cliente_documento_digits", "documento ~ '^[0-9]+$'"));
@@ -21,8 +14,7 @@ internal sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
 
         builder.HasKey(c => c.Id);
         builder.Property(c => c.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new ClienteId(value));
+            .HasColumnName("id");
 
         builder.Property(c => c.Nome)
             .HasColumnName("nome")
@@ -32,12 +24,7 @@ internal sealed class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.Property(c => c.Documento)
             .HasColumnName("documento")
             .HasMaxLength(14)
-            .IsRequired()
-            .HasConversion(
-                d => d.Numero,
-                n => n.Length <= 11
-                    ? (Documento)(Cpf)_cpfCtor.Invoke(new object[] { n })
-                    : (Documento)(Cnpj)_cnpjCtor.Invoke(new object[] { n }));
+            .IsRequired();
 
         builder.HasIndex(c => c.Documento).IsUnique();
 

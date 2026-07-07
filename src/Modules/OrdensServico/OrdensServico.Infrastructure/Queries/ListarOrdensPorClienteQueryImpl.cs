@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using OrdensServico.Adapters.DataSources.Records;
 using OrdensServico.Contracts.Dtos;
 using OrdensServico.Contracts.Queries;
-using OrdensServico.Domain.OrdemServico;
 using OrdensServico.Infrastructure.Persistence;
 
 namespace OrdensServico.Infrastructure.Queries;
@@ -25,12 +25,12 @@ internal sealed class ListarOrdensPorClienteQueryImpl : IListarOrdensPorClienteQ
         return ordens.Select(ToDto).ToList();
     }
 
-    private static OrdemServicoResumoDto ToDto(OrdemServico os) =>
+    private static OrdemServicoResumoDto ToDto(OrdemServicoRecord os) =>
         new(
-            os.Id.Value,
+            os.Id,
             os.ClienteId,
             os.VeiculoId,
-            os.Status.ToString(),
+            os.Status,
             os.DescricaoDiagnostico,
             os.NotificadoEm,
             os.EntregueEm,
@@ -38,6 +38,6 @@ internal sealed class ListarOrdensPorClienteQueryImpl : IListarOrdensPorClienteQ
             os.AtualizadoEm,
             [.. os.ItensServico.Select(s => new ItemServicoDto(s.ServicoId, s.Quantidade, s.PrecoUnitarioSnapshot))],
             [.. os.ItensPeca.Select(p => new ItemPecaDto(p.PecaInsumoId, p.Quantidade, p.PrecoUnitarioSnapshot))],
-            [.. os.Orcamentos.Select(oc => new OrcamentoDto(oc.ValorTotal, oc.Status.ToString(), oc.DataGeracao, oc.DataEnvio, oc.DataAprovacao))]
+            [.. os.Orcamentos.Select(oc => new OrcamentoDto(oc.ValorTotal, oc.Status, oc.DataGeracao, oc.DataEnvio, oc.DataAprovacao))]
         );
 }

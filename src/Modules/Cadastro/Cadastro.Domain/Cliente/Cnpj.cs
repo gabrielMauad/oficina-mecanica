@@ -5,7 +5,7 @@ namespace Cadastro.Domain.Cliente;
 
 public sealed class Cnpj : Documento
 {
-    private Cnpj(string numero) : base(numero) { }
+    internal Cnpj(string numero) : base(numero) { }
 
     public static Result<Cnpj> Criar(string numero)
     {
