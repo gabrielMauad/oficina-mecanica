@@ -17,8 +17,22 @@ public sealed class Orcamento : Entity<OrcamentoId>
         DataGeracao = DateTime.UtcNow;
     }
 
+    private Orcamento(OrcamentoId id, decimal valorTotal, StatusOrcamento status, DateTime dataGeracao,
+        DateTime? dataEnvio, DateTime? dataAprovacao) : base(id)
+    {
+        ValorTotal = valorTotal;
+        Status = status;
+        DataGeracao = dataGeracao;
+        DataEnvio = dataEnvio;
+        DataAprovacao = dataAprovacao;
+    }
+
     internal static Orcamento Criar(decimal valorTotal)
         => new(OrcamentoId.Novo(), valorTotal);
+
+    public static Orcamento Reconstituir(OrcamentoId id, decimal valorTotal, StatusOrcamento status,
+        DateTime dataGeracao, DateTime? dataEnvio, DateTime? dataAprovacao) =>
+        new(id, valorTotal, status, dataGeracao, dataEnvio, dataAprovacao);
 
     internal Result<Orcamento> Enviar(DateTime dataEnvio)
     {

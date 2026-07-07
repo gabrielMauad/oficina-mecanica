@@ -14,9 +14,9 @@ internal sealed class ListarClientesQueryImpl : IListarClientesQuery
         _context.Clientes
             .AsNoTracking()
             .Select(c => new ClienteListItem(
-                c.Id.Value,
+                c.Id,
                 c.Nome,
-                c.Documento.Numero,
+                c.Documento,
                 c.Email,
                 c.Telefone,
                 c.Ativo,

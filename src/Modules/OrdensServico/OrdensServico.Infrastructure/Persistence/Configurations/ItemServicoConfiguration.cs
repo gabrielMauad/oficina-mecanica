@@ -1,19 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OrdensServico.Domain.OrdemServico;
+using OrdensServico.Adapters.DataSources.Records;
 
 namespace OrdensServico.Infrastructure.Persistence.Configurations;
 
-internal sealed class ItemServicoConfiguration : IEntityTypeConfiguration<ItemServico>
+internal sealed class ItemServicoConfiguration : IEntityTypeConfiguration<ItemServicoRecord>
 {
-    public void Configure(EntityTypeBuilder<ItemServico> builder)
+    public void Configure(EntityTypeBuilder<ItemServicoRecord> builder)
     {
         builder.ToTable("os_servico");
 
         builder.HasKey(is_ => is_.Id);
         builder.Property(is_ => is_.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new ItemServicoId(value));
+            .HasColumnName("id");
 
         builder.Property(is_ => is_.ServicoId)
             .HasColumnName("servico_id")

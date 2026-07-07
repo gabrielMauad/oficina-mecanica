@@ -16,6 +16,9 @@ public sealed class ItemServico : Entity<ItemServicoId>
         PrecoUnitarioSnapshot = precoUnitarioSnapshot;
     }
 
+    public static ItemServico Reconstituir(ItemServicoId id, Guid servicoId, int quantidade, decimal precoUnitarioSnapshot) =>
+        new(id, servicoId, quantidade, precoUnitarioSnapshot);
+
     internal static Result<ItemServico> Criar(Guid servicoId, int quantidade, decimal precoUnitarioSnapshot)
     {
         if (servicoId == Guid.Empty)

@@ -12,6 +12,8 @@ public sealed class Placa : ValueObject
 
     private Placa(string numero) => Numero = numero;
 
+    public static Placa Reconstituir(string numero) => new(numero);
+
     public static Result<Placa> Criar(string numero)
     {
         if (string.IsNullOrWhiteSpace(numero))

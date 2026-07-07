@@ -24,6 +24,22 @@ public sealed class Cliente : AggregateRoot<ClienteId>
         AtualizadoEm = DateTime.UtcNow;
     }
 
+    private Cliente(ClienteId id, string nome, Documento documento, string email, string telefone,
+        bool ativo, DateTime cadastradoEm, DateTime atualizadoEm) : base(id)
+    {
+        Nome = nome;
+        Documento = documento;
+        Email = email;
+        Telefone = telefone;
+        Ativo = ativo;
+        CadastradoEm = cadastradoEm;
+        AtualizadoEm = atualizadoEm;
+    }
+
+    public static Cliente Reconstituir(ClienteId id, string nome, Documento documento, string email,
+        string telefone, bool ativo, DateTime cadastradoEm, DateTime atualizadoEm) =>
+        new(id, nome, documento, email, telefone, ativo, cadastradoEm, atualizadoEm);
+
     public static Result<Cliente> Criar(string nome, string documento, string email, string telefone, bool pessoaFisica)
     {
         if (string.IsNullOrWhiteSpace(nome))

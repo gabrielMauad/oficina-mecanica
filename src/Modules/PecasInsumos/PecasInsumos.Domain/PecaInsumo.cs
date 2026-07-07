@@ -33,6 +33,41 @@ public sealed class PecaInsumo : AggregateRoot<PecaInsumoId>
         AtualizadoEm = DateTime.UtcNow;
     }
 
+    private PecaInsumo(
+        PecaInsumoId id,
+        string nome,
+        string? descricao,
+        Dinheiro precoUnitario,
+        int quantidadeEmEstoque,
+        UnidadeDeMedida unidadeDeMedida,
+        bool ativo,
+        DateTime cadastradoEm,
+        DateTime atualizadoEm
+    )
+    : base(id)
+    {
+        Nome = nome;
+        Descricao = descricao;
+        PrecoUnitario = precoUnitario;
+        QuantidadeEmEstoque = quantidadeEmEstoque;
+        UnidadeDeMedida = unidadeDeMedida;
+        Ativo = ativo;
+        CadastradoEm = cadastradoEm;
+        AtualizadoEm = atualizadoEm;
+    }
+
+    public static PecaInsumo Reconstituir(
+        PecaInsumoId id,
+        string nome,
+        string? descricao,
+        Dinheiro precoUnitario,
+        int quantidadeEmEstoque,
+        UnidadeDeMedida unidadeDeMedida,
+        bool ativo,
+        DateTime cadastradoEm,
+        DateTime atualizadoEm) =>
+        new(id, nome, descricao, precoUnitario, quantidadeEmEstoque, unidadeDeMedida, ativo, cadastradoEm, atualizadoEm);
+
     public static Result<PecaInsumo> Criar(string nome, string? descricao, decimal preco, int quantidadeEmEstoque, UnidadeDeMedida unidadeDeMedida)
     {
         if (string.IsNullOrWhiteSpace(nome))

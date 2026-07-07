@@ -14,5 +14,8 @@ public abstract class Documento : ValueObject
     }
 
     protected abstract bool ValidarDocumento(string numero);
+
+    public static Documento Reconstituir(string numero) =>
+        numero.Length <= 11 ? new Cpf(numero) : new Cnpj(numero);
 }
 

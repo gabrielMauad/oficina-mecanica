@@ -8,6 +8,8 @@ public sealed class Dinheiro : ValueObject
 
     private Dinheiro(decimal valor) => Valor = valor;
 
+    public static Dinheiro Reconstituir(decimal valor) => new(valor);
+
     public static Result<Dinheiro> Criar(decimal valor)
     {
         if (valor < 0)

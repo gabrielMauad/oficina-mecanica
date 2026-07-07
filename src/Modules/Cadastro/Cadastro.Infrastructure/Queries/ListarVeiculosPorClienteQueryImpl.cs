@@ -1,5 +1,4 @@
 using Cadastro.Application.Veiculos.Queries.ListarVeiculosPorCliente;
-using Cadastro.Domain.Cliente;
 using Cadastro.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,19 +12,17 @@ internal sealed class ListarVeiculosPorClienteQueryImpl : IListarVeiculosPorClie
 
     public Task<VeiculosPorCliente?> ListarPorClienteId(Guid clienteId, CancellationToken ct = default)
     {
-        var id = new ClienteId(clienteId);
-
         return _context.Clientes
             .AsNoTracking()
-            .Where(c => c.Id == id)
+            .Where(c => c.Id == clienteId)
             .Select(c => new VeiculosPorCliente(
-                c.Id.Value,
+                c.Id,
                 c.Nome,
                 _context.Veiculos
-                    .Where(v => v.ClienteId == id)
+                    .Where(v => v.ClienteId == clienteId)
                     .Select(v => new VeiculoDoCliente(
-                        v.Id.Value,
-                        v.Placa.Numero,
+                        v.Id,
+                        v.Placa,
                         v.Modelo,
                         v.Marca,
                         v.Ano,

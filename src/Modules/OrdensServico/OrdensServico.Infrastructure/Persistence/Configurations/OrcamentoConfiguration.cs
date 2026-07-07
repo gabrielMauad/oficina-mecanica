@@ -1,19 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OrdensServico.Domain.OrdemServico;
+using OrdensServico.Adapters.DataSources.Records;
 
 namespace OrdensServico.Infrastructure.Persistence.Configurations;
 
-internal sealed class OrcamentoConfiguration : IEntityTypeConfiguration<Orcamento>
+internal sealed class OrcamentoConfiguration : IEntityTypeConfiguration<OrcamentoRecord>
 {
-    public void Configure(EntityTypeBuilder<Orcamento> builder)
+    public void Configure(EntityTypeBuilder<OrcamentoRecord> builder)
     {
         builder.ToTable("orcamento");
 
         builder.HasKey(or => or.Id);
         builder.Property(or => or.Id)
-            .HasColumnName("id")
-            .HasConversion(id => id.Value, value => new OrcamentoId(value));
+            .HasColumnName("id");
 
         builder.Property(or => or.ValorTotal)
             .HasColumnName("valor_total")
@@ -22,7 +21,6 @@ internal sealed class OrcamentoConfiguration : IEntityTypeConfiguration<Orcament
 
         builder.Property(or => or.Status)
             .HasColumnName("status")
-            .HasConversion<string>()
             .HasMaxLength(20)
             .IsRequired();
 

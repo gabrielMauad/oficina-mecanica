@@ -1,5 +1,5 @@
 using Cadastro.Adapters.DataSources;
-using Cadastro.Domain.Veiculo;
+using Cadastro.Adapters.DataSources.Records;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cadastro.Infrastructure.Persistence.Repositories;
@@ -10,14 +10,14 @@ internal sealed class VeiculoRepository : IVeiculoRepository
 
     public VeiculoRepository(CadastroDbContext context) => _context = context;
 
-    public Task Adicionar(Veiculo veiculo, CancellationToken ct = default)
+    public Task Adicionar(VeiculoRecord veiculo, CancellationToken ct = default)
     {
         _context.Veiculos.Add(veiculo);
         return Task.CompletedTask;
     }
 
-    public Task<Veiculo?> ObterPorId(VeiculoId id, CancellationToken ct = default) =>
-        _context.Veiculos.FirstOrDefaultAsync(v => v.Id == id, ct);
+    public Task<VeiculoRecord?> ObterPorId(Guid id, CancellationToken ct = default) =>
+        _context.Veiculos.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id, ct);
 
     public Task<bool> ExistePorPlaca(string placa, CancellationToken ct = default) =>
         _context.Database

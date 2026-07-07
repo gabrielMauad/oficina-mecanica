@@ -8,15 +8,18 @@ public sealed class TransactionBehavior<TRequest, TResponse>
     where TRequest : ICommand
 {
     private readonly IEnumerable<IUnitOfWork> _unitOfWorks;
+    private readonly IDomainEventCollector _collector;
     private readonly IPendingIntegrationEvents _pendingEvents;
     private readonly IPublisher _publisher;
 
     public TransactionBehavior(
         IEnumerable<IUnitOfWork> unitOfWorks,
+        IDomainEventCollector collector,
         IPendingIntegrationEvents pendingEvents,
         IPublisher publisher)
     {
         _unitOfWorks = unitOfWorks;
+        _collector = collector;
         _pendingEvents = pendingEvents;
         _publisher = publisher;
     }
@@ -31,18 +34,13 @@ public sealed class TransactionBehavior<TRequest, TResponse>
         if (response is IResult { IsFailure: true })
             return response;
 
-        // Coleta domain events de todos os contextos antes de persistir
-        // (contextos sem entidades rastreadas retornam lista vazia — no-op)
-        var domainEvents = _unitOfWorks
-            .SelectMany(uow => uow.CollectDomainEvents())
-            .ToList();
+        var domainEvents = _collector.Coletar();
 
         // Persiste cada contexto — no-op para os que não têm alterações rastreadas
         foreach (var uow in _unitOfWorks)
             await uow.SaveChangesAsync(cancellationToken);
 
-        foreach (var uow in _unitOfWorks)
-            uow.ClearDomainEvents();
+        _collector.Limpar();
 
         foreach (var domainEvent in domainEvents)
             await _publisher.Publish(domainEvent, cancellationToken);

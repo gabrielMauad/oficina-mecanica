@@ -15,6 +15,8 @@ public sealed class Dinheiro : ValueObject
         return Result<Dinheiro>.Success(new Dinheiro(valor));
     }
 
+    public static Dinheiro Reconstituir(decimal valor) => new(valor);
+
     protected override IEnumerable<object> GetComponents()
     {
         yield return Valor;
