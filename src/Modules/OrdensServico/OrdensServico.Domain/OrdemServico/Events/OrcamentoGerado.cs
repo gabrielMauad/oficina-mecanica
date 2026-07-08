@@ -1,11 +1,11 @@
-﻿using SharedKernel.Domain;
+using SharedKernel.Domain;
 
 namespace OrdensServico.Domain.OrdemServico.Events;
 
-public sealed record DiagnosticoConcluido(
+public sealed record OrcamentoGerado(
     OrdemServicoId OrdemServicoId,
     OrcamentoId OrcamentoId,
-    string DescricaoDiagnostico,
+    string? DescricaoDiagnostico,
     IReadOnlyList<ItemServicoSnapshot> Servicos,
     IReadOnlyList<ItemPecaSnapshot> Pecas,
     decimal ValorTotal,

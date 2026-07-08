@@ -45,7 +45,7 @@ public class OrdemServicoTests
         Assert.Equal(2, os.Orcamentos.Count);
         Assert.Equal(StatusOrcamento.Rejeitado, os.Orcamentos[0].Status);
         Assert.Equal(StatusOrcamento.Pendente, os.Orcamentos[1].Status);
-        Assert.Single(os.DomainEvents.OfType<DiagnosticoConcluido>());
+        Assert.Single(os.DomainEvents.OfType<OrcamentoGerado>());
     }
 
 
@@ -135,7 +135,7 @@ public class OrdemServicoTests
 
 
     [Fact]
-    public void RegistrarDiagnostico_ComDadosValidos_AdicionaItens_CriaOrcamentoPendente_EmiteUmDiagnosticoConcluido()
+    public void RegistrarDiagnostico_ComDadosValidos_AdicionaItens_CriaOrcamentoPendente_EmiteUmOrcamentoGerado()
     {
         var os = CriarOsEmDiagnostico();
         var servicos = new[] { new ItemServicoInput(ServicoId, 1, 100m) };
@@ -150,7 +150,7 @@ public class OrdemServicoTests
         Assert.Single(os.Orcamentos);
         Assert.Equal(StatusOrcamento.Pendente, os.Orcamentos[0].Status);
         Assert.Single(os.DomainEvents);
-        var evt = Assert.IsType<DiagnosticoConcluido>(os.DomainEvents.Single());
+        var evt = Assert.IsType<OrcamentoGerado>(os.DomainEvents.Single());
         Assert.Equal(os.Id, evt.OrdemServicoId);
         Assert.Equal("DiagnÃ³stico de teste", evt.DescricaoDiagnostico);
         Assert.Single(evt.Servicos);

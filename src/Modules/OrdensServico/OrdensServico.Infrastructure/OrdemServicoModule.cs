@@ -7,6 +7,7 @@ using OrdensServico.Adapters.DataSources;
 using OrdensServico.Adapters.Gateways;
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
+using OrdensServico.Application.Ordens.Queries.ListarOrdensParaAcompanhamento;
 using OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
 using OrdensServico.Contracts.Queries;
 using OrdensServico.Infrastructure.Persistence;
@@ -54,6 +55,7 @@ public static class OrdemServicoModule
         #region Queries de leitura
 
         services.AddScoped<IListarOrdensPorClienteReadModel, ListarOrdensPorClienteReadModelImpl>();
+        services.AddScoped<IListarOrdensParaAcompanhamentoReadModel, ListarOrdensParaAcompanhamentoReadModelImpl>();
 
         #endregion
 

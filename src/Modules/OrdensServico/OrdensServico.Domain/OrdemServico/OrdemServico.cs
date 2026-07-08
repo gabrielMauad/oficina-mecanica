@@ -90,6 +90,25 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         return ordemServico;
     }
 
+    public static Result<OrdemServico> AbrirComServicos(
+        Guid clienteId,
+        Guid veiculoId,
+        IEnumerable<ItemServicoInput> servicos,
+        IEnumerable<ItemPecaInput> pecas)
+    {
+        if (clienteId == Guid.Empty)
+            return Error.Validation("OrdemServico.ClienteIdVazio", "ClienteId é obrigatório.");
+        if (veiculoId == Guid.Empty)
+            return Error.Validation("OrdemServico.VeiculoIdVazio", "VeiculoId é obrigatório.");
+
+        var os = new OrdemServico(OrdemServicoId.Novo(), clienteId, veiculoId);
+        var resultado = os.MontarOrcamentoEEmitirEvento(descricaoDiagnostico: null, servicos, pecas);
+        if (resultado.IsFailure) return resultado.Error;
+
+        os.Status = StatusOrdemServico.AguardandoAprovacao;
+        return os;
+    }
+
     public Result<OrdemServico> IniciarDiagnostico()
     {
         if (Status != StatusOrdemServico.Recebida)
@@ -112,12 +131,24 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         if (string.IsNullOrWhiteSpace(descricaoDiagnostico))
             return Error.Validation("OrdemServico.DiagnosticoVazio", "Descrição do diagnóstico é obrigatória.");
 
+        var resultado = MontarOrcamentoEEmitirEvento(descricaoDiagnostico, servicos, pecas);
+        if (resultado.IsFailure) return resultado.Error;
+
+        DescricaoDiagnostico = descricaoDiagnostico;
+        return this;
+    }
+
+    private Result<OrdemServico> MontarOrcamentoEEmitirEvento(
+        string? descricaoDiagnostico,
+        IEnumerable<ItemServicoInput> servicos,
+        IEnumerable<ItemPecaInput> pecas)
+    {
         var servicosList = servicos.ToList();
         var pecasList = pecas.ToList();
 
-        if (!servicosList.Any())
+        if (servicosList.Count == 0)
             return Error.Validation("OrdemServico.OrcamentoSemServicos", "Não é possível gerar orçamento sem itens de serviços.");
-        if (!pecasList.Any())
+        if (pecasList.Count == 0)
             return Error.Validation("OrdemServico.OrcamentoSemPecas", "Não é possível gerar orçamento sem itens de peças.");
 
         _itensServico.Clear();
@@ -143,7 +174,6 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         var orcamento = Orcamento.Criar(valorTotal);
         _orcamentos.Add(orcamento);
 
-        DescricaoDiagnostico = descricaoDiagnostico;
         AtualizadoEm = DateTime.UtcNow;
 
         var servicosSnapshot = _itensServico
@@ -153,7 +183,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
             .Select(x => new ItemPecaSnapshot(x.PecaInsumoId, x.Quantidade, x.PrecoUnitarioSnapshot))
             .ToList();
 
-        AddDomainEvent(new DiagnosticoConcluido(Id, orcamento.Id, descricaoDiagnostico, servicosSnapshot, pecasSnapshot, valorTotal, DateTime.UtcNow));
+        AddDomainEvent(new OrcamentoGerado(Id, orcamento.Id, descricaoDiagnostico, servicosSnapshot, pecasSnapshot, valorTotal, DateTime.UtcNow));
         return this;
     }
 

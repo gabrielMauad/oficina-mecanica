@@ -94,7 +94,7 @@ public class OrdemServicoEndpointsTests
         Assert.Equal("EmDiagnostico", osAposIniciar!.Status);
 
         // 7. Registrar Diagnóstico
-        //    O handler EnviarOrcamentoAoCliente reage ao evento DiagnosticoConcluido
+        //    O handler EnviarOrcamentoAoCliente reage ao evento OrcamentoGerado
         //    e move a OS de forma síncrona para AguardandoAprovacao + orçamento para Enviado
         var registrarBody = new
         {

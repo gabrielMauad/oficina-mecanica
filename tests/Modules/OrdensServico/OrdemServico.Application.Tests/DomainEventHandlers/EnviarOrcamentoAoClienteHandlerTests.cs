@@ -48,8 +48,8 @@ public class EnviarOrcamentoAoClienteHandlerTests
         return os;
     }
 
-    private static DiagnosticoConcluido CriarNotificacao(OrdensServico.Domain.OrdemServico.OrdemServico os) =>
-        os.DomainEvents.OfType<DiagnosticoConcluido>().Single();
+    private static OrcamentoGerado CriarNotificacao(OrdensServico.Domain.OrdemServico.OrdemServico os) =>
+        os.DomainEvents.OfType<OrcamentoGerado>().Single();
 
     [Fact(DisplayName = "Cenário feliz: OS encontrada → EnviarOrcamento, Save e NotificarOrcamentoPronto chamados")]
     public async Task Handle_OsEncontrada_EnviaOrcamentoENotificaCliente()

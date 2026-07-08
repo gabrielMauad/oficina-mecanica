@@ -9,7 +9,7 @@ using SharedKernel.Domain;
 
 namespace OrdensServico.Application.DomainEventHandlers;
 
-public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoConcluido>
+public sealed class EnviarOrcamentoAoCliente : INotificationHandler<OrcamentoGerado>
 {
     private readonly IOrdemServicoGateway _ordemServicoGateway;
     private readonly IUnitOfWork _unitOfWork;
@@ -40,13 +40,13 @@ public sealed class EnviarOrcamentoAoCliente : INotificationHandler<DiagnosticoC
         _logger = logger;
     }
 
-    public async Task Handle(DiagnosticoConcluido notification, CancellationToken ct)
+    public async Task Handle(OrcamentoGerado notification, CancellationToken ct)
     {
         OrdemServico? ordemServico = await _ordemServicoGateway.ObterPorId(notification.OrdemServicoId, ct);
         if (ordemServico is null)
         {
             _logger.LogError(
-                "OS {OrdemServicoId} não encontrada ao tentar enviar orçamento após DiagnosticoConcluido.",
+                "OS {OrdemServicoId} não encontrada ao tentar enviar orçamento após OrcamentoGerado.",
                 notification.OrdemServicoId);
             return;
         }

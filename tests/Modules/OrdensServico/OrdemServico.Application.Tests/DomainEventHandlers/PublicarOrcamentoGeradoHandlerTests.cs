@@ -22,7 +22,7 @@ public class PublicarOrcamentoGeradoHandlerTests
         _handler = new(_busMock.Object, _pendingEvents);
     }
 
-    private static DiagnosticoConcluido CriarNotificacao()
+    private static OrcamentoGerado CriarNotificacao()
     {
         var os = OrdensServico.Domain.OrdemServico.OrdemServico.Criar(ClienteId, VeiculoId).Value;
         os.IniciarDiagnostico();
@@ -31,11 +31,11 @@ public class PublicarOrcamentoGeradoHandlerTests
             [new ItemServicoInput(ServicoId, 1, 100m)],
             [new ItemPecaInput(PecaId, 2, 50m)]);
 
-        return os.DomainEvents.OfType<DiagnosticoConcluido>().Single();
+        return os.DomainEvents.OfType<OrcamentoGerado>().Single();
     }
 
     [Fact(DisplayName = "Handle: enfileira OrcamentoGeradoIntegrationEvent com payload correto")]
-    public async Task Handle_DiagnosticoConcluido_EnfileiradOrcamentoGeradoComPayloadCorreto()
+    public async Task Handle_OrcamentoGerado_EnfileiradOrcamentoGeradoComPayloadCorreto()
     {
         var notification = CriarNotificacao();
 

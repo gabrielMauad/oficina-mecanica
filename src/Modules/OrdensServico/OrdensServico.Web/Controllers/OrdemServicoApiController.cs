@@ -25,10 +25,32 @@ public class OrdemServicoApiController : ControllerBase
         return CreatedAtAction(nameof(ObterPorId), new { id = result.Value.Id }, result.Value);
     }
 
+    [HttpPost("completa")]
+    public async Task<IActionResult> AbrirCompleta([FromBody] AbrirOrdemServicoCompletaRequest request)
+    {
+        var result = await _caController.AbrirCompleta(request);
+
+        if (result.IsFailure)
+            return UnprocessableEntity(result.Error);
+
+        return CreatedAtAction(nameof(ObterPorId), new { id = result.Value.Id }, result.Value);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> ObterPorId(Guid id)
     {
         var result = await _caController.ObterPorId(id);
+
+        if (result.IsFailure)
+            return NotFound(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("{id}/status")]
+    public async Task<IActionResult> ObterStatus(Guid id)
+    {
+        var result = await _caController.ObterStatus(id);
 
         if (result.IsFailure)
             return NotFound(result.Error);
@@ -42,6 +64,18 @@ public class OrdemServicoApiController : ControllerBase
     public async Task<IActionResult> ListarPorCliente([FromQuery] Guid clienteId)
     {
         var result = await _caController.ListarPorCliente(clienteId);
+
+        if (result.IsFailure)
+            return NotFound(result.Error);
+
+        return Ok(result.Value);
+    }
+
+    [Authorize]
+    [HttpGet("acompanhamento")]
+    public async Task<IActionResult> ListarParaAcompanhamento()
+    {
+        var result = await _caController.ListarParaAcompanhamento();
 
         if (result.IsFailure)
             return NotFound(result.Error);
