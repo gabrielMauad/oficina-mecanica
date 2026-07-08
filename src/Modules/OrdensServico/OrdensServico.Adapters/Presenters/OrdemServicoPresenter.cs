@@ -22,6 +22,9 @@ public static class OrdemServicoPresenter
             [.. entity.Orcamentos.Select(x => new OrcamentoViewModel(x.ValorTotal, x.Status.ToString(), x.DataGeracao, x.DataEnvio, x.DataAprovacao))]
         );
 
+    public static StatusOrdemServicoViewModel PresentStatus(OrdemServico entity) =>
+        new(entity.Id.Value, entity.Status.ToString());
+
     public static List<OrdemServicoViewModel> PresentListar(List<OrdemServicoListItem> readModels) =>
         [.. readModels.Select(x => new OrdemServicoViewModel(
             x.Id,
