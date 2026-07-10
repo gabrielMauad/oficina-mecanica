@@ -1,0 +1,100 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore OficinaMecanica.slnx
+
+      - name: Build
+        run: dotnet build OficinaMecanica.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test OficinaMecanica.slnx --no-build --configuration Release --verbosity normal
+
+  docker-image:
+    name: Build & Push image
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Bootstrap/Api/Dockerfile
+          push: true
+          tags: |
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/oficina-mecanica-api:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/oficina-mecanica-api:${{ github.sha }}
+
+
+  deploy:
+    name: Deploy to Kubernetes (kind)
+    needs: docker-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.5'
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init -input=false
+
+      - name: Terraform Apply (cria kind + deploy do banco e da app)
+        working-directory: infra
+        run: |
+          terraform apply -auto-approve -input=false \
+            -var="api_image=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/oficina-mecanica-api:${{ github.sha }}"
+
+      - name: Smoke test (/healthz via NodePort)
+        run: |
+          echo "aguardando a API responder em localhost:30080..."
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:30080/healthz; then
+              echo "OK: API respondeu 200"; exit 0
+            fi
+            sleep 10
+          done
+          echo "FALHA: API nao respondeu a tempo"; exit 1
+
+      - name: Estado do cluster (evidência nos logs)
+        if: always()
+        env:
+          KUBECONFIG: ${{ github.workspace }}/infra/kubeconfig.yaml
+        run: |
+          kubectl get pods,svc,hpa -n oficina-mecanica || true
+          kubectl top pods -n oficina-mecanica || true
+
+      - name: Terraform Destroy (limpa o cluster efêmero)
+        if: always()
+        working-directory: infra
+        run: terraform destroy -auto-approve -input=false || true

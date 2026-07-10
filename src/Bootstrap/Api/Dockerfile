@@ -9,4 +9,8 @@ RUN dotnet publish src/Bootstrap/Api/Api.csproj -c Release -o /api --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /api
 COPY --from=build /api ./
+
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+
 ENTRYPOINT ["dotnet", "Api.dll"]
