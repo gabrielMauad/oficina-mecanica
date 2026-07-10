@@ -4,12 +4,12 @@ services:
       context: .
       dockerfile: src/Bootstrap/Api/Dockerfile
     ports:
-      - "8080:80"
+      - "8080:8080"
     environment:
-      - ASPNETCORE_URLS=http://+:80
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__Default=Host=postgres;Username=postgres;Password=postgres;Database=oficina_mecanica;SSL Mode=Disable
-      - Jwt__Secret=docker-dev-secret-key-replace-in-prod-00
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Username=oficina;Password=oficina-dev-pass;Database=oficina_mecanica;SSL Mode=Disable
+      - Jwt__Secret=docker-dev-secret-key-replace-in-prod-000
       - Auth__AdminEmail=admin@oficina.com
       - Auth__AdminSenha=admin123
     depends_on:
@@ -19,16 +19,16 @@ services:
   postgres:
     image: postgres:16
     restart: always
-    container_name: postgres
+    container_name: oficina-postgres
+    environment:
+      POSTGRES_DB: oficina_mecanica
+      POSTGRES_USER: oficina
+      POSTGRES_PASSWORD: oficina-dev-pass
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U oficina -d oficina_mecanica"]
       interval: 10s
       timeout: 5s
       retries: 5
-    environment:
-      POSTGRES_DB: oficina_mecanica
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

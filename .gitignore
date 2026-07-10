@@ -66,3 +66,9 @@ coverage-results/
 
 # Claude Code
 .claude/
+
+# Terraform
+infra/.terraform/
+infra/kubeconfig.yaml
+infra/terraform.tfvars
+infra/*.tfstate*
