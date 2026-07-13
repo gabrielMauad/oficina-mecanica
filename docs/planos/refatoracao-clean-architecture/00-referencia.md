@@ -290,4 +290,4 @@ Itens globais (Plano 06):
 - [ ] `Adapters` de nenhum módulo referencia ASP.NET/EF (auditoria).
 - [ ] `Domain` de nenhum módulo referencia framework.
 - [ ] Código morto removido (antigos `*Response` com `FromX` que viraram Presenter, `Models` órfãos).
-- [ ] `docs/arquitetura/analise-clean-architecture.md` e README atualizados ao novo desenho.
+- [ ] `docs/arquitetura/clean-architecture.md` e README atualizados ao novo desenho.

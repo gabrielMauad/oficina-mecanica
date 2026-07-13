@@ -1,7 +1,6 @@
 # 02 — Kubernetes (manifestos em `/k8s`)
 
-> Pré-requisito de leitura: `00-visao-geral.md`. Conceitos e exemplos em
-> `docs/aulas/consolidado_02_kubernetes.md` e `docs/aulas/consolidado_04_banco.md`.
+> Pré-requisito de leitura: `00-visao-geral.md`.
 
 Objetivo: criar todos os manifestos que compõem o sistema no cluster: namespace, ConfigMap,
 Secret, banco PostgreSQL (com persistência), aplicação (Deployment + Service) e HPA.
@@ -85,8 +84,7 @@ stringData:
 
 A persistência usa **PVC com provisionamento dinâmico**. O kind já traz uma StorageClass padrão
 (`standard`, do local-path-provisioner), então **basta um PVC** — o PersistentVolume é criado
-automaticamente (não é preciso declarar um PV manual). Isso atende ao requisito de persistência
-do banco (ver `consolidado_04_banco.md`).
+automaticamente (não é preciso declarar um PV manual).
 
 ### `k8s/database/10-postgres-pvc.yaml`
 
@@ -309,8 +307,7 @@ spec:
 
 ### `k8s/app/22-api-hpa.yaml`
 
-HPA por CPU (métrica mais comum; ver `consolidado_02_kubernetes.md`). Escala de 1 a 5 réplicas
-com alvo de 50% de utilização média de CPU sobre o `requests.cpu` (100m) definido no Deployment.
+HPA por CPU. Escala de 1 a 5 réplicas com alvo de 50% de utilização média de CPU sobre o `requests.cpu` (100m) definido no Deployment.
 
 ```yaml
 apiVersion: autoscaling/v2

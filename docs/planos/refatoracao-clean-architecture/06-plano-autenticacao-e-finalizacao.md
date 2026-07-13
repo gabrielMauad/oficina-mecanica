@@ -72,7 +72,7 @@ de saída; manter o nome atual para não inflar).
 - [ ] Nenhum `Domain/Ports` remanescente.
 
 ### B5. Documentação
-- [ ] Atualizar `docs/arquitetura/analise-clean-architecture.md` (ou anexar nota) refletindo o novo
+- [ ] Atualizar `docs/arquitetura/clean-architecture.md` (ou anexar nota) refletindo o novo
   desenho: Controller CA, Gateways e Presenters como artefatos nomeados; o mapeamento anel→projeto da §2
   de `00-referencia.md`.
 - [ ] Atualizar a seção de arquitetura do README, se houver, com o diagrama de projetos por módulo.

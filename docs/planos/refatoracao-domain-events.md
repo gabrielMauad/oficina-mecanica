@@ -664,5 +664,5 @@ A refatoração permite testes mais focados, não menos:
 
 _Spec gerada em 2026-05-11 substituindo a versão de 2026-05-10. Validada contra o estado
 real do código em `src/Modules/`, o event storming em
-`docs/spec/event-storming-contextos-delimitados.md`, e a arquitetura em
+`docs/arquitetura/event-storming.md`, e a arquitetura em
 `docs/arquitetura/estrutura-do-projeto.md`._

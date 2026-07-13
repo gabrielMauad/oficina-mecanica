@@ -1,8 +1,6 @@
 # 03 — Terraform (IaC em `/infra`)
 
-> Pré-requisito de leitura: `00-visao-geral.md` e `02-kubernetes.md`. Conceitos em
-> `docs/aulas/consolidado_01_terraform.md`. Padrão de aplicar manifestos via Terraform validado
-> pelo professor em `docs/perguntas-infra.md`.
+> Pré-requisito de leitura: `00-visao-geral.md` e `02-kubernetes.md`.
 
 Objetivo: provisionar, de forma declarativa, (a) o **cluster kind**, (b) o **metrics-server**
 (pré-requisito do HPA) e (c) **todos os manifestos** do `/k8s` — usando **resources de verdade**

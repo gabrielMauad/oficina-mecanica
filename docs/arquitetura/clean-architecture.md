@@ -244,7 +244,7 @@ nenhum princípio.
 
 > A ressalva da §6 item 3 ("Presenter acoplado ao Controller") e a ausência de um
 > **Gateway** físico foram endereçadas por uma 2ª fase de refatoração, cuja fonte de
-> verdade é [`docs/arquitetura/refatoracao-clean-architecture/00-referencia.md`](refatoracao-clean-architecture/00-referencia.md).
+> verdade é [`docs/planos/refatoracao-clean-architecture/00-referencia.md`](../planos/refatoracao-clean-architecture/00-referencia.md).
 > Este addendum resume o estado final; o documento de referência traz o porquê completo
 > de cada decisão.
 
