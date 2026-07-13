@@ -31,12 +31,6 @@ Evolução da Fase 1 de um sistema de gestão de oficina mecânica. A aplicaçã
 (Clean Architecture) e as APIs da Fase 2 já estão implementadas. **Este plano cobre apenas a
 parte de INFRAESTRUTURA** dos requisitos da Fase 2: Docker, Kubernetes, Terraform (IaC) e CI/CD.
 
-O enunciado oficial está em `docs/spec/14SOAT - Fase 2 - Tech challenge.pdf`. O material de
-estudo consolidado das aulas está em `docs/aulas/consolidado_*.md` (00 requisitos, 01 terraform,
-02 kubernetes, 03 docker, 04 banco, 05 cicd, 06 checklist). Perguntas/respostas oficiais do
-fórum sobre infra estão em `docs/perguntas-infra.md`. **Consulte-os quando precisar de detalhe
-conceitual** — este plano assume o que está lá.
-
 ## 2. Fatos do projeto (verificados no código — não presuma nada diferente)
 
 | Fato | Valor |
@@ -83,9 +77,6 @@ A API lê configuração por env vars. Mapeamento definido para K8s:
 > **mesma** Secret.
 
 ## 3. Decisões de arquitetura (JÁ TOMADAS — não re-discutir)
-
-Estas decisões foram fechadas com base no prazo (~4 dias), na inexperiência com AWS e nas
-respostas do fórum (`docs/perguntas-infra.md`). São premissas do plano:
 
 1. **Cluster: kind (Kubernetes in Docker), 100% local**, provisionado por Terraform com o
    provider `tehcyx/kind`. Sem cloud, sem EKS. O fórum aceita projeto totalmente local com o
@@ -169,10 +160,6 @@ oficina-mecanica-v2/
 | CI/CD: execução dos testes | `04` (reaproveita `ci.yml`) |
 | CI/CD: build da imagem Docker | `04` (Docker Hub) |
 | CI/CD: deploy no cluster + deploy do banco + aplicar manifestos | `04` (terraform apply em kind efêmero) |
-
-> Os entregáveis de documentação/apresentação do PDF (README, diagrama, collection, vídeo, PDF
-> do portal, compartilhar repo com `soat-architecture`) **não fazem parte deste plano** — ver
-> nota de escopo na seção 0. Checklist detalhado original: `docs/aulas/consolidado_06_checklist.md`.
 
 ## 7. Definition of Done (o plano está concluído quando)
 

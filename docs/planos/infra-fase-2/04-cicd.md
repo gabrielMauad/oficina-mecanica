@@ -1,6 +1,6 @@
 # 04 — CI/CD (GitHub Actions)
 
-> Pré-requisito de leitura: `00`, `01`, `03`. Conceitos em `docs/aulas/consolidado_05_cicd.md`.
+> Pré-requisito de leitura: `00`, `01`, `03`.
 
 Objetivo: pipeline que roda **de ponta a ponta no GitHub Actions** e cumpre as etapas exigidas:
 build da aplicação → testes → build da imagem Docker → deploy no cluster Kubernetes → deploy do
@@ -189,7 +189,7 @@ job). Com o sistema no ar via Terraform local (ver `03`):
 ```bash
 kubectl get hpa -n oficina-mecanica -w        # janela 1: observa TARGETS e réplicas
 
-# janela 2: gera carga contra a API (loop simples ou k6 — ver consolidado_02/consolidado_05)
+# janela 2: gera carga contra a API
 for i in $(seq 1 5000); do curl -s http://localhost:30080/healthz > /dev/null; done
 ```
 

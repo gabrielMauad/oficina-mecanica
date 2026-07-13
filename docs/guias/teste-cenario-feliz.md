@@ -30,7 +30,14 @@
                                - Notificação ao cliente (notificado_em preenchido)
 [13] Concluir OS
 [14] Verificar estado final
+[15] Consultar OS por Cliente
+[16] Consultar Status Resumido da OS
+[17] Listar OS para Acompanhamento (painel interno)
 ```
+
+> ℹ️ Existe também um fluxo alternativo que colapsa os passos [6]–[8] em uma única
+> chamada: `POST /ordens-servico/completa`. Veja a seção "Fluxo Alternativo — Abrir OS
+> Já Completa" mais abaixo.
 
 ---
 
@@ -521,6 +528,113 @@ curl -s "http://localhost:8080/api/v1/ordens-servico?clienteId={CLIENTE_ID}" | j
 
 ---
 
+## Passo 16 — Consultar Status Resumido da OS
+
+Endpoint leve, retorna apenas `id` e `status` — útil para polling frequente sem trazer o
+snapshot completo da OS.
+
+```bash
+curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID}/status | jq .
+```
+
+**Resultado esperado:** `200 OK`
+
+```json
+{
+  "id": "{OS_ID}",
+  "status": "Entregue"
+}
+```
+
+---
+
+## Passo 17 — Listar OS para Acompanhamento (painel interno)
+
+Lista as OS "ativas" (exclui `Finalizada` e `Entregue`), ordenadas por prioridade de
+status — `EmExecucao` → `AguardandoAprovacao` → `EmDiagnostico` → `Recebida` — e, dentro de
+cada status, as mais antigas primeiro. Requer autenticação (`[Authorize]`).
+
+```bash
+curl -s http://localhost:8080/api/v1/ordens-servico/acompanhamento | jq .
+```
+
+**Resultado esperado:** `200 OK` — lista de OS ativas. Como a OS deste guia já está
+`Entregue`, ela **não** deve aparecer nesta lista.
+
+---
+
+## Fluxo Alternativo — Abrir OS Já Completa (`POST /completa`)
+
+Endpoint novo que abre a OS diretamente com serviços e peças definidos, pulando as
+etapas manuais de "iniciar diagnóstico" + "registrar diagnóstico" (Passos 7–8). A OS já
+nasce em `AguardandoAprovacao`, com orçamento `Enviado` e estoque reservado — mesmos
+efeitos colaterais do Passo 8, em uma única chamada.
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Content-Type: application/json" \
+  -d '{
+    "clienteId": "{CLIENTE_ID}",
+    "veiculoId": "{VEICULO_ID}",
+    "servicos": [
+      {
+        "servicoId": "{SERVICO_ID}",
+        "quantidade": 1
+      }
+    ],
+    "pecas": [
+      {
+        "pecaInsumoId": "{PECA_ID}",
+        "quantidade": 2
+      }
+    ]
+  }' | jq .
+```
+
+**Resultado esperado:** `201 Created`
+
+```json
+{
+  "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "clienteId": "{CLIENTE_ID}",
+  "veiculoId": "{VEICULO_ID}",
+  "status": "AguardandoAprovacao",
+  "descricaoDiagnostico": null,
+  "itensServico": [
+    {
+      "servicoId": "{SERVICO_ID}",
+      "quantidade": 1,
+      "precoUnitarioSnapshot": 150.00
+    }
+  ],
+  "itensPeca": [
+    {
+      "pecaInsumoId": "{PECA_ID}",
+      "quantidade": 2,
+      "precoUnitarioSnapshot": 45.90
+    }
+  ],
+  "orcamentos": [
+    {
+      "valorTotal": 241.80,
+      "status": "Enviado",
+      "dataGeracao": "...",
+      "dataEnvio": "...",
+      "dataAprovacao": null
+    }
+  ]
+}
+```
+
+> ✅ Diferente do fluxo manual, aqui a OS já nasce em `AguardandoAprovacao` com orçamento
+> `Enviado` e `descricaoDiagnostico: null` — não existe etapa de diagnóstico neste fluxo.
+> A partir daqui, a OS segue o mesmo ciclo de vida do fluxo principal:
+> `aprovar-orcamento → executar → finalizar → concluir` (Passos 10–13).
+
+> ⚙️ **Salve:** `OS_COMPLETA_ID = id`
+
+---
+
 ## Checklist de Validação
 
 | # | Verificação | Esperado |
@@ -542,3 +656,6 @@ curl -s "http://localhost:8080/api/v1/ordens-servico?clienteId={CLIENTE_ID}" | j
 | 13 | PATCH concluir | 200, status = Entregue, entregueEm preenchido |
 | 14 | GET /ordens-servico/{id} final | Snapshot completo correto |
 | 15 | GET /ordens-servico?clienteId=... | Lista a OS criada |
+| 16 | GET /ordens-servico/{id}/status | 200, retorna apenas {id, status} |
+| 17 | GET /ordens-servico/acompanhamento | 200, lista OS ativas ordenadas por prioridade, sem Entregue |
+| 18 | POST /ordens-servico/completa | 201, status = AguardandoAprovacao direto, orçamento = Enviado, sem diagnóstico |

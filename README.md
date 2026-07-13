@@ -1,6 +1,31 @@
 # Sistema de Oficina Mecânica
 
-Back-end de um sistema integrado de atendimento e execução de serviços para oficina mecânica, desenvolvido como Tech Challenge da Fase 1 da pós-graduação em Arquitetura de Software (FIAP/SOAT).
+Back-end de um sistema integrado de atendimento e execução de serviços para oficina mecânica,
+desenvolvido como **Tech Challenge da pós-graduação em Arquitetura de Software (FIAP/SOAT)**.
+
+- **Fase 1** — back-end monolítico com DDD, APIs REST, autenticação JWT e testes.
+- **Fase 2** — **evolução da aplicação** (refatoração para **Clean Code + Clean Architecture** e
+  novas APIs de Ordem de Serviço) **e infraestrutura** (Docker, **Kubernetes**, **Terraform**,
+  **CI/CD** e escalabilidade automática com HPA).
+
+> 📚 **Toda a documentação detalhada está em [`docs/`](docs/README.md)** — este README concentra
+> o contexto e os links. Comece por [`docs/README.md`](docs/README.md) para navegar.
+
+---
+
+## Índice
+
+- [Sobre o Projeto](#sobre-o-projeto)
+- [Arquitetura e Desenhos da Solução](#arquitetura-e-desenhos-da-solução)
+- [Execução Local (Docker Compose)](#execução-local-docker-compose)
+- [Deploy em Kubernetes](#deploy-em-kubernetes)
+- [Provisionamento da Infraestrutura (Terraform)](#provisionamento-da-infraestrutura-terraform)
+- [CI/CD](#cicd)
+- [Autenticação](#autenticação)
+- [APIs — Documentação e Collection](#apis--documentação-e-collection)
+- [Testes](#testes)
+- [Vídeo Demonstrativo](#vídeo-demonstrativo)
+- [Documentação Completa](#documentação-completa)
 
 ---
 
@@ -8,44 +33,113 @@ Back-end de um sistema integrado de atendimento e execução de serviços para o
 
 ### O Desafio
 
-O requisito do Tech Challenge era construir um back-end monolítico com DDD aplicado, APIs RESTful documentadas, autenticação JWT, validação de CPF/CNPJ e placa, cobertura de testes ≥ 80% nos domínios críticos, e orquestração via Docker.
+Construir um back-end de gestão de oficina com **DDD aplicado**, **APIs RESTful documentadas**,
+**autenticação JWT**, validação de CPF/CNPJ e placa, **cobertura de testes ≥ 80%** nos domínios
+críticos e orquestração via Docker (Fase 1) — e, na Fase 2, provisionar e implantar toda a
+solução em **Kubernetes com IaC e CI/CD**.
 
-### Objetivos Adicionais (além do requisito)
+### Objetivos da Fase 2
 
-O projeto foi desenvolvido com foco em estudo aprofundado de arquitetura de software, incorporando deliberadamente práticas que vão além do MVP exigido:
+A Fase 2 evolui a Fase 1 em **dois pilares** — qualidade/organização do código **e**
+infraestrutura escalável e automatizada.
 
-- **Modular Monolith** com fronteiras de Bounded Context físicas (assembly por camada por módulo), preparando a extração futura para microsserviços com mínimo retrabalho
-- **DDD aplicado de forma real**: domain events existem apenas quando há consumidor concreto; events sem handler são dead code e foram explicitamente removidos
-- **CQRS com MediatR v12**: vertical slices, pipeline behaviors para validação, logging e transação
-- **Integration Events in-process**: bus desacoplado (`IIntegrationEventBus`) substituível por RabbitMQ/Kafka sem alterar Application ou Domain de nenhum módulo
-- **Anti-Corruption Layer (ACL)** para comunicação síncrona entre módulos via ports e adapters, seguindo o vocabulário de cada BC
-- **TransactionBehavior** centralizado com orquestração pós-commit de domain events e integration events
+**Pilar 1 — Evolução da aplicação**
 
----
-
-## Pré-requisitos
-
-| Ferramenta | Versão mínima |
+| Objetivo | Entregue |
 |---|---|
-| Docker + Docker Compose | v2.x |
-| .NET SDK | 10.0 (apenas para testes locais sem Docker) |
+| **Clean Code + Clean Architecture** | Refatoração da Fase 1: separação de camadas e dependências com artefatos nomeados (Controller CA, Gateway, Presenter, Use Cases). Planos em [`docs/planos/refatoracao-clean-architecture/`](docs/planos/refatoracao-clean-architecture/) |
+| **Novas/alteradas APIs de OS** | Abertura completa da OS (cliente, veículo, serviços e peças de uma vez), consulta de status, aprovação/recusa de orçamento, **listagem ordenada por status** com **exclusão lógica** de OS finalizadas/entregues, e notificação de status |
+| **Testes automatizados** | Unitários (xUnit) + integração (Testcontainers) cobrindo os fluxos críticos, cobertura ≥ 80% nos domínios |
+
+**Pilar 2 — Infraestrutura e automação**
+
+| Objetivo | Entregue |
+|---|---|
+| **Conteinerização** | `Dockerfile` multi-stage + `docker-compose` para dev local |
+| **Orquestração** em Kubernetes | Deployments, Services, ConfigMap, Secret e **HPA** em [`k8s/`](k8s/) |
+| **Escalabilidade automática** | HorizontalPodAutoscaler por CPU (min 1 / max 5) |
+| **Infraestrutura como Código** | Módulo **Terraform** em [`infra/`](infra/) provisiona cluster + banco + app |
+| **CI/CD** | Pipeline GitHub Actions: build → teste → imagem → deploy → smoke test |
+
+> Detalhes das decisões de Clean Architecture em
+> [`docs/arquitetura/clean-architecture.md`](docs/arquitetura/clean-architecture.md) e das mudanças
+> funcionais da OS em [`docs/arquitetura/decisoes.md`](docs/arquitetura/decisoes.md).
+
+### Objetivos Adicionais (estudo de arquitetura)
+
+Além do MVP exigido, o projeto incorpora deliberadamente práticas avançadas:
+
+- **Modular Monolith** com fronteiras de Bounded Context físicas (assembly por camada por
+  módulo), preparando a extração futura para microsserviços com mínimo retrabalho.
+- **DDD real**: domain events existem apenas quando há consumidor concreto.
+- **CQRS com MediatR v12**: vertical slices, pipeline behaviors (validação, logging, transação).
+- **Integration Events in-process**: bus desacoplado (`IIntegrationEventBus`) substituível por
+  RabbitMQ/Kafka sem alterar Application ou Domain.
+- **Anti-Corruption Layer (ACL)** para comunicação síncrona entre módulos via ports e adapters.
 
 ---
 
-## Executando com Docker
+## Arquitetura e Desenhos da Solução
+
+Os três desenhos exigidos na Fase 2 estão em [`docs/arquitetura/diagramas/`](docs/arquitetura/diagramas/)
+(Mermaid — renderizam direto no GitHub):
+
+| Desenho | Arquivo |
+|---|---|
+| 🧩 **Componentes da aplicação** (C4 níveis 1–3) | [`diagramas/componentes.md`](docs/arquitetura/diagramas/componentes.md) |
+| 🏗️ **Infraestrutura provisionada** (cluster kind, banco, API, HPA) | [`diagramas/infraestrutura.md`](docs/arquitetura/diagramas/infraestrutura.md) |
+| 🚀 **Fluxo de deploy** (CI/CD) | [`diagramas/fluxo-deploy.md`](docs/arquitetura/diagramas/fluxo-deploy.md) |
+
+### Modular Monolith + Clean Architecture
+
+O projeto é aderente à **Clean Architecture** (os quatro anéis são projetos físicos distintos e
+a Regra de Dependência é forçada em compile-time) e organizado como **Modular Monolith**: cada
+Bounded Context tem 5 projetos próprios, com a fronteira enforçada por referências de projeto.
+Para extrair um microsserviço, basta mover os projetos do módulo, trocar adapters por HTTP
+clients e o bus in-process por mensageria — nada no Domain ou Application muda.
+
+### Bounded Contexts
+
+| Módulo | Responsabilidade |
+|---|---|
+| **Autenticacao** | Login e emissão de JWT |
+| **Cadastro** | Cliente, Veículo, Serviço (catálogo) |
+| **PecasInsumos** | Estoque de peças, disponibilidade, entradas e saídas |
+| **OrdemServico** | Ciclo de vida completo da OS e orçamento |
+
+### Banco de Dados
+
+**PostgreSQL 16**, banco único (`oficina_mecanica`), **1 schema por módulo** (`cadastro`,
+`pecas_insumos`, `ordem_servico`), **sem FK cross-schema** — o isolamento simula microsserviços.
+
+> 📖 Aprofundamento: [`estrutura-do-projeto.md`](docs/arquitetura/estrutura-do-projeto.md) ·
+> [`clean-architecture.md`](docs/arquitetura/clean-architecture.md) ·
+> [`decisoes.md`](docs/arquitetura/decisoes.md) ·
+> [`database-schema.md`](docs/arquitetura/database-schema.md) ·
+> [`event-storming.md`](docs/arquitetura/event-storming.md).
+
+---
+
+## Execução Local (Docker Compose)
+
+Forma mais rápida de subir tudo para desenvolvimento e testes manuais.
+
+**Pré-requisitos:** Docker + Docker Compose v2.x. (.NET SDK 10.0 apenas para rodar testes fora do
+container.)
 
 ```bash
 git clone <repo>
-cd oficina-mecanica
+cd oficina-mecanica-v2
 
 docker compose up --build
 ```
 
-Isso sobe dois serviços:
+Sobe dois serviços:
 - **`postgres`** — PostgreSQL 16, banco `oficina_mecanica`, porta `5432`
-- **`api`** — aplicação .NET, porta `8080`
+- **`api`** — aplicação .NET 10, porta `8080`
 
-As **migrations são aplicadas automaticamente** na inicialização da API (via `MigrateAsync()` em `Program.cs`). Não é necessário nenhum comando manual.
+As **migrations são aplicadas automaticamente** na inicialização da API (`MigrateAsync()` em
+`Program.cs`). Nenhum comando manual é necessário.
 
 ### Pontos de acesso
 
@@ -54,13 +148,93 @@ As **migrations são aplicadas automaticamente** na inicialização da API (via 
 | API REST | `http://localhost:8080/api/v1/` |
 | Scalar (docs interativa) | `http://localhost:8080/scalar` |
 | Health check | `http://localhost:8080/healthz` |
-| PostgreSQL | `localhost:5432` — user/pass: `postgres/postgres` |
+| PostgreSQL | `localhost:5432` — user/pass: `oficina` / `oficina-dev-pass` |
+
+---
+
+## Deploy em Kubernetes
+
+Os manifestos estão em [`k8s/`](k8s/), organizados em `base/` (namespace, ConfigMap, Secret),
+`database/` (PVC, Deployment e Service do PostgreSQL) e `app/` (Deployment, Service NodePort e
+**HPA** da API). O deploy é feito de forma **declarativa via Terraform** (que aplica esses
+manifestos como _resources_) — ver a seção seguinte.
+
+Recursos-chave do cluster:
+
+- **Cluster local:** [kind](https://kind.sigs.k8s.io/) (Kubernetes in Docker), namespace
+  `oficina-mecanica`.
+- **HPA:** `oficina-api-hpa` escala a API de **1 a 5 réplicas** ao ultrapassar **50% de CPU**
+  (depende do metrics-server, provisionado junto).
+- **Acesso:** `http://localhost:30080` (NodePort) ou
+  `kubectl port-forward -n oficina-mecanica svc/oficina-api 8080:8080`.
+
+Comandos úteis após o deploy:
+
+```bash
+kubectl get pods,svc,hpa -n oficina-mecanica
+kubectl top pods -n oficina-mecanica          # métricas (metrics-server)
+kubectl get hpa -n oficina-mecanica -w        # acompanhar a escalabilidade
+```
+
+> Desenho do cluster: [`diagramas/infraestrutura.md`](docs/arquitetura/diagramas/infraestrutura.md).
+
+---
+
+## Provisionamento da Infraestrutura (Terraform)
+
+O módulo em [`infra/`](infra/) provisiona **tudo** de forma declarativa — cluster kind,
+metrics-server (via Helm) e todos os manifestos do `k8s/` — usando _resources_ Terraform de
+verdade (`kind_cluster`, `helm_release`, `kubectl_manifest`), **sem `local-exec`**.
+
+**Pré-requisitos:** Docker, Terraform ≥ 1.5, `kind` e `kubectl` no PATH.
+
+```bash
+cd infra
+terraform init
+
+# 1. cria só o cluster kind primeiro
+terraform apply -auto-approve -target=kind_cluster.this
+
+# 2. builda a imagem (da raiz do repo) e carrega no cluster
+cd ..
+docker build -f src/Bootstrap/Api/Dockerfile -t oficina-mecanica-api:local .
+kind load docker-image oficina-mecanica-api:local --name oficina-mecanica
+
+# 3. aplica o resto (metrics-server, base, banco, app, HPA)
+cd infra
+terraform apply -auto-approve
+```
+
+Para destruir tudo (remove o cluster kind e todo o conteúdo):
+
+```bash
+cd infra && terraform destroy -auto-approve
+```
+
+> 📖 Passo a passo completo (local e CI), tabela de recursos e troubleshooting em
+> [`infra/README.md`](infra/README.md).
+
+---
+
+## CI/CD
+
+Dois workflows do GitHub Actions:
+
+| Workflow | Gatilho | O que faz |
+|---|---|---|
+| [`ci.yml`](.github/workflows/ci.yml) | Pull Request → `main` | build + testes (validação de PR) |
+| [`ci-cd.yml`](.github/workflows/ci-cd.yml) | Push/merge → `main` | build → teste → imagem (Docker Hub) → **deploy em cluster kind efêmero** → smoke test em `/healthz` → destroy |
+
+O cluster kind é criado **dentro do runner** GitHub-hosted, então o histórico do Actions é
+autocontido. Segredos necessários: `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN`.
+
+> Desenho do pipeline: [`diagramas/fluxo-deploy.md`](docs/arquitetura/diagramas/fluxo-deploy.md).
 
 ---
 
 ## Autenticação
 
-A maioria dos endpoints requer um token JWT. Para obtê-lo:
+A maioria dos endpoints requer JWT. Para obtê-lo:
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/auth/login \
@@ -68,43 +242,49 @@ curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -d '{"email": "admin@oficina.com", "senha": "admin123"}'
 ```
 
-O token retornado tem validade de **1 hora**. Use-o como `Authorization: Bearer <token>` nas demais chamadas, ou pelo botão **Authorize** no Scalar.
+O token tem validade de **1 hora**. Use-o como `Authorization: Bearer <token>` ou pelo botão
+**Authorize** no Scalar.
 
-> Credenciais e segredo JWT são definidos no `docker-compose.yml`. Em produção, substitua as variáveis `Jwt__Secret`, `Auth__AdminEmail` e `Auth__AdminSenha`.
+> Credenciais e segredo JWT são definidos no `docker-compose.yml` (dev) e na Secret do Kubernetes
+> (cluster). Em produção, substitua `Jwt__Secret`, `Auth__AdminEmail` e `Auth__AdminSenha`.
 
-**Endpoints públicos** (sem autenticação): `GET /api/v1/ordens-servico&clienteId=X` (acompanhamento pelo cliente) e `GET /healthz`.
-
----
-
-## Testando a API
-
-### Guias de teste E2E
-
-- **[Cenário feliz (happy path)](docs/testes/cenario-feliz.md)** — fluxo completo de ponta a ponta com exemplos `curl`, resultados esperados e checklist
-- **[Cenários alternativos](docs/testes/cenarios-alternativos.md)** — validações de erro: CPF/CNPJ inválido, placa inválida, transições inválidas, estoque insuficiente, rejeição + estorno
-
-### Coleção Bruno
-
-A coleção completa está em [`docs/testes/collection_bruno.yml`](docs/testes/collection_bruno.yml), importável diretamente no [Bruno](https://usebruno.com). Inclui todos os módulos com ambiente `Local` pré-configurado (`http://localhost:8080`).
+**Endpoints públicos** (sem autenticação): consulta de acompanhamento da OS pelo cliente e
+`GET /healthz`.
 
 ---
 
-## Testes Automatizados
+## APIs — Documentação e Collection
 
-### Rodando os testes
+| Recurso | Onde |
+|---|---|
+| **Documentação interativa (Scalar/OpenAPI)** | `http://localhost:8080/scalar` (e `/openapi`) com a API rodando |
+| **Collection completa (Bruno)** | [`docs/guias/collection_bruno.yml`](docs/guias/collection_bruno.yml) — importável no [Bruno](https://usebruno.com), ambiente `Local` pré-configurado |
+
+A collection Bruno inclui todos os módulos e endpoints, incluindo os novos da Fase 2.
+
+---
+
+## Testes
+
+### Guias E2E
+
+- **[Cenário feliz (happy path)](docs/guias/teste-cenario-feliz.md)** — fluxo completo com
+  exemplos `curl`, resultados esperados e checklist.
+- **[Cenários alternativos](docs/guias/teste-cenarios-alternativos.md)** — validações de erro:
+  CPF/CNPJ inválido, placa inválida, transições inválidas, estoque insuficiente, rejeição + estorno.
+
+### Testes automatizados
 
 ```bash
-# Todos os testes (unitários + integração)
+# Todos (unitários + integração)
 dotnet test OficinaMecanica.slnx
 
 # Apenas unitários (sem Docker)
 dotnet test OficinaMecanica.slnx --filter "Category!=Integration"
 
-# Apenas integração (requer Docker)
+# Apenas integração (requer Docker — Testcontainers.PostgreSql)
 dotnet test tests/IntegrationTests
 ```
-
-### Stack de testes
 
 | Camada | Ferramenta |
 |---|---|
@@ -113,210 +293,49 @@ dotnet test tests/IntegrationTests
 | Integração (banco real) | Testcontainers.PostgreSql |
 | Cobertura | Coverlet + ReportGenerator |
 
-### Estrutura dos testes
+**Domain.Tests** — puros, sem IO, sustentam a cobertura ≥ 80%. **IntegrationTests** — sobem a
+aplicação completa com `WebApplicationFactory<Program>` e Postgres real, validando migrations,
+adapters e o pipeline de eventos de ponta a ponta.
 
-```
-tests/
-├── Modules/
-│   ├── Cadastro/
-│   │   ├── Cadastro.Domain.Tests/        ← invariantes, VOs, sem IO
-│   │   └── Cadastro.Application.Tests/   ← handlers com mocks
-│   ├── OrdemServico/
-│   │   ├── OrdemServico.Domain.Tests/
-│   │   └── OrdemServico.Application.Tests/
-│   └── PecasInsumos/
-│       ├── PecasInsumos.Domain.Tests/
-│       └── PecasInsumos.Application.Tests/
-└── IntegrationTests/                     ← ponta a ponta com Postgres real
-    ├── Modules/ (Cadastro, OrdemServico, PecasInsumos)
-    └── EventBus/                         ← testa fluxo cross-module via integration events
-```
-
-**Domain.Tests** — puros, sem IO, sem mocks. Cobrem invariantes, transições de estado e geração de domain events. São estes que sustentam a cobertura ≥ 80%.
-
-**IntegrationTests** — sobe a aplicação completa com `WebApplicationFactory<Program>` e Postgres real via Testcontainers. Garante que migrations, adapters e o pipeline de eventos funcionam de ponta a ponta.
-
-### Gerando relatório de cobertura
+### Cobertura (meta ≥ 80%)
 
 ```bash
-dotnet test OficinaMecanica.slnx \
-  --collect:"XPlat Code Coverage" \
-  --results-directory coverage-results/
-
-reportgenerator \
-  -reports:"coverage-results/**/coverage.cobertura.xml" \
-  -targetdir:"coverage-report/" \
-  -reporttypes:Html
+dotnet test OficinaMecanica.slnx --collect:"XPlat Code Coverage" --results-directory coverage-results/
+reportgenerator -reports:"coverage-results/**/coverage.cobertura.xml" -targetdir:"coverage-report/" -reporttypes:Html
 ```
 
-Abra `coverage-report/index.html` para visualizar. Meta: **≥ 80% de cobertura de linha** nos projetos Domain e Application.
-
-### Resultado atual
-
 ![Coverage Summary](docs/images/coverage-summary.png)
-
 ![Coverage Detail](docs/images/coverage-detail.png)
 
 ---
 
-## Arquitetura
+## Vídeo Demonstrativo
 
-### Aderência à Clean Architecture
+> 🎥 **[Assista à demonstração no YouTube](ADICIONAR_LINK_DO_VIDEO)** _(link a preencher)_
 
-O projeto é **aderente à Clean Architecture** (Robert C. Martin): os quatro anéis estão representados por projetos físicos distintos — Domain (Entities), Application (Use Cases), Adapters/Contracts (Interface Adapters) e Web/Infrastructure/Bootstrap (Frameworks & Drivers) — e a **Regra de Dependência é forçada em compile-time** pelas referências de projeto, com dependências apontando sempre para dentro.
+O vídeo (≤ 15 min, público ou não listado) demonstra:
 
-O anel verde (Interface Adapters) tem assembly próprio por módulo (`{Module}.Adapters`), com os artefatos nomeados que o diagrama de Martin cobra: **Controller CA** (`Controllers/`), **Gateway** (`Gateways/`, delega ao `I{Entity}Repository` em `DataSources/`) e **Presenter** (`Presenters/`, monta a ViewModel a partir da entidade devolvida pelo Handler). O MediatR (`ISender.Send`) permanece como único seam de framework, vivendo dentro do Controller CA — decisão consciente, não uma lacuna.
+- Deploy da aplicação (Terraform provisiona o cluster e sobe a stack)
+- Execução do CI/CD (pipeline no GitHub Actions)
+- Consumo das APIs (via Scalar / Bruno)
+- **Escalabilidade automática** — carga na API dispara o HPA e escala as réplicas
 
-> Análise completa, camada por camada, em [`docs/arquitetura/analise-clean-architecture.md`](docs/arquitetura/analise-clean-architecture.md).
+---
 
-### Modular Monolith
+## Documentação Completa
 
-O projeto adota a arquitetura de **Modular Monolith** — não um monolito em camadas horizontais clássico, mas com Bounded Contexts físicos: cada BC possui 5 projetos próprios. A fronteira é enforcement em compile-time via referências de projeto.
+Índice navegável de toda a documentação: **[`docs/README.md`](docs/README.md)**.
 
-**Por que essa escolha?** Em camadas horizontais, os 3 BCs ficariam misturados no mesmo `Domain.dll`. Aqui, para extrair um microsserviço basta mover 5 projetos, trocar adapters por HTTP clients e substituir o bus in-process por mensageria — nada no Domain ou Application muda.
-
-### Bounded Contexts
-
-| Módulo | Responsabilidade |
+| Tema | Pasta |
 |---|---|
-| **Autenticacao** | Login e emissão de JWT (sem entidades de domínio complexas) |
-| **Cadastro** | Cliente, Veículo, Serviço (catálogo) |
-| **PecasInsumos** | Estoque de peças, disponibilidade, entradas e saídas |
-| **OrdemServico** | Ciclo de vida completo da OS e orçamento |
-
-### Estrutura de projetos
-
-```
-src/
-├── SharedKernel/
-│   ├── SharedKernel.Domain/        ← Entity, AggregateRoot, ValueObject, Result<T>, IDomainEvent, IIntegrationEvent
-│   └── SharedKernel.Application/   ← IUnitOfWork, IPendingIntegrationEvents, IIntegrationEventBus, pipeline behaviors
-├── Modules/
-│   ├── Autenticacao/               ← Application, Adapters, Infrastructure, Web
-│   ├── Cadastro/                   ← Domain, Application, Adapters, Infrastructure, Web, Contracts
-│   ├── OrdensServico/              ← Domain, Application, Adapters, Infrastructure, Web, Contracts
-│   └── PecasInsumos/               ← Domain, Application, Adapters, Infrastructure, Web, Contracts
-└── Bootstrap/
-    └── Api/                        ← Program.cs, Dockerfile, middlewares
-```
-
-### Papel de cada camada
-
-| Camada | Responsabilidade | Referências permitidas |
-|---|---|---|
-| **Domain** | Agregados, VOs, domain events | SharedKernel.Domain apenas |
-| **Application** | Use cases (Command/Query/Handler/Validator), domain event handlers, `Gateways/I{X}Gateway` (interfaces) | Domain, SharedKernel.*, Contracts próprios e de outros módulos |
-| **Adapters** | Controller CA (`Controllers/`), Gateway — impl de persistência e ACL (`Gateways/`), interface do repositório (`DataSources/I{Entity}Repository`), Presenter (`Presenters/`), Request/ViewModel (`Models/`) | Application, Domain, Contracts de outros módulos, MediatR — **sem ASP.NET/EF** |
-| **Contracts** | Interface pública do módulo: queries síncronas, DTOs, integration events | SharedKernel.Domain apenas |
-| **Infrastructure** | EF Core, repositórios (impl do DataSource), module registration (DI) | Application, Domain, Contracts, **Adapters**, SharedKernel.*, EF/Npgsql |
-| **Web** *(ex-Presentation)* | Controllers REST finos (`*ApiController`), status HTTP por endpoint, registrados via `AddApplicationPart` no Bootstrap | Adapters, SharedKernel.* |
-
-> Detalhes completos em [`docs/arquitetura/estrutura-do-projeto.md`](docs/arquitetura/estrutura-do-projeto.md).
+| Arquitetura, diagramas e decisões | [`docs/arquitetura/`](docs/arquitetura/) |
+| Planos de implementação e infra | [`docs/planos/`](docs/planos/) |
+| Guias de teste e collection | [`docs/guias/`](docs/guias/) |
+| Recursos Terraform (passo a passo) | [`infra/README.md`](infra/README.md) |
+| Enunciados oficiais (FIAP) | [`docs/spec/`](docs/spec/) |
 
 ---
 
-## Banco de Dados
+## Licença
 
-**PostgreSQL 16**, banco único (`oficina_mecanica`), **1 schema por módulo**, **1 DbContext por módulo**.
-
-| Schema | Tabelas principais |
-|---|---|
-| `cadastro` | `cliente`, `veiculo`, `servico` |
-| `ordem_servico` | `ordem_servico`, `os_servico`, `os_peca`, `orcamento` |
-| `pecas_insumos` | `peca_insumo` |
-
-**Regra crítica:** sem FK cross-schema. Referências entre BCs são apenas por `UUID` sem validação no banco. A validação é responsabilidade da Application via ACL. Isso simula o isolamento de microsserviços e prepara a extração futura sem surpresas.
-
-> Schema completo: [`docs/arquitetura/database-schema.md`](docs/arquitetura/database-schema.md).
-
----
-
-## Decisões de Arquitetura Relevantes
-
-### Domain Events — só quando há consumidor real
-
-Um domain event existe apenas se houver um handler concreto que consuma e faça algo significativo. Eventos sem consumidor são dead code. Dos ~15 candidatos identificados no event storming, **3 sobreviveram**:
-
-| Evento | Onde | Consumidores |
-|---|---|---|
-| `DiagnosticoConcluido` | OrdemServico.Domain | (1) Enfileira `OrcamentoGeradoIntegrationEvent` → decrementa estoque; (2) Chama `EnviarOrcamento()` no agregado |
-| `OrcamentoRejeitado` | OrdemServico.Domain | Enfileira `OrcamentoRejeitadoIntegrationEvent` → estorna estoque |
-| `OrdemServicoFinalizada` | OrdemServico.Domain | Chama `NotificarCliente()` no agregado (stub de log) |
-
-> Spec completa: [`docs/spec/domain-events-review.md`](docs/spec/domain-events-review.md).
-
-### TransactionBehavior — orquestração pós-commit
-
-O `TransactionBehavior` do MediatR centraliza toda a orquestração em uma sequência determinística:
-
-1. Handler executa → agregado acumula domain events
-2. `CollectDomainEvents()` coleta os eventos antes do commit
-3. `SaveChangesAsync()` — **commit**
-4. `ClearDomainEvents()` nos agregados
-5. `IPublisher.Publish(domainEvent)` para cada evento → handlers de domain event rodam
-6. Handlers podem enfileirar integration events em `IPendingIntegrationEvents` ou mutar outros agregados (com `SaveChanges` próprio)
-7. `IIntegrationEventBus.Publish()` para cada integration event pendente
-
-Nenhum evento sai antes do commit. Command handlers não sabem nada sobre integration events — isso é responsabilidade dos domain event handlers.
-
-### Comunicação entre módulos
-
-**Síncrona (ACL):** quando o módulo precisa de resposta imediata (ex: verificar se cliente existe ao criar OS). O consumidor define uma *port* em seu Domain no seu vocabulário; a Infrastructure implementa um *adapter* que chama os Contracts do produtor e traduz o resultado.
-
-**Assíncrona (Integration Events):** quando é um fato consumado que outros BCs reagem (ex: orçamento gerado → decrementa estoque). Integration events vivem nos `<Modulo>.Contracts`. Nenhum módulo referencia diretamente Domain ou Application de outro módulo.
-
-### Veiculo é imutável
-
-Placa, modelo, marca e ano são definidos na criação e não têm métodos de mutação. Não existe endpoint `PUT /veiculos/{id}` — decisão intencional de domínio.
-
-### PATCH parcial para atualizações
-
-`AtualizarClienteCommand` e `AtualizarServicoCommand` aceitam campos anuláveis. Campos `null` são ignorados pelo handler. Validação com `.When(campo is not null)` no FluentValidation. Campos imutáveis (documento, email, nome do serviço) nunca são expostos para atualização.
-
-### Decremento de estoque na geração do orçamento
-
-O estoque é reservado quando o orçamento é gerado (ao concluir o diagnóstico), não na aprovação. Isso evita a condição de corrida onde dois orçamentos disputam o mesmo estoque. A rejeição estorna via `OrcamentoRejeitadoIntegrationEvent`.
-
-### Result\<T\> — erros de negócio sem exceptions
-
-Handlers retornam `Result<T>`. O `TransactionBehavior` não persiste se `result.IsFailure`. Controllers mapeiam falhas para Problem Details (RFC 7807). Exceptions não tratadas passam pelo `CustomExceptionHandler` global.
-
----
-
-## Ciclo de Vida de uma OS
-
-```
-POST /ordens-servico                    → status: Recebida
-PATCH /{id}/iniciar-diagnostico         → status: EmDiagnostico
-PATCH /{id}/registrar-diagnostico       → cria orçamento, envia ao cliente, decrementa estoque
-                                          (automático via domain events)
-                                          → status: AguardandoAprovacao, orçamento: Enviado
-PATCH /{id}/aprovar-orcamento           → orçamento: Aprovado
-  (ou) /rejeitar-orcamento             → orçamento: Rejeitado, estoque estornado
-PATCH /{id}/executar                    → status: EmExecucao
-PATCH /{id}/finalizar                   → status: Finalizada, notificado_em preenchido (automático)
-PATCH /{id}/concluir                    → status: Entregue
-```
-
-> Event storming completo: [`docs/spec/event-storming-contextos-delimitados.md`](docs/spec/event-storming-contextos-delimitados.md).
-
----
-
-## CI/CD
-
-GitHub Actions executa build + testes unitários em todo PR e push para `main`. Veja [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
-
----
-
-## Referências Internas
-
-| Documento | Conteúdo |
-|---|---|
-| [`docs/arquitetura/analise-clean-architecture.md`](docs/arquitetura/analise-clean-architecture.md) | Análise de aderência à Clean Architecture, mapeamento de anéis e Regra de Dependência |
-| [`docs/arquitetura/estrutura-do-projeto.md`](docs/arquitetura/estrutura-do-projeto.md) | Decisões de arquitetura, papel de cada projeto, regras de referência |
-| [`docs/arquitetura/database-schema.md`](docs/arquitetura/database-schema.md) | Schema completo do banco com DDL e rastreabilidade event storming → coluna |
-| [`docs/spec/event-storming-contextos-delimitados.md`](docs/spec/event-storming-contextos-delimitados.md) | Event storming com todos os fluxos e CDs |
-| [`docs/spec/domain-events-review.md`](docs/spec/domain-events-review.md) | Decisões sobre quais domain events existem e por quê |
-| [`docs/testes/cenario-feliz.md`](docs/testes/cenario-feliz.md) | Guia completo do happy path com curl e resultados esperados |
-| [`docs/testes/cenarios-alternativos.md`](docs/testes/cenarios-alternativos.md) | Validações de erro e fluxo de rejeição/estorno |
-| [`docs/testes/collection_bruno.yml`](docs/testes/collection_bruno.yml) | Coleção Bruno com todos os endpoints |
+Ver [`LICENSE`](LICENSE).

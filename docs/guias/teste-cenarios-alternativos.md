@@ -1,6 +1,6 @@
 # Guia de Testes E2E — Cenários Alternativos
 
-> **Pré-requisito:** Ter executado pelo menos os passos 1–5 do `cenario-feliz.md`
+> **Pré-requisito:** Ter executado pelo menos os passos 1–5 do [`teste-cenario-feliz.md`](teste-cenario-feliz.md)
 > para ter `{CLIENTE_ID}`, `{VEICULO_ID}`, `{SERVICO_ID}` e `{PECA_ID}` disponíveis.
 > Base URL: `http://localhost:8080`
 
@@ -26,6 +26,10 @@
 | A14 | Concluir OS sem notificação ao cliente | OrdemServico | 422 |
 | A15 | Decrementar estoque além do disponível | PecasInsumos | 422 |
 | A16 | Buscar entidade inexistente | Todos | 404 |
+| A17 | Abrir OS completa (`/completa`) com cliente inexistente | OrdemServico | 422 |
+| A18 | Abrir OS completa (`/completa`) sem peças | OrdemServico | 422 |
+| A19 | Abrir OS completa (`/completa`) com peça indisponível | OrdemServico + PecasInsumos | 422 |
+| A20 | Consultar status (`/{id}/status`) de OS inexistente | OrdemServico | 404 |
 
 ---
 
@@ -580,6 +584,130 @@ curl -s http://localhost:8080/api/v1/pecas-insumos/00000000-0000-0000-0000-00000
 curl -s http://localhost:8080/api/v1/ordens-servico/00000000-0000-0000-0000-000000000099 | jq .
 # Esperado: 404
 ```
+
+---
+
+## A17 — Abrir OS Completa com Cliente Inexistente
+
+O endpoint `POST /completa` roda as mesmas validações de ACL do endpoint `Gerar` antes
+de montar o orçamento.
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Content-Type: application/json" \
+  -d '{
+    "clienteId": "00000000-0000-0000-0000-000000000001",
+    "veiculoId": "{VEICULO_ID}",
+    "servicos": [
+      { "servicoId": "{SERVICO_ID}", "quantidade": 1 }
+    ],
+    "pecas": [
+      { "pecaInsumoId": "{PECA_ID}", "quantidade": 1 }
+    ]
+  }' | jq .
+```
+
+**Resultado esperado:** `422 Unprocessable Entity`
+
+```json
+{
+  "code": "OrdemServico.ClienteInexistenteOuInativo",
+  "description": "O cliente informado não existe ou está inativo."
+}
+```
+
+> ✅ Nenhuma OS é criada — a validação de cliente ocorre antes de montar orçamento ou
+> reservar estoque.
+
+---
+
+## A18 — Abrir OS Completa Sem Peças
+
+Diferente do fluxo manual (`registrar-diagnostico`), aqui a ausência de peças é barrada
+já no `AbrirOrdemServicoCompletaValidator` (FluentValidation), antes mesmo de chegar ao
+domínio.
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Content-Type: application/json" \
+  -d '{
+    "clienteId": "{CLIENTE_ID}",
+    "veiculoId": "{VEICULO_ID}",
+    "servicos": [
+      { "servicoId": "{SERVICO_ID}", "quantidade": 1 }
+    ],
+    "pecas": []
+  }' | jq .
+```
+
+**Resultado esperado:** `422 Unprocessable Entity`
+
+```json
+{
+  "code": "validation.failed",
+  "description": "Ao menos uma peça deve ser informada."
+}
+```
+
+> ✅ O mesmo vale para `servicos: []` (mensagem "Ao menos um serviço deve ser
+> informado."), `servicoId`/`pecaInsumoId` vazios e `quantidade <= 0` em qualquer item.
+
+---
+
+## A19 — Abrir OS Completa com Peça Indisponível
+
+```bash
+# Criar peça com estoque zero
+PECA_SEM_ESTOQUE_ID=$(curl -s -X POST http://localhost:8080/api/v1/pecas-insumos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Amortecedor Traseiro",
+    "descricao": "Amortecedor sem estoque",
+    "preco": 210.00,
+    "quantidadeEmEstoque": 0,
+    "unidadeDeMedida": "Unidade"
+  }' | jq -r '.pecaInsumoId')
+
+curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Content-Type: application/json" \
+  -d '{
+    "clienteId": "{CLIENTE_ID}",
+    "veiculoId": "{VEICULO_ID}",
+    "servicos": [
+      { "servicoId": "{SERVICO_ID}", "quantidade": 1 }
+    ],
+    "pecas": [
+      { "pecaInsumoId": "'"$PECA_SEM_ESTOQUE_ID"'", "quantidade": 1 }
+    ]
+  }' | jq .
+```
+
+**Resultado esperado:** `422 Unprocessable Entity`
+
+```json
+{
+  "code": "OrdemServico.PecaIndisponivel",
+  "description": "Peça/insumo indisponível para a quantidade informada."
+}
+```
+
+> ✅ Nenhuma OS é criada e nenhum estoque é reservado — a verificação de disponibilidade
+> via `IPecaDisponibilidadeGateway` ocorre antes de chamar `OrdemServico.AbrirComServicos`.
+> Se o `pecaInsumoId` não existir de fato, o código retornado é
+> `OrdemServico.PecaNaoEncontrada` em vez de `PecaIndisponivel`.
+
+---
+
+## A20 — Consultar Status de OS Inexistente
+
+```bash
+curl -s http://localhost:8080/api/v1/ordens-servico/00000000-0000-0000-0000-000000000099/status \
+  | jq .
+# Esperado: 404
+```
+
+> ✅ `GET /{id}/status` reaproveita a mesma query `ObterOrdemServicoPorIdQuery` do
+> `GET /{id}`, então o comportamento de 404 para OS inexistente é idêntico.
 
 ---
 

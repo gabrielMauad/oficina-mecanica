@@ -627,6 +627,64 @@ items:
           timeout: 0
           followRedirects: true
           maxRedirects: 5
+      - info:
+          name: Abrir Completa
+          type: http
+          seq: 11
+        http:
+          method: POST
+          url: '{{url}}/{{route_prefix}}/completa'
+          body:
+            type: json
+            data: |-
+              {
+                "clienteId": "{{clienteId}}",
+                "veiculoId": "{{veiculoId}}",
+                "servicos": [
+                  {
+                    "servicoId": "{{servicoId}}",
+                    "quantidade": 1
+                  }
+                ],
+                "pecas": [
+                  {
+                    "pecaInsumoId": "{{pecasInsumoId}}",
+                    "quantidade": 1
+                  }
+                ]
+              }
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Obter Status
+          type: http
+          seq: 12
+        http:
+          method: GET
+          url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/status'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
+      - info:
+          name: Listar para Acompanhamento
+          type: http
+          seq: 13
+        http:
+          method: GET
+          url: '{{url}}/{{route_prefix}}/acompanhamento'
+          auth: inherit
+        settings:
+          encodeUrl: true
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
 request:
   variables:
     - name: api_prefix

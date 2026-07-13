@@ -1,7 +1,6 @@
 # 01 — Docker (Dockerfile e docker-compose)
 
-> Pré-requisito de leitura: `00-visao-geral.md` (seção 2, fatos do projeto). Conceitos em
-> `docs/aulas/consolidado_03_docker.md`.
+> Pré-requisito de leitura: `00-visao-geral.md` (seção 2, fatos do projeto).
 
 Objetivo: garantir que o Dockerfile e o docker-compose estejam revisados e funcionais, servindo
 de base para a imagem que o Kubernetes e o CI/CD vão consumir.
