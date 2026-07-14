@@ -311,7 +311,7 @@ reportgenerator -reports:"coverage-results/**/coverage.cobertura.xml" -targetdir
 
 ## Vídeo Demonstrativo
 
-> 🎥 **[Assista à demonstração no YouTube](ADICIONAR_LINK_DO_VIDEO)** _(link a preencher)_
+> 🎥 **[Assista à demonstração no YouTube](https://youtu.be/ZnaUtgUUb5I)** _(https://youtu.be/ZnaUtgUUb5I)_
 
 O vídeo (≤ 15 min, público ou não listado) demonstra:
 
