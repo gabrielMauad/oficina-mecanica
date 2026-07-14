@@ -685,6 +685,39 @@ items:
           timeout: 0
           followRedirects: true
           maxRedirects: 5
+  - info:
+      name: Autenticacao
+      type: folder
+      seq: 4
+    request:
+      auth: inherit
+      variables:
+        - name: route_prefix
+          value: '{{api_prefix}}/auth'
+    items:
+      - info:
+          name: Login
+          type: http
+          seq: 1
+        http:
+          method: post
+          url: '{{url}}/{{route_prefix}}/login'
+          headers:
+            - name: Content-Type
+              value: application/json
+          body:
+            type: json
+            data: |-
+              {
+                "email": "admin@oficina.com",
+                "senha": "admin123"
+              }
+          auth: inherit
+        settings:
+          encodeUrl: false
+          timeout: 0
+          followRedirects: true
+          maxRedirects: 5
 request:
   variables:
     - name: api_prefix
