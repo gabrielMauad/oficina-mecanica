@@ -257,10 +257,19 @@ O token tem validade de **1 hora**. Use-o como `Authorization: Bearer <token>` o
 
 | Recurso | Onde |
 |---|---|
-| **Documentação interativa (Scalar/OpenAPI)** | `http://localhost:8080/scalar` (e `/openapi`) com a API rodando |
+| **Documentação interativa (Scalar/OpenAPI)** | `docker compose up`: `http://localhost:8080/scalar` (e `/openapi`) — cluster kind (`k8s`/Terraform): `http://localhost:30080/scalar` (NodePort) ou via `kubectl port-forward -n oficina-mecanica svc/oficina-api 8080:8080` |
 | **Collection completa (Bruno)** | [`docs/guias/collection_bruno.yml`](docs/guias/collection_bruno.yml) — importável no [Bruno](https://usebruno.com), ambiente `Local` pré-configurado |
 
 A collection Bruno inclui todos os módulos e endpoints, incluindo os novos da Fase 2.
+
+A exposição do Scalar/OpenAPI **não depende mais do ambiente** (`ASPNETCORE_ENVIRONMENT`) — é
+controlada pela flag `OpenApi:Enabled` (variável `OpenApi__Enabled`), habilitada por padrão em
+[`appsettings.json`](src/Bootstrap/Api/appsettings.json) e propagada explicitamente no
+[`docker-compose.yml`](docker-compose.yml) e no [`ConfigMap`](k8s/base/01-configmap.yaml) do
+Kubernetes. Isso permite consultar a documentação também no ambiente publicado (kind), e desligá-la
+sem recompilar (`OpenApi__Enabled=false`) caso um deploy mais restritivo precise disso. Os testes
+de integração desligam a flag explicitamente para manter a suíte rápida e sem rotas de
+documentação registradas.
 
 ---
 

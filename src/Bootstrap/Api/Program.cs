@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Api.Middlewares;
 using Api.OpenApi;
 using Autenticacao.Infrastructure;
@@ -16,7 +17,6 @@ using OrdensServico.Web;
 using PecasInsumos.Infrastructure;
 using PecasInsumos.Infrastructure.Persistence;
 using PecasInsumos.Web;
-using Scalar.AspNetCore;
 using SharedKernel.Application;
 using System.Text;
 
@@ -98,16 +98,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference(option =>
-    {
-        option.Title = "Oficina Mecanica API";
-    });
-
-    app.MapGet("/", () => Results.Redirect("/scalar"));
-}
+app.MapOpenApiDocumentation();
 app.MapHealthChecks("/healthz");
 
 using (var scope = app.Services.CreateScope())
