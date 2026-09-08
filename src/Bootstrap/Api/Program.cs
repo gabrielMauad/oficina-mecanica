@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Api.Middlewares;
 using Api.OpenApi;
 using Autenticacao.Infrastructure;
@@ -21,6 +22,8 @@ using SharedKernel.Application;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddStructuredJsonLogging();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
