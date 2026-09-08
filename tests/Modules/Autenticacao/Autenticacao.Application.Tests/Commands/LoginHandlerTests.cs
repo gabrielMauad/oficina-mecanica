@@ -36,7 +36,7 @@ public class LoginHandlerTests
         var tokenInfo = new TokenInfo("jwt-token-gerado", DateTime.UtcNow.AddHours(1));
 
         _tokenServiceMock
-            .Setup(x => x.Gerar(command.Email, "Admin"))
+            .Setup(x => x.Gerar(command.Email, "Oficina"))
             .Returns(tokenInfo);
 
         // Act
@@ -49,7 +49,7 @@ public class LoginHandlerTests
         Assert.Equal(tokenInfo.Token, result.Value.Token);
         Assert.Equal(tokenInfo.ExpiresAt, result.Value.ExpiresAt);
 
-        _tokenServiceMock.Verify(x => x.Gerar(command.Email, "Admin"), Times.Once);
+        _tokenServiceMock.Verify(x => x.Gerar(command.Email, "Oficina"), Times.Once);
     }
 
     [Fact(DisplayName = "Email case-insensitive: maiúsculas são aceitas")]
@@ -60,7 +60,7 @@ public class LoginHandlerTests
         var tokenInfo = new TokenInfo("jwt-token-gerado", DateTime.UtcNow.AddHours(1));
 
         _tokenServiceMock
-            .Setup(x => x.Gerar(command.Email, "Admin"))
+            .Setup(x => x.Gerar(command.Email, "Oficina"))
             .Returns(tokenInfo);
 
         // Act
@@ -70,7 +70,7 @@ public class LoginHandlerTests
         Assert.True(result.IsSuccess);
         Assert.False(result.IsFailure);
 
-        _tokenServiceMock.Verify(x => x.Gerar(command.Email, "Admin"), Times.Once);
+        _tokenServiceMock.Verify(x => x.Gerar(command.Email, "Oficina"), Times.Once);
     }
 
     [Fact(DisplayName = "Erro: email incorreto retorna CredenciaisInvalidas")]

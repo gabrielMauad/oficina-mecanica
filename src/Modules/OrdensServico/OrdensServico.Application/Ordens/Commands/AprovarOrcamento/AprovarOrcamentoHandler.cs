@@ -20,6 +20,9 @@ public sealed class AprovarOrcamentoHandler : IRequestHandler<AprovarOrcamentoCo
         if (ordemServico is null)
             return OrdemServicoErrors.NaoEncontrada;
 
+        if (command.SolicitanteClienteId is { } clienteId && ordemServico.ClienteId != clienteId)
+            return OrdemServicoErrors.AcessoNegado;
+
         Result<OrdemServico> result = ordemServico.AprovarOrcamento();
         if (result.IsFailure)
             return result.Error;

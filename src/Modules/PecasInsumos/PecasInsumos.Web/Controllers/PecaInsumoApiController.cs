@@ -5,7 +5,7 @@ using PecasInsumos.Adapters.Models.Request;
 
 namespace PecasInsumos.Web.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Oficina")]
 [ApiController]
 [Route("api/v1/pecas-insumos")]
 public class PecaInsumoApiController : ControllerBase

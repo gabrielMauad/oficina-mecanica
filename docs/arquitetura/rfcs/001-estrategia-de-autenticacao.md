@@ -147,8 +147,12 @@ usuários da oficina — o usuário administrador continua vindo de configuraç�
 
 ## 7. Questões em aberto
 
-- **`GET /api/v1/ordens-servico` está hoje anônima** (listagem ordenada por status, herdada da Fase
-  2). É preciso decidir, na implementação, se ela permanece pública ou passa a exigir papel
-  `Oficina` — uma listagem completa de ordens de serviço é informação sensível, mas o
-  comportamento público foi um requisito da fase anterior.
+- ~~`GET /api/v1/ordens-servico` está hoje anônima~~ **Resolvida.** Passou a exigir papel
+  `Oficina`. A listagem por cliente (`?clienteId=`) devolve dados de qualquer cliente da base —
+  mesmo sendo filtrável por id, é uma consulta de estoque de informação (quais OS um cliente tem,
+  seus status e valores) que não deveria ficar exposta sem autenticação, e o requisito de
+  "comportamento público" da Fase 2 não sobrevive à introdução de papéis nesta fase: não há mais
+  um único nível de acesso a preservar. Em contrapartida, o acompanhamento do próprio cliente
+  continua disponível — pelo token de CPF, em `GET /api/v1/ordens-servico/acompanhamento`
+  (seção 4.2), agora também filtrado pelo `sub` do token para não expor OS de terceiros.
 - **Validação na borda** (seção 5) fica pendente de tempo e de acesso à infraestrutura.

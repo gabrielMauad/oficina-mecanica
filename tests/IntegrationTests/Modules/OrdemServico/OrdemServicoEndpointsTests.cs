@@ -115,7 +115,9 @@ public class OrdemServicoEndpointsTests
         Assert.NotNull(osAposRegistrar.Orcamentos[0].DataEnvio);
 
         // 8. Aprovar Orçamento: orçamento muda para Aprovado, OS permanece AguardandoAprovacao
-        var aprovarResponse = await client.PatchAsync(
+        //    Rota exige papel Cliente (RFC-001 §4.2) — usa um client autenticado como o dono da OS
+        using var clienteClient = _factory.CreateClienteAuthenticatedClient(clienteId);
+        var aprovarResponse = await clienteClient.PatchAsync(
             $"/api/v1/ordens-servico/{osId}/aprovar-orcamento", EmptyJsonContent());
         Assert.Equal(HttpStatusCode.OK, aprovarResponse.StatusCode);
 
@@ -221,8 +223,9 @@ public class OrdemServicoEndpointsTests
         Assert.Equal("AguardandoAprovacao", osAntes.Status);
         Assert.Equal("Enviado", osAntes.Orcamentos[0].Status);
 
-        // Act — Rejeitar orçamento
-        var rejeitarResponse = await client.PatchAsync(
+        // Act — Rejeitar orçamento (rota exige papel Cliente — RFC-001 §4.2)
+        using var clienteClient = _factory.CreateClienteAuthenticatedClient(clienteId);
+        var rejeitarResponse = await clienteClient.PatchAsync(
             $"/api/v1/ordens-servico/{osId}/rejeitar-orcamento", EmptyJsonContent());
 
         // Assert
@@ -236,20 +239,21 @@ public class OrdemServicoEndpointsTests
     }
 
     // =========================================================================
-    // GET /api/v1/ordens-servico?clienteId={id}  — AllowAnonymous
+    // GET /api/v1/ordens-servico?clienteId={id} — papel Oficina (RFC-001 §7: era
+    // AllowAnonymous na Fase 2; decisão desta fase foi protegê-la — ver "Questões em aberto")
     // =========================================================================
 
-    [Fact(DisplayName = "GET /ordens-servico?clienteId — público (AllowAnonymous), retorna lista do cliente")]
-    public async Task ListarOrdensPorCliente_SemToken_DeveRetornar200()
+    [Fact(DisplayName = "GET /ordens-servico?clienteId — com token Oficina, retorna lista do cliente")]
+    public async Task ListarOrdensPorCliente_ComTokenOficina_DeveRetornar200()
     {
         // Arrange — criar OS com autenticação
         var token = await _factory.GetAuthTokenAsync();
         using var authClient = _factory.CreateAuthenticatedClient(token);
 
         var clienteId = await CriarClienteAsync(authClient,
-            nome: "Cliente Publico Lista",
+            nome: "Cliente Lista Oficina",
             documento: "48668018086",
-            email: "publico.lista@integration.test",
+            email: "lista.oficina@integration.test",
             telefone: "31999990030");
 
         var veiculoId = await CriarVeiculoAsync(authClient,
@@ -267,9 +271,8 @@ public class OrdemServicoEndpointsTests
         osResponse.EnsureSuccessStatusCode();
         var os = await osResponse.Content.ReadFromJsonAsync<OrdemServicoDto>(JsonOptions);
 
-        // Act — GET sem token (endpoint é AllowAnonymous)
-        using var publicClient = _factory.CreateClient();
-        var response = await publicClient.GetAsync($"/api/v1/ordens-servico?clienteId={clienteId}");
+        // Act
+        var response = await authClient.GetAsync($"/api/v1/ordens-servico?clienteId={clienteId}");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -279,6 +282,122 @@ public class OrdemServicoEndpointsTests
         Assert.NotEmpty(lista);
         Assert.Contains(lista, x => x.Id == os!.Id);
         Assert.All(lista, x => Assert.Equal(clienteId, x.ClienteId));
+    }
+
+    [Fact(DisplayName = "GET /ordens-servico?clienteId — sem token, retorna 401")]
+    public async Task ListarOrdensPorCliente_SemToken_DeveRetornar401()
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/v1/ordens-servico?clienteId={Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "GET /ordens-servico?clienteId — token Cliente, retorna 403 (rota exige Oficina)")]
+    public async Task ListarOrdensPorCliente_ComTokenCliente_DeveRetornar403()
+    {
+        using var clienteClient = _factory.CreateClienteAuthenticatedClient(Guid.NewGuid());
+
+        var response = await clienteClient.GetAsync($"/api/v1/ordens-servico?clienteId={Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    // =========================================================================
+    // Isolamento entre clientes — RFC-001 §4.2: um token Cliente só opera sobre a
+    // própria OS, comparando o `sub` do token com o dono da OS.
+    // =========================================================================
+
+    [Fact(DisplayName = "GET /ordens-servico/{id} — token de outro cliente retorna 403")]
+    public async Task ObterOS_ComTokenDeOutroCliente_DeveRetornar403()
+    {
+        var token = await _factory.GetAuthTokenAsync();
+        using var client = _factory.CreateAuthenticatedClient(token);
+
+        var donoId = await CriarClienteAsync(client,
+            nome: "Dono da OS",
+            documento: "14730217071",
+            email: "dono.os@integration.test",
+            telefone: "31999990080");
+
+        var veiculoId = await CriarVeiculoAsync(client,
+            placa: "DON4H56",
+            modelo: "Argo",
+            marca: "Fiat",
+            ano: 2022,
+            clienteId: donoId);
+
+        var osResponse = await client.PostAsJsonAsync("/api/v1/ordens-servico", new
+        {
+            ClienteId = donoId,
+            VeiculoId = veiculoId
+        });
+        osResponse.EnsureSuccessStatusCode();
+        var osId = (await osResponse.Content.ReadFromJsonAsync<OrdemServicoDto>(JsonOptions))!.Id;
+
+        // Act — outro cliente (id aleatório, não é o dono) tenta acessar a OS
+        using var outroClienteClient = _factory.CreateClienteAuthenticatedClient(Guid.NewGuid());
+        var response = await outroClienteClient.GetAsync($"/api/v1/ordens-servico/{osId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact(DisplayName = "PATCH /aprovar-orcamento — token de outro cliente retorna 403")]
+    public async Task AprovarOrcamento_ComTokenDeOutroCliente_DeveRetornar403()
+    {
+        var token = await _factory.GetAuthTokenAsync();
+        using var client = _factory.CreateAuthenticatedClient(token);
+
+        var donoId = await CriarClienteAsync(client,
+            nome: "Dono do Orcamento",
+            documento: "85476279016",
+            email: "dono.orcamento@integration.test",
+            telefone: "31999990090");
+
+        var veiculoId = await CriarVeiculoAsync(client,
+            placa: "DON5I67",
+            modelo: "Kwid",
+            marca: "Renault",
+            ano: 2021,
+            clienteId: donoId);
+
+        var servicoId = await CriarServicoAsync(client,
+            nome: "Troca de Amortecedor",
+            descricao: null,
+            preco: 300.00m);
+
+        var pecaId = await CriarPecaAsync(client,
+            nome: "Amortecedor Traseiro",
+            descricao: null,
+            preco: 150.00m,
+            estoque: 5,
+            unidade: "Unidade");
+
+        var osResponse = await client.PostAsJsonAsync("/api/v1/ordens-servico", new
+        {
+            ClienteId = donoId,
+            VeiculoId = veiculoId
+        });
+        osResponse.EnsureSuccessStatusCode();
+        var osId = (await osResponse.Content.ReadFromJsonAsync<OrdemServicoDto>(JsonOptions))!.Id;
+
+        await client.PatchAsync($"/api/v1/ordens-servico/{osId}/iniciar-diagnostico", EmptyJsonContent());
+        await client.PatchAsJsonAsync($"/api/v1/ordens-servico/{osId}/registrar-diagnostico", new
+        {
+            DescricaoDiagnostico = "Amortecedor com vazamento.",
+            Servicos = new[] { new { ServicoId = servicoId, Quantidade = 1 } },
+            Pecas = new[] { new { PecaInsumoId = pecaId, Quantidade = 1 } }
+        });
+
+        // Act — outro cliente (não é o dono) tenta aprovar o orçamento
+        using var outroClienteClient = _factory.CreateClienteAuthenticatedClient(Guid.NewGuid());
+        var response = await outroClienteClient.PatchAsync(
+            $"/api/v1/ordens-servico/{osId}/aprovar-orcamento", EmptyJsonContent());
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     // =========================================================================

@@ -47,4 +47,32 @@ public class ObterOrdemServicoPorIdHandlerTests
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);
     }
+
+    [Fact(DisplayName = "Solicitante Cliente diferente do dono: retorna erro AcessoNegado")]
+    public async Task Handle_SolicitanteClienteDiferenteDoDono_RetornaErroAcessoNegado()
+    {
+        var os = OrdensServico.Domain.OrdemServico.OrdemServico.Criar(ClienteId, VeiculoId).Value;
+        _repoMock.Setup(x => x.ObterPorId(It.IsAny<OrdemServicoId>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(os);
+
+        var query = new ObterOrdemServicoPorIdQuery(os.Id.Value, Guid.NewGuid());
+        Result<OrdensServico.Domain.OrdemServico.OrdemServico> result = await _handler.Handle(query, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("OrdemServico.AcessoNegado", result.Error.Code);
+    }
+
+    [Fact(DisplayName = "Solicitante Cliente é o dono: retorna a OS normalmente")]
+    public async Task Handle_SolicitanteClienteEhODono_RetornaEntidade()
+    {
+        var os = OrdensServico.Domain.OrdemServico.OrdemServico.Criar(ClienteId, VeiculoId).Value;
+        _repoMock.Setup(x => x.ObterPorId(It.IsAny<OrdemServicoId>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(os);
+
+        var query = new ObterOrdemServicoPorIdQuery(os.Id.Value, ClienteId);
+        Result<OrdensServico.Domain.OrdemServico.OrdemServico> result = await _handler.Handle(query, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(os.Id.Value, result.Value.Id.Value);
+    }
 }

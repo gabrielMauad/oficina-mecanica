@@ -187,7 +187,9 @@ public class EstoqueIntegrationEventTests
         Assert.Equal(estoqueInicial - quantidadeUsada, pecaAposDecremento.QuantidadeEmEstoque); // 15
 
         // Rejeitar Orçamento → deve estornar o estoque (15 + 5 = 20)
-        (await client.PatchAsync(
+        // Rota exige papel Cliente (RFC-001 §4.2) — usa um client autenticado como o dono da OS
+        using var clienteClient = _factory.CreateClienteAuthenticatedClient(clienteId);
+        (await clienteClient.PatchAsync(
             $"/api/v1/ordens-servico/{osId}/rejeitar-orcamento", EmptyJsonContent()))
             .EnsureSuccessStatusCode();
 

@@ -57,4 +57,19 @@ public class RejeitarOrcamentoHandlerTests
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);
         _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [Fact(DisplayName = "Erro: solicitante Cliente diferente do dono → AcessoNegado")]
+    public async Task Handle_SolicitanteClienteDiferenteDoDono_RetornaErroAcessoNegado()
+    {
+        var os = CriarOsAguardandoAprovacao();
+        _repoMock.Setup(x => x.ObterPorId(It.IsAny<OrdemServicoId>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(os);
+
+        var command = new RejeitarOrcamentoCommand(os.Id.Value, Guid.NewGuid());
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("OrdemServico.AcessoNegado", result.Error.Code);
+        _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 }

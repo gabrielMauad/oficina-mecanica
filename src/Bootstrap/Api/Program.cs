@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Api.Middlewares;
 using Api.OpenApi;
 using Autenticacao.Infrastructure;
@@ -5,10 +6,8 @@ using Autenticacao.Web;
 using Cadastro.Infrastructure;
 using Cadastro.Infrastructure.Persistence;
 using Cadastro.Web;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OrdensServico.Infrastructure;
 using OrdensServico.Infrastructure.Persistence;
@@ -18,28 +17,10 @@ using PecasInsumos.Infrastructure.Persistence;
 using PecasInsumos.Web;
 using Scalar.AspNetCore;
 using SharedKernel.Application;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        var jwtSecret = builder.Configuration["Jwt:Secret"]
-            ?? throw new InvalidOperationException("JWT secret não configurado.");
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
-
-builder.Services.AddAuthorization();
+builder.Services.AddOficinaMecanicaAuthentication(builder.Configuration);
 
 builder.Services.AddOpenApi(options =>
 {

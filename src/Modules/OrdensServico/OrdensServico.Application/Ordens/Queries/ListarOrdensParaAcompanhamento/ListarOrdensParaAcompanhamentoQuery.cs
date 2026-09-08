@@ -4,4 +4,4 @@ using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Ordens.Queries.ListarOrdensParaAcompanhamento;
 
-public sealed record ListarOrdensParaAcompanhamentoQuery() : IRequest<Result<List<OrdemServicoListItem>>>;
+public sealed record ListarOrdensParaAcompanhamentoQuery(Guid ClienteId) : IRequest<Result<List<OrdemServicoListItem>>>;

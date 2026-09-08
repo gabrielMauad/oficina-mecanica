@@ -8,4 +8,8 @@ metadata:
 data:
   ASPNETCORE_ENVIRONMENT: "Development"
   ASPNETCORE_URLS: "http://+:8080"
+  Jwt__Issuer: "oficina-mecanica-app"
+  Jwt__Audience: "oficina-mecanica-api"
+  Jwt__ValidIssuers__0: "oficina-mecanica-app"
+  Jwt__ValidIssuers__1: "oficina-mecanica-auth"
   Auth__AdminEmail: "admin@oficina.com"

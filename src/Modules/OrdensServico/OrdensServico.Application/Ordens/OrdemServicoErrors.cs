@@ -16,6 +16,10 @@ internal class OrdemServicoErrors
         "OrdemServico.NaoEncontrada",
         "Ordem de serviço não encontrada.");
 
+    public static readonly Error AcessoNegado = Error.Forbidden(
+        "OrdemServico.AcessoNegado",
+        "Você não tem permissão para acessar esta ordem de serviço.");
+
     public static readonly Error ServicoNaoEncontrado = Error.Validation(
         "OrdemServico.ServicoNaoEncontrado",
         "Servico não encontrado.");

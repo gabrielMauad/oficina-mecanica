@@ -4,5 +4,5 @@ namespace OrdensServico.Application.Ordens.Queries.ListarOrdensParaAcompanhament
 
 public interface IListarOrdensParaAcompanhamentoReadModel
 {
-    Task<List<OrdemServicoListItem>> Listar(CancellationToken ct = default);
+    Task<List<OrdemServicoListItem>> Listar(Guid clienteId, CancellationToken ct = default);
 }

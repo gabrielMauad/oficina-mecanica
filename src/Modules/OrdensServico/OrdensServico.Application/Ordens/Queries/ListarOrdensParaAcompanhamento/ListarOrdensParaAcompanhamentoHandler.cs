@@ -17,6 +17,6 @@ public sealed class ListarOrdensParaAcompanhamentoHandler
         CancellationToken ct
     )
     {
-        return await _readModel.Listar(ct);
+        return await _readModel.Listar(request.ClienteId, ct);
     }
 }

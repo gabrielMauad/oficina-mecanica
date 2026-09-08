@@ -21,14 +21,14 @@ internal sealed class ListarOrdensParaAcompanhamentoReadModelImpl : IListarOrden
 
     public ListarOrdensParaAcompanhamentoReadModelImpl(OrdensServicoDbContext context) => _context = context;
 
-    public async Task<List<OrdemServicoListItem>> Listar(CancellationToken ct = default)
+    public async Task<List<OrdemServicoListItem>> Listar(Guid clienteId, CancellationToken ct = default)
     {
         var ordens = await _context.OrdensServico
             .AsNoTracking()
             .Include(o => o.ItensServico)
             .Include(o => o.ItensPeca)
             .Include(o => o.Orcamentos)
-            .Where(o => StatusPorPrioridade.Contains(o.Status))
+            .Where(o => o.ClienteId == clienteId && StatusPorPrioridade.Contains(o.Status))
             .ToListAsync(ct);
 
         return ordens
