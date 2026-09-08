@@ -1,3 +1,4 @@
+using Api.Extensions;
 using Api.Middlewares;
 using Api.OpenApi;
 using Autenticacao.Infrastructure;
@@ -73,7 +74,7 @@ builder.Services.AddOpenApi(options =>
 });
 
 
-builder.Services.AddHealthChecks();
+builder.Services.AddApiHealthChecks();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddAutenticacaoModule(builder.Configuration);
@@ -108,7 +109,7 @@ if (app.Environment.IsDevelopment())
 
     app.MapGet("/", () => Results.Redirect("/scalar"));
 }
-app.MapHealthChecks("/healthz");
+app.MapApiHealthChecks();
 
 using (var scope = app.Services.CreateScope())
 {
