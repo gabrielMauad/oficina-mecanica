@@ -16,6 +16,7 @@ services:
       - Jwt__ValidIssuers__1=oficina-mecanica-auth
       - Auth__AdminEmail=admin@oficina.com
       - Auth__AdminSenha=admin123
+      - OpenApi__Enabled=true
     depends_on:
       postgres:
         condition: service_healthy

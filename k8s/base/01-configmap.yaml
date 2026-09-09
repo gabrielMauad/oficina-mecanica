@@ -13,3 +13,4 @@ data:
   Jwt__ValidIssuers__0: "oficina-mecanica-app"
   Jwt__ValidIssuers__1: "oficina-mecanica-auth"
   Auth__AdminEmail: "admin@oficina.com"
+  OpenApi__Enabled: "true"
