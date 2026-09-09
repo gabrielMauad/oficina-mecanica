@@ -65,6 +65,27 @@ O estoque é reservado quando o orçamento é gerado (ao concluir o diagnóstico
 completa), não na aprovação. Isso evita a condição de corrida onde dois orçamentos disputam o
 mesmo estoque. A rejeição estorna via `OrcamentoRejeitadoIntegrationEvent`.
 
+## Dois emissores de token e autorização por papel
+
+A aplicação **valida** tokens de dois emissores, mas só **emite** um deles:
+
+| Papel | Emissor | Credencial | `iss` |
+|---|---|---|---|
+| `Oficina` | esta aplicação (`POST /api/v1/auth/login`) | email + senha | `oficina-mecanica-app` |
+| `Cliente` | Function Serverless (repositório separado, ainda não existe) | CPF | `oficina-mecanica-auth` |
+
+Ambos são HS256 com o mesmo segredo compartilhado e carregam a claim `role`. As rotas deixaram
+de exigir apenas "estar autenticado": cada ação declara o papel exigido. Além do papel, um token
+`Cliente` só opera sobre a **própria** OS — o `sub` do token é comparado com o dono, e o acesso
+à OS de outro cliente devolve **403**, não 404.
+
+Consequência prática: `GET /api/v1/ordens-servico?clienteId=...` **deixou de ser anônima**
+(passou a exigir `Oficina`) e o acompanhamento pelo cliente virou
+`GET /api/v1/ordens-servico/acompanhamento`, filtrado pelo token. Racional completo em
+[`rfcs/001-estrategia-de-autenticacao.md`](rfcs/001-estrategia-de-autenticacao.md) e
+[`adrs/003-dois-emissores-e-autorizacao-por-papel.md`](adrs/003-dois-emissores-e-autorizacao-por-papel.md);
+mapa de rotas por papel no [README](../../README.md#mapa-de-rotas-por-papel).
+
 ## Result\<T\> — erros de negócio sem exceptions
 
 Handlers retornam `Result<T>`. O `TransactionBehavior` não persiste se `result.IsFailure`.
