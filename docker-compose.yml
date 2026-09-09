@@ -17,9 +17,26 @@ services:
       - Auth__AdminEmail=admin@oficina.com
       - Auth__AdminSenha=admin123
       - OpenApi__Enabled=true
+      # OTLP: destino configurável por variável de ambiente padrão do OpenTelemetry (ADR-004),
+      # sem nada específico de fornecedor. Aqui aponta para o Jaeger local do compose; em outro
+      # ambiente basta trocar o endpoint (e, se preciso, OTEL_EXPORTER_OTLP_HEADERS) para o
+      # coletor/APM real — nenhum código muda.
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       postgres:
         condition: service_healthy
+      jaeger:
+        condition: service_started
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: oficina-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686" # UI: http://localhost:16686
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
 
   postgres:
     image: postgres:16
