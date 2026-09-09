@@ -12,12 +12,20 @@ internal sealed class JwtTokenService : IJwtTokenService
     private static readonly TimeSpan Expiracao = TimeSpan.FromHours(1);
 
     private readonly string _secret;
+    private readonly string _issuer;
+    private readonly string _audience;
 
     public JwtTokenService(IConfiguration configuration)
     {
         _secret = configuration["Jwt:Secret"]
             ?? throw new InvalidOperationException(
                 "JWT secret não configurado.");
+        _issuer = configuration["Jwt:Issuer"]
+            ?? throw new InvalidOperationException(
+                "JWT issuer não configurado.");
+        _audience = configuration["Jwt:Audience"]
+            ?? throw new InvalidOperationException(
+                "JWT audience não configurada.");
     }
 
     public TokenInfo Gerar(string email, string role)
@@ -26,14 +34,16 @@ internal sealed class JwtTokenService : IJwtTokenService
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.Email, email),
-            new Claim(ClaimTypes.Role, role)
+            new Claim(JwtRegisteredClaimNames.Sub, email),
+            new Claim("role", role)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
+            issuer: _issuer,
+            audience: _audience,
             claims: claims,
             expires: expiresAt,
             signingCredentials: credentials);

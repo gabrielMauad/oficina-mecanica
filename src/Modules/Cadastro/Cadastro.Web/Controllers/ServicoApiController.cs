@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Cadastro.Web.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Oficina")]
 [ApiController]
 [Route("api/v1/servicos")]
 public class ServicoApiController : ControllerBase

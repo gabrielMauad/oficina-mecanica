@@ -26,7 +26,7 @@ public sealed class LoginHandler : IRequestHandler<LoginCommand, Result<TokenInf
         if (!emailValido || !senhaValida)
             return Task.FromResult<Result<TokenInfo>>(AutenticacaoErrors.CredenciaisInvalidas);
 
-        var tokenInfo = _tokenService.Gerar(command.Email, "Admin");
+        var tokenInfo = _tokenService.Gerar(command.Email, "Oficina");
         return Task.FromResult<Result<TokenInfo>>(tokenInfo);
     }
 }

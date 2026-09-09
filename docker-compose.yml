@@ -10,6 +10,10 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Default=Host=postgres;Port=5432;Username=oficina;Password=oficina-dev-pass;Database=oficina_mecanica;SSL Mode=Disable
       - Jwt__Secret=docker-dev-secret-key-replace-in-prod-000
+      - Jwt__Issuer=oficina-mecanica-app
+      - Jwt__Audience=oficina-mecanica-api
+      - Jwt__ValidIssuers__0=oficina-mecanica-app
+      - Jwt__ValidIssuers__1=oficina-mecanica-auth
       - Auth__AdminEmail=admin@oficina.com
       - Auth__AdminSenha=admin123
       - OpenApi__Enabled=true

@@ -55,16 +55,16 @@ public sealed class OrdemServicoController
         return OrdemServicoPresenter.Present(result.Value);
     }
 
-    public async Task<Result<OrdemServicoViewModel>> AprovarOrcamento(Guid id)
+    public async Task<Result<OrdemServicoViewModel>> AprovarOrcamento(Guid id, Guid? solicitanteClienteId = null)
     {
-        var result = await _sender.Send(new AprovarOrcamentoCommand(id));
+        var result = await _sender.Send(new AprovarOrcamentoCommand(id, solicitanteClienteId));
         if (result.IsFailure) return result.Error;
         return OrdemServicoPresenter.Present(result.Value);
     }
 
-    public async Task<Result<OrdemServicoViewModel>> RejeitarOrcamento(Guid id)
+    public async Task<Result<OrdemServicoViewModel>> RejeitarOrcamento(Guid id, Guid? solicitanteClienteId = null)
     {
-        var result = await _sender.Send(new RejeitarOrcamentoCommand(id));
+        var result = await _sender.Send(new RejeitarOrcamentoCommand(id, solicitanteClienteId));
         if (result.IsFailure) return result.Error;
         return OrdemServicoPresenter.Present(result.Value);
     }
@@ -90,16 +90,16 @@ public sealed class OrdemServicoController
         return OrdemServicoPresenter.Present(result.Value);
     }
 
-    public async Task<Result<OrdemServicoViewModel>> ObterPorId(Guid id)
+    public async Task<Result<OrdemServicoViewModel>> ObterPorId(Guid id, Guid? solicitanteClienteId = null)
     {
-        var result = await _sender.Send(new ObterOrdemServicoPorIdQuery(id));
+        var result = await _sender.Send(new ObterOrdemServicoPorIdQuery(id, solicitanteClienteId));
         if (result.IsFailure) return result.Error;
         return OrdemServicoPresenter.Present(result.Value);
     }
 
-    public async Task<Result<StatusOrdemServicoViewModel>> ObterStatus(Guid id)
+    public async Task<Result<StatusOrdemServicoViewModel>> ObterStatus(Guid id, Guid? solicitanteClienteId = null)
     {
-        var result = await _sender.Send(new ObterOrdemServicoPorIdQuery(id));
+        var result = await _sender.Send(new ObterOrdemServicoPorIdQuery(id, solicitanteClienteId));
         if (result.IsFailure) return result.Error;
         return OrdemServicoPresenter.PresentStatus(result.Value);
     }
@@ -111,9 +111,9 @@ public sealed class OrdemServicoController
         return OrdemServicoPresenter.PresentListar(result.Value);
     }
 
-    public async Task<Result<List<OrdemServicoViewModel>>> ListarParaAcompanhamento()
+    public async Task<Result<List<OrdemServicoViewModel>>> ListarParaAcompanhamento(Guid clienteId)
     {
-        var result = await _sender.Send(new ListarOrdensParaAcompanhamentoQuery());
+        var result = await _sender.Send(new ListarOrdensParaAcompanhamentoQuery(clienteId));
         if (result.IsFailure) return result.Error;
         return OrdemServicoPresenter.PresentListar(result.Value);
     }

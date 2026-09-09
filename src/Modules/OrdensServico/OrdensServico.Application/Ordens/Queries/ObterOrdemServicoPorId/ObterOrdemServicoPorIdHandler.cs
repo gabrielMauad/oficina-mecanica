@@ -22,6 +22,9 @@ public sealed class ObterOrdemServicoPorIdHandler : IRequestHandler<ObterOrdemSe
         if (ordemServico is null)
             return OrdemServicoErrors.NaoEncontrada;
 
+        if (request.SolicitanteClienteId is { } clienteId && ordemServico.ClienteId != clienteId)
+            return OrdemServicoErrors.AcessoNegado;
+
         return ordemServico;
     }
 }

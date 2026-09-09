@@ -20,6 +20,9 @@ public sealed class RejeitarOrcamentoHandler : IRequestHandler<RejeitarOrcamento
         if (ordemServico is null)
             return OrdemServicoErrors.NaoEncontrada;
 
+        if (command.SolicitanteClienteId is { } clienteId && ordemServico.ClienteId != clienteId)
+            return OrdemServicoErrors.AcessoNegado;
+
         Result<OrdemServico> result = ordemServico.RejeitarOrcamento();
         if (result.IsFailure)
             return result.Error;

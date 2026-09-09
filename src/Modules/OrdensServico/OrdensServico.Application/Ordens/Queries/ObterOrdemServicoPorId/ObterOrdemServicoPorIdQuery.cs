@@ -4,4 +4,5 @@ using SharedKernel.Domain;
 
 namespace OrdensServico.Application.Ordens.Queries.ObterOrdemServicoPorId;
 
-public sealed record ObterOrdemServicoPorIdQuery(Guid OrdemServicoId) : IRequest<Result<OrdemServico>>;
+public sealed record ObterOrdemServicoPorIdQuery(Guid OrdemServicoId, Guid? SolicitanteClienteId = null)
+    : IRequest<Result<OrdemServico>>;

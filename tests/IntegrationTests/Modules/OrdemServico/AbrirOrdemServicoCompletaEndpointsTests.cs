@@ -133,7 +133,9 @@ public class AbrirOrdemServicoCompletaEndpointsTests
         abrirResponse.EnsureSuccessStatusCode();
         var osId = (await abrirResponse.Content.ReadFromJsonAsync<OrdemServicoDto>(JsonOptions))!.Id;
 
-        var aprovarResponse = await client.PatchAsync(
+        // Rota exige papel Cliente (RFC-001 §4.2) — usa um client autenticado como o dono da OS
+        using var clienteClient = _factory.CreateClienteAuthenticatedClient(clienteId);
+        var aprovarResponse = await clienteClient.PatchAsync(
             $"/api/v1/ordens-servico/{osId}/aprovar-orcamento", EmptyJsonContent());
         Assert.Equal(HttpStatusCode.OK, aprovarResponse.StatusCode);
 
@@ -209,13 +211,17 @@ public class AbrirOrdemServicoCompletaEndpointsTests
         });
         os4Response.EnsureSuccessStatusCode();
         var os4Id = (await os4Response.Content.ReadFromJsonAsync<OrdemServicoDto>(JsonOptions))!.Id;
-        (await client.PatchAsync($"/api/v1/ordens-servico/{os4Id}/aprovar-orcamento", EmptyJsonContent())).EnsureSuccessStatusCode();
+
+        // aprovar-orcamento exige papel Cliente (RFC-001 §4.2)
+        using var clienteClient = _factory.CreateClienteAuthenticatedClient(clienteId);
+        (await clienteClient.PatchAsync($"/api/v1/ordens-servico/{os4Id}/aprovar-orcamento", EmptyJsonContent())).EnsureSuccessStatusCode();
         (await client.PatchAsync($"/api/v1/ordens-servico/{os4Id}/executar", EmptyJsonContent())).EnsureSuccessStatusCode();
         (await client.PatchAsync($"/api/v1/ordens-servico/{os4Id}/finalizar", EmptyJsonContent())).EnsureSuccessStatusCode();
         (await client.PatchAsync($"/api/v1/ordens-servico/{os4Id}/concluir", EmptyJsonContent())).EnsureSuccessStatusCode();
 
-        // Act
-        var acompanhamentoResponse = await client.GetAsync("/api/v1/ordens-servico/acompanhamento");
+        // Act — /acompanhamento exige papel Cliente e é filtrado pelo `sub` do token (o
+        // dono das OS criadas acima)
+        var acompanhamentoResponse = await clienteClient.GetAsync("/api/v1/ordens-servico/acompanhamento");
         Assert.Equal(HttpStatusCode.OK, acompanhamentoResponse.StatusCode);
 
         var lista = await acompanhamentoResponse.Content.ReadFromJsonAsync<List<OrdemServicoDto>>(JsonOptions);

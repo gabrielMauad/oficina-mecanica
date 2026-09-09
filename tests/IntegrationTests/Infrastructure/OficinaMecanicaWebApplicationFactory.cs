@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text;
 using Testcontainers.PostgreSql;
 
 namespace IntegrationTests.Infrastructure;
@@ -20,6 +24,12 @@ public sealed class OficinaMecanicaWebApplicationFactory
     private const string TestJwtSecret = "integration-test-jwt-secret-minimum-32-chars!!";
     private const string TestAdminEmail = "admin@integration.test";
     private const string TestAdminSenha = "Test@Integration1234";
+
+    // Mesmos valores configurados via Jwt:Issuer / Jwt:Audience / Jwt:ValidIssuers abaixo —
+    // ver RFC-001 §4.1 (contrato do token) e ADR-003 (dois emissores).
+    private const string AppIssuer = "oficina-mecanica-app";
+    private const string ClienteAuthIssuer = "oficina-mecanica-auth";
+    private const string Audience = "oficina-mecanica-api";
 
     private readonly PostgreSqlContainer _db = new PostgreSqlBuilder()
         .WithDatabase("oficina_mecanica")
@@ -56,6 +66,10 @@ public sealed class OficinaMecanicaWebApplicationFactory
                 ["ConnectionStrings:Default"] = _db.GetConnectionString(),
                 // JWT secret — mesmo valor usado para gerar e validar tokens nos testes
                 ["Jwt:Secret"] = TestJwtSecret,
+                ["Jwt:Issuer"] = AppIssuer,
+                ["Jwt:Audience"] = Audience,
+                ["Jwt:ValidIssuers:0"] = AppIssuer,
+                ["Jwt:ValidIssuers:1"] = ClienteAuthIssuer,
                 // Credenciais do admin — usadas pelo LoginHandler
                 ["Auth:AdminEmail"] = TestAdminEmail,
                 ["Auth:AdminSenha"] = TestAdminSenha,
@@ -97,6 +111,38 @@ public sealed class OficinaMecanicaWebApplicationFactory
         var body = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
         return body!.Token;
     }
+
+    /// <summary>
+    /// Gera um token de papel Cliente assinado com o mesmo segredo de teste, simulando o
+    /// token que a Function Serverless (emissor "oficina-mecanica-auth") emitiria — ver
+    /// RFC-001 §4.1. A aplicação não emite esse token, então é montado diretamente aqui.
+    /// </summary>
+    public string GetClienteAuthToken(Guid clienteId)
+    {
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, clienteId.ToString()),
+            new Claim("role", "Cliente")
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestJwtSecret));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: ClienteAuthIssuer,
+            audience: Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>
+    /// Cria um HttpClient autenticado com um token de papel Cliente para o clienteId informado.
+    /// </summary>
+    public HttpClient CreateClienteAuthenticatedClient(Guid clienteId) =>
+        CreateAuthenticatedClient(GetClienteAuthToken(clienteId));
 
     private sealed record LoginResponseDto(string Token, DateTime ExpiresAt);
 }
