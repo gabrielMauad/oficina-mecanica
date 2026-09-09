@@ -7,6 +7,63 @@
 > **Como usar este guia:**
 > Cada passo retorna um ID nos campos indicados. Copie-o e substitua nos passos
 > subsequentes onde indicado com `{VARIAVEL}`.
+>
+> **Todas as chamadas exigem token**, e o *papel* do token importa — cada passo indica qual
+> usar. Comece pelo **Passo 0**.
+
+---
+
+## Passo 0 — Obter os tokens
+
+A autorização é por papel (ver [RFC-001 §4.2](../arquitetura/rfcs/001-estrategia-de-autenticacao.md)).
+Existem dois tokens, e usar o errado devolve **403 Forbidden**:
+
+| Variável | Papel | Usada em |
+|---|---|---|---|
+| `$TOKEN_OFICINA` | `Oficina` | tudo, exceto o que está abaixo |
+| `$TOKEN_CLIENTE` | `Cliente` | aprovar/rejeitar orçamento e `/acompanhamento` |
+
+### Token da oficina (papel `Oficina`)
+
+Emitido pela própria aplicação — é a **única rota anônima** além dos health checks:
+
+```bash
+export TOKEN_OFICINA=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@oficina.com", "senha": "admin123"}' | jq -r .token)
+
+echo "$TOKEN_OFICINA"
+```
+
+### Token do cliente (papel `Cliente`)
+
+> ⚠️ **Não existe endpoint nesta aplicação que emita o token de cliente.** Ele é emitido por
+> uma **Function Serverless** que autentica por CPF e que **ainda não foi construída** (virá em
+> repositório separado — ver [ADR-005](../arquitetura/adrs/005-quatro-repositorios-e-estrategia-de-branches.md)).
+> Até lá, o token só é obtido **manualmente** ou pelo helper usado nos testes de integração
+> (`OficinaMecanicaWebApplicationFactory.CreateClienteAuthenticatedClient`).
+
+Para gerar um manualmente, assine um JWT **HS256** com o mesmo `Jwt__Secret` da aplicação
+(definido no `docker-compose.yml`) e com estas claims:
+
+| Claim | Valor |
+|---|---|
+| `iss` | `oficina-mecanica-auth` |
+| `aud` | `oficina-mecanica-api` |
+| `sub` | o `{CLIENTE_ID}` retornado no Passo 1 |
+| `role` | `Cliente` |
+| `exp` | 1 hora |
+
+Qualquer ferramenta de JWT serve (por exemplo, colar as claims e o segredo em
+[jwt.io](https://jwt.io)). Depois:
+
+```bash
+export TOKEN_CLIENTE="<cole aqui o JWT gerado>"
+```
+
+> O `sub` **precisa ser o id do cliente dono da OS**: a aplicação compara o `sub` com o dono e
+> devolve **403** se um cliente tentar acessar a OS de outro. Como o `{CLIENTE_ID}` só existe
+> depois do Passo 1, gere este token entre o Passo 1 e o Passo 10.
 
 ---
 
@@ -32,7 +89,7 @@
 [14] Verificar estado final
 [15] Consultar OS por Cliente
 [16] Consultar Status Resumido da OS
-[17] Listar OS para Acompanhamento (painel interno)
+[17] Listar OS para Acompanhamento (token do cliente — filtra pelo cliente do token)
 ```
 
 > ℹ️ Existe também um fluxo alternativo que colapsa os passos [6]–[8] em uma única
@@ -43,8 +100,11 @@
 
 ## Passo 1 — Criar Cliente
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/clientes \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "João Silva",
@@ -74,8 +134,11 @@ curl -s -X POST http://localhost:8080/api/v1/clientes \
 
 ## Passo 2 — Cadastrar Veículo
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/veiculos \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "placa": "ABC1D23",
@@ -105,8 +168,11 @@ curl -s -X POST http://localhost:8080/api/v1/veiculos \
 
 ## Passo 3 — Adicionar Serviço ao Catálogo
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/servicos \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Troca de Óleo",
@@ -133,8 +199,11 @@ curl -s -X POST http://localhost:8080/api/v1/servicos \
 
 ## Passo 4 — Adicionar Peça/Insumo ao Estoque
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/pecas-insumos \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Filtro de Óleo",
@@ -165,10 +234,13 @@ curl -s -X POST http://localhost:8080/api/v1/pecas-insumos \
 
 ## Passo 5 — Incrementar Estoque da Peça
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 Adicionamos 10 unidades ao estoque antes de usar na OS.
 
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/pecas-insumos/{PECA_ID}/estoque/entrada \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "quantidade": 10
@@ -190,8 +262,11 @@ curl -s -X PATCH http://localhost:8080/api/v1/pecas-insumos/{PECA_ID}/estoque/en
 
 ## Passo 6 — Criar Ordem de Serviço
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/ordens-servico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "clienteId": "{CLIENTE_ID}",
@@ -222,8 +297,11 @@ curl -s -X POST http://localhost:8080/api/v1/ordens-servico \
 
 ## Passo 7 — Iniciar Diagnóstico
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/iniciar-diagnostico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   | jq .
 ```
 
@@ -243,6 +321,8 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/iniciar-dia
 
 ## Passo 8 — Registrar Diagnóstico
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 Esta é a chamada mais importante do fluxo. Ao retornar com sucesso, **três coisas acontecem automaticamente**:
 1. O orçamento é criado com `Status = Pendente`
 2. O orçamento é enviado ao cliente (`Status = Enviado`), e a OS transita para `AguardandoAprovacao`
@@ -250,6 +330,7 @@ Esta é a chamada mais importante do fluxo. Ao retornar com sucesso, **três coi
 
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/registrar-diagnostico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "descricaoDiagnostico": "Motor com desgaste acentuado. Necessário troca de óleo e filtro.",
@@ -309,8 +390,12 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/registrar-d
 
 ## Passo 8a — Verificar OS após os handlers automáticos
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`). Aceita também `$TOKEN_CLIENTE`,
+> mas nesse caso **só a própria OS** — o token de outro cliente recebe **403**.
+
 ```bash
-curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} | jq .
+curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 **Resultado esperado:** `200 OK`
@@ -339,8 +424,11 @@ curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} | jq .
 
 ## Passo 9 — Verificar Estoque Decrementado
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
-curl -s http://localhost:8080/api/v1/pecas-insumos/{PECA_ID} | jq .
+curl -s http://localhost:8080/api/v1/pecas-insumos/{PECA_ID} \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 **Resultado esperado:** `200 OK`
@@ -361,8 +449,12 @@ curl -s http://localhost:8080/api/v1/pecas-insumos/{PECA_ID} | jq .
 
 ## Passo 10 — Aprovar Orçamento
 
+> 🔑 **Token:** `$TOKEN_CLIENTE` (papel `Cliente`). Com o token da oficina esta rota devolve **403**.
+> O `sub` do token precisa ser o `{CLIENTE_ID}` **dono desta OS** — outro cliente também recebe **403**.
+
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/aprovar-orcamento \
+  -H "Authorization: Bearer $TOKEN_CLIENTE" \
   | jq .
 ```
 
@@ -388,8 +480,11 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/aprovar-orc
 
 ## Passo 11 — Executar OS
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/executar \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   | jq .
 ```
 
@@ -408,11 +503,14 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/executar \
 
 ## Passo 12 — Finalizar OS
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 Ao finalizar, o domain event `OrdemServicoFinalizada` é emitido. O handler
 `NotificarClienteAoFinalizar` reage e preenche `notificado_em` automaticamente.
 
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/finalizar \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   | jq .
 ```
 
@@ -433,8 +531,11 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/finalizar \
 
 ## Passo 12a — Verificar notificação automática
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
-curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} | jq .
+curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 **Resultado esperado:** `200 OK`
@@ -454,8 +555,11 @@ curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} | jq .
 
 ## Passo 13 — Concluir OS (Entrega do Veículo)
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/concluir \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   | jq .
 ```
 
@@ -475,8 +579,11 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/{OS_ID}/concluir \
 
 ## Passo 14 — Verificar Estado Final Completo
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 ```bash
-curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} | jq .
+curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 **Resultado esperado:** `200 OK` — snapshot completo da OS:
@@ -520,8 +627,12 @@ curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID} | jq .
 
 ## Passo 15 — Consultar OS por Cliente
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`). Esta rota **deixou de ser anônima**
+> na Fase 3 — uma listagem completa de OS é informação sensível.
+
 ```bash
-curl -s "http://localhost:8080/api/v1/ordens-servico?clienteId={CLIENTE_ID}" | jq .
+curl -s "http://localhost:8080/api/v1/ordens-servico?clienteId={CLIENTE_ID}" \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 **Resultado esperado:** `200 OK` — lista com a OS criada.
@@ -530,11 +641,15 @@ curl -s "http://localhost:8080/api/v1/ordens-servico?clienteId={CLIENTE_ID}" | j
 
 ## Passo 16 — Consultar Status Resumido da OS
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`). Aceita também `$TOKEN_CLIENTE`,
+> mas nesse caso **só a própria OS** — o token de outro cliente recebe **403**.
+
 Endpoint leve, retorna apenas `id` e `status` — útil para polling frequente sem trazer o
 snapshot completo da OS.
 
 ```bash
-curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID}/status | jq .
+curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID}/status \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 **Resultado esperado:** `200 OK`
@@ -548,14 +663,18 @@ curl -s http://localhost:8080/api/v1/ordens-servico/{OS_ID}/status | jq .
 
 ---
 
-## Passo 17 — Listar OS para Acompanhamento (painel interno)
+## Passo 17 — Listar OS para Acompanhamento (do cliente do token)
+
+> 🔑 **Token:** `$TOKEN_CLIENTE` (papel `Cliente`). Com o token da oficina esta rota devolve **403**.
 
 Lista as OS "ativas" (exclui `Finalizada` e `Entregue`), ordenadas por prioridade de
 status — `EmExecucao` → `AguardandoAprovacao` → `EmDiagnostico` → `Recebida` — e, dentro de
-cada status, as mais antigas primeiro. Requer autenticação (`[Authorize]`).
+cada status, as mais antigas primeiro. A lista é **filtrada pelo cliente do token** (`sub`),
+então só aparecem as OS desse cliente.
 
 ```bash
-curl -s http://localhost:8080/api/v1/ordens-servico/acompanhamento | jq .
+curl -s http://localhost:8080/api/v1/ordens-servico/acompanhamento \
+  -H "Authorization: Bearer $TOKEN_CLIENTE" | jq .
 ```
 
 **Resultado esperado:** `200 OK` — lista de OS ativas. Como a OS deste guia já está
@@ -565,6 +684,8 @@ curl -s http://localhost:8080/api/v1/ordens-servico/acompanhamento | jq .
 
 ## Fluxo Alternativo — Abrir OS Já Completa (`POST /completa`)
 
+> 🔑 **Token:** `$TOKEN_OFICINA` (papel `Oficina`).
+
 Endpoint novo que abre a OS diretamente com serviços e peças definidos, pulando as
 etapas manuais de "iniciar diagnóstico" + "registrar diagnóstico" (Passos 7–8). A OS já
 nasce em `AguardandoAprovacao`, com orçamento `Enviado` e estoque reservado — mesmos
@@ -572,6 +693,7 @@ efeitos colaterais do Passo 8, em uma única chamada.
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "clienteId": "{CLIENTE_ID}",
@@ -637,25 +759,25 @@ curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
 
 ## Checklist de Validação
 
-| # | Verificação | Esperado |
-|---|---|---|
-| 1 | POST /clientes com CPF válido | 201, clienteId retornado |
-| 2 | POST /veiculos com placa Mercosul | 201, veiculoId retornado |
-| 3 | POST /servicos | 201, servicoId retornado |
-| 4 | POST /pecas-insumos | 201, pecaInsumoId retornado |
-| 5 | PATCH estoque/entrada | 200, estoque = 10 |
-| 6 | POST /ordens-servico | 201, status = Recebida |
-| 7 | PATCH iniciar-diagnostico | 200, status = EmDiagnostico |
-| 8 | PATCH registrar-diagnostico | 200, orçamento criado |
-| 8a | GET /ordens-servico/{id} | status = AguardandoAprovacao, orçamento = Enviado |
-| 9 | GET /pecas-insumos/{id} | estoque = 8 (decrementou 2) |
-| 10 | PATCH aprovar-orcamento | 200, orçamento = Aprovado |
-| 11 | PATCH executar | 200, status = EmExecucao |
-| 12 | PATCH finalizar | 200, status = Finalizada |
-| 12a | GET /ordens-servico/{id} | notificadoEm preenchido |
-| 13 | PATCH concluir | 200, status = Entregue, entregueEm preenchido |
-| 14 | GET /ordens-servico/{id} final | Snapshot completo correto |
-| 15 | GET /ordens-servico?clienteId=... | Lista a OS criada |
-| 16 | GET /ordens-servico/{id}/status | 200, retorna apenas {id, status} |
-| 17 | GET /ordens-servico/acompanhamento | 200, lista OS ativas ordenadas por prioridade, sem Entregue |
-| 18 | POST /ordens-servico/completa | 201, status = AguardandoAprovacao direto, orçamento = Enviado, sem diagnóstico |
+| # | Verificação | Token | Esperado |
+|---|---|---|---|
+| 1 | POST /clientes com CPF válido | `Oficina` | 201, clienteId retornado |
+| 2 | POST /veiculos com placa Mercosul | `Oficina` | 201, veiculoId retornado |
+| 3 | POST /servicos | `Oficina` | 201, servicoId retornado |
+| 4 | POST /pecas-insumos | `Oficina` | 201, pecaInsumoId retornado |
+| 5 | PATCH estoque/entrada | `Oficina` | 200, estoque = 10 |
+| 6 | POST /ordens-servico | `Oficina` | 201, status = Recebida |
+| 7 | PATCH iniciar-diagnostico | `Oficina` | 200, status = EmDiagnostico |
+| 8 | PATCH registrar-diagnostico | `Oficina` | 200, orçamento criado |
+| 8a | GET /ordens-servico/{id} | `Oficina` | status = AguardandoAprovacao, orçamento = Enviado |
+| 9 | GET /pecas-insumos/{id} | `Oficina` | estoque = 8 (decrementou 2) |
+| 10 | PATCH aprovar-orcamento | `Cliente` | 200, orçamento = Aprovado |
+| 11 | PATCH executar | `Oficina` | 200, status = EmExecucao |
+| 12 | PATCH finalizar | `Oficina` | 200, status = Finalizada |
+| 12a | GET /ordens-servico/{id} | `Oficina` | notificadoEm preenchido |
+| 13 | PATCH concluir | `Oficina` | 200, status = Entregue, entregueEm preenchido |
+| 14 | GET /ordens-servico/{id} final | `Oficina` | Snapshot completo correto |
+| 15 | GET /ordens-servico?clienteId=... | `Oficina` | Lista a OS criada |
+| 16 | GET /ordens-servico/{id}/status | `Oficina` | 200, retorna apenas {id, status} |
+| 17 | GET /ordens-servico/acompanhamento | `Cliente` | 200, lista OS ativas ordenadas por prioridade, sem Entregue |
+| 18 | POST /ordens-servico/completa | `Oficina` | 201, status = AguardandoAprovacao direto, orçamento = Enviado, sem diagnóstico |

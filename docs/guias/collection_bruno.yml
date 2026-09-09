@@ -17,6 +17,19 @@ config:
       variables:
         - name: url
           value: http://localhost:8080
+        # Token de papel Oficina — copie o campo "token" da resposta de Autenticacao > Login.
+        # É o token herdado por padrão em todas as requisições da collection.
+        - name: token_oficina
+          value: ''
+        # Token de papel Cliente — usado apenas por "Aprovar Orçamento",
+        # "Rejeitar Orçamento" e "Listar para Acompanhamento".
+        # NÃO existe endpoint nesta aplicação que o emita: quem emite é a Function
+        # Serverless de autenticação por CPF, que ainda não foi construída.
+        # Até lá, gere manualmente um JWT HS256 com o mesmo Jwt__Secret da aplicação e as
+        # claims iss=oficina-mecanica-auth, aud=oficina-mecanica-api,
+        # sub=<id do cliente dono da OS>, role=Cliente. Ver RFC-001 §4.1.
+        - name: token_cliente
+          value: ''
 items:
   - info:
       name: Cadastro
@@ -569,6 +582,11 @@ items:
         http:
           method: PATCH
           url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/aprovar-orcamento'
+          # Rota de papel Cliente (RFC-001 §4.2): sobrescreve o Authorization herdado
+          # da collection (token da oficina), que aqui receberia 403.
+          headers:
+            - name: Authorization
+              value: Bearer {{token_cliente}}
           auth: inherit
         settings:
           encodeUrl: true
@@ -582,6 +600,11 @@ items:
         http:
           method: PATCH
           url: '{{url}}/{{route_prefix}}/{{ordemServicoId}}/rejeitar-orcamento'
+          # Rota de papel Cliente (RFC-001 §4.2): sobrescreve o Authorization herdado
+          # da collection (token da oficina), que aqui receberia 403.
+          headers:
+            - name: Authorization
+              value: Bearer {{token_cliente}}
           auth: inherit
         settings:
           encodeUrl: true
@@ -679,6 +702,11 @@ items:
         http:
           method: GET
           url: '{{url}}/{{route_prefix}}/acompanhamento'
+          # Rota de papel Cliente (RFC-001 §4.2): sobrescreve o Authorization herdado
+          # da collection (token da oficina), que aqui receberia 403.
+          headers:
+            - name: Authorization
+              value: Bearer {{token_cliente}}
           auth: inherit
         settings:
           encodeUrl: true
@@ -719,6 +747,13 @@ items:
           followRedirects: true
           maxRedirects: 5
 request:
+  # Autenticação padrão da collection: token de papel Oficina (RFC-001 §4.2).
+  # As três rotas de papel Cliente (Aprovar Orçamento, Rejeitar Orçamento e
+  # Listar para Acompanhamento) sobrescrevem este header com {{token_cliente}}.
+  # Autenticacao > Login é anônima e ignora o header.
+  headers:
+    - name: Authorization
+      value: Bearer {{token_oficina}}
   variables:
     - name: api_prefix
       value: api/v1

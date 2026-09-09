@@ -3,6 +3,30 @@
 > **Pré-requisito:** Ter executado pelo menos os passos 1–5 do [`teste-cenario-feliz.md`](teste-cenario-feliz.md)
 > para ter `{CLIENTE_ID}`, `{VEICULO_ID}`, `{SERVICO_ID}` e `{PECA_ID}` disponíveis.
 > Base URL: `http://localhost:8080`
+>
+> **Tokens:** este guia assume as variáveis `$TOKEN_OFICINA` e `$TOKEN_CLIENTE` já exportadas —
+> veja o **Passo 0** do [`teste-cenario-feliz.md`](teste-cenario-feliz.md#passo-0--obter-os-tokens).
+
+---
+
+## Tokens usados neste guia
+
+A autorização é por papel (ver [RFC-001 §4.2](../arquitetura/rfcs/001-estrategia-de-autenticacao.md)).
+Todos os cenários abaixo usam `$TOKEN_OFICINA`, **exceto** os que aprovam ou rejeitam orçamento
+(A11 e A13c), que exigem `$TOKEN_CLIENTE`.
+
+| Rota usada aqui | Token |
+|---|---|
+| `PATCH /ordens-servico/{id}/aprovar-orcamento` (A11) | `$TOKEN_CLIENTE` (papel `Cliente`) |
+| `PATCH /ordens-servico/{id}/rejeitar-orcamento` (A13c) | `$TOKEN_CLIENTE` (papel `Cliente`) |
+| Todas as demais | `$TOKEN_OFICINA` (papel `Oficina`) |
+
+> ⚠️ Nos dois cenários com `$TOKEN_CLIENTE`, o `sub` do token precisa ser o **dono da OS**
+> (`{CLIENTE_ID}`). Se for outro cliente, a resposta é **403 Forbidden** — e não o 422 ou 200
+> que o cenário espera, o que faz o teste parecer falhar por outro motivo.
+>
+> Como a Function Serverless que emite o token de cliente **ainda não existe**, esse token só é
+> obtido manualmente (ver Passo 0 do guia do cenário feliz).
 
 ---
 
@@ -37,6 +61,7 @@
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/clientes \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Fulano Inválido",
@@ -65,6 +90,7 @@ curl -s -X POST http://localhost:8080/api/v1/clientes \
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/clientes \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Empresa Inválida Ltda",
@@ -92,6 +118,7 @@ Testa uma placa que não é nem Mercosul (`ABC1D23`) nem padrão antigo (`ABC-12
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/veiculos \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "placa": "PLACA99",
@@ -121,6 +148,7 @@ Tenta cadastrar um segundo cliente com o mesmo CPF do passo 1 do cenário feliz.
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/clientes \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "João Silva Cópia",
@@ -148,6 +176,7 @@ Tenta cadastrar um segundo veículo com a mesma placa `ABC1D23` do cenário feli
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/veiculos \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "placa": "ABC1D23",
@@ -173,6 +202,7 @@ curl -s -X POST http://localhost:8080/api/v1/veiculos \
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/ordens-servico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "clienteId": "00000000-0000-0000-0000-000000000001",
@@ -201,6 +231,7 @@ Crie um segundo cliente e tente abrir OS usando o veículo do primeiro cliente.
 **7a — Criar segundo cliente:**
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/clientes \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Maria Souza",
@@ -216,6 +247,7 @@ curl -s -X POST http://localhost:8080/api/v1/clientes \
 **7b — Tentar criar OS com veículo do cliente 1:**
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/ordens-servico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "clienteId": "{CLIENTE2_ID}",
@@ -242,6 +274,7 @@ Depois crie uma peça com estoque zero e tente usá-la no diagnóstico.
 **8a — Criar peça com estoque zero:**
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/pecas-insumos \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Pastilha de Freio",
@@ -257,6 +290,7 @@ curl -s -X POST http://localhost:8080/api/v1/pecas-insumos \
 **8b — Criar e iniciar nova OS:**
 ```bash
 OS2_ID=$(curl -s -X POST http://localhost:8080/api/v1/ordens-servico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{"clienteId": "{CLIENTE_ID}", "veiculoId": "{VEICULO_ID}"}' \
   | jq -r '.id')
@@ -267,6 +301,7 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS2_ID/iniciar-dia
 **8c — Tentar registrar diagnóstico com peça sem estoque:**
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS2_ID/registrar-diagnostico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "descricaoDiagnostico": "Freios desgastados.",
@@ -298,6 +333,7 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS2_ID/registrar-d
 ```bash
 # Usando a OS2 do cenário anterior (já em EmDiagnostico)
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS2_ID/registrar-diagnostico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "descricaoDiagnostico": "Diagnóstico teste.",
@@ -327,6 +363,7 @@ O domínio exige pelo menos 1 serviço e 1 peça para gerar orçamento.
 
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS2_ID/registrar-diagnostico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "descricaoDiagnostico": "Apenas serviço, sem peças.",
@@ -350,17 +387,21 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS2_ID/registrar-d
 
 ## A11 — Transição de Estado Inválida (Pular Etapa)
 
+> 🔑 **Token:** `$TOKEN_OFICINA` para criar a OS; `$TOKEN_CLIENTE` (dono da OS) para aprovar.
+
 Tenta aprovar orçamento numa OS que ainda está em `Recebida` (sem passar pelo diagnóstico).
 
 ```bash
 # Criar OS nova — ainda em Recebida
 OS3_ID=$(curl -s -X POST http://localhost:8080/api/v1/ordens-servico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{"clienteId": "{CLIENTE_ID}", "veiculoId": "{VEICULO_ID}"}' \
   | jq -r '.id')
 
 # Tentar aprovar sem passar pelas etapas anteriores
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS3_ID/aprovar-orcamento \
+  -H "Authorization: Bearer $TOKEN_CLIENTE" \
   | jq .
 ```
 
@@ -391,6 +432,7 @@ Tenta executar uma OS em `AguardandoAprovacao` sem aprovar o orçamento primeiro
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS3_ID/iniciar-diagnostico
 
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS3_ID/registrar-diagnostico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "descricaoDiagnostico": "Teste de transição.",
@@ -399,7 +441,8 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS3_ID/registrar-d
   }'
 
 # (aguardar GET para confirmar AguardandoAprovacao, depois tentar executar sem aprovar)
-curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS3_ID/executar | jq .
+curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS3_ID/executar \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 **Resultado esperado:** `422 Unprocessable Entity`
@@ -414,6 +457,9 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS3_ID/executar | 
 ---
 
 ## A13 — Rejeição de Orçamento com Estorno de Estoque ⭐
+
+> 🔑 **Token:** `$TOKEN_OFICINA` em todos os subpassos, **exceto 13c** (rejeitar orçamento),
+> que exige `$TOKEN_CLIENTE`.
 
 **Este é o cenário alternativo mais importante.** Valida a cadeia completa de
 eventos de rejeição: `RejeitarOrcamento` → domain event `OrcamentoRejeitado` →
@@ -432,6 +478,7 @@ curl -s http://localhost:8080/api/v1/pecas-insumos/{PECA_ID} | jq '.quantidadeEs
 ```bash
 # Criar OS
 OS_REJEICAO_ID=$(curl -s -X POST http://localhost:8080/api/v1/ordens-servico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{"clienteId": "{CLIENTE_ID}", "veiculoId": "{VEICULO_ID}"}' \
   | jq -r '.id')
@@ -443,6 +490,7 @@ curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS_REJEICAO_ID/ini
 
 # Registrar diagnóstico com 3 peças
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS_REJEICAO_ID/registrar-diagnostico \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "descricaoDiagnostico": "Revisão geral — cliente vai avaliar orçamento.",
@@ -465,8 +513,11 @@ curl -s http://localhost:8080/api/v1/pecas-insumos/{PECA_ID} | jq '.quantidadeEs
 
 ### 13c — Rejeitar orçamento
 
+> 🔑 **Token:** `$TOKEN_CLIENTE` (papel `Cliente`, `sub` = `{CLIENTE_ID}` dono da OS).
+
 ```bash
 curl -s -X PATCH http://localhost:8080/api/v1/ordens-servico/$OS_REJEICAO_ID/rejeitar-orcamento \
+  -H "Authorization: Bearer $TOKEN_CLIENTE" \
   | jq .
 ```
 
@@ -499,7 +550,8 @@ curl -s http://localhost:8080/api/v1/pecas-insumos/{PECA_ID} | jq '.quantidadeEs
 ### 13e — Verificar OS após rejeição
 
 ```bash
-curl -s http://localhost:8080/api/v1/ordens-servico/$OS_REJEICAO_ID | jq .
+curl -s http://localhost:8080/api/v1/ordens-servico/$OS_REJEICAO_ID \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 ```
 
 > ✅ Status permanece `AguardandoAprovacao`. O orçamento rejeitado permite
@@ -534,6 +586,7 @@ if (Status != StatusOrdemServico.Finalizada || NotificadoEm == null)
 ```bash
 # Tenta decrementar mais do que há em estoque
 curl -s -X PATCH http://localhost:8080/api/v1/pecas-insumos/{PECA_ID}/estoque/saida \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "quantidade": 9999
@@ -557,31 +610,36 @@ curl -s -X PATCH http://localhost:8080/api/v1/pecas-insumos/{PECA_ID}/estoque/sa
 
 **Cliente inexistente:**
 ```bash
-curl -s http://localhost:8080/api/v1/clientes/00000000-0000-0000-0000-000000000099 | jq .
+curl -s http://localhost:8080/api/v1/clientes/00000000-0000-0000-0000-000000000099 \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 # Esperado: 404
 ```
 
 **Veículo inexistente:**
 ```bash
-curl -s http://localhost:8080/api/v1/veiculos/00000000-0000-0000-0000-000000000099 | jq .
+curl -s http://localhost:8080/api/v1/veiculos/00000000-0000-0000-0000-000000000099 \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 # Esperado: 404
 ```
 
 **Serviço inexistente:**
 ```bash
-curl -s http://localhost:8080/api/v1/servicos/00000000-0000-0000-0000-000000000099 | jq .
+curl -s http://localhost:8080/api/v1/servicos/00000000-0000-0000-0000-000000000099 \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 # Esperado: 404
 ```
 
 **Peça/Insumo inexistente:**
 ```bash
-curl -s http://localhost:8080/api/v1/pecas-insumos/00000000-0000-0000-0000-000000000099 | jq .
+curl -s http://localhost:8080/api/v1/pecas-insumos/00000000-0000-0000-0000-000000000099 \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 # Esperado: 404
 ```
 
 **OS inexistente:**
 ```bash
-curl -s http://localhost:8080/api/v1/ordens-servico/00000000-0000-0000-0000-000000000099 | jq .
+curl -s http://localhost:8080/api/v1/ordens-servico/00000000-0000-0000-0000-000000000099 \
+  -H "Authorization: Bearer $TOKEN_OFICINA" | jq .
 # Esperado: 404
 ```
 
@@ -594,6 +652,7 @@ de montar o orçamento.
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "clienteId": "00000000-0000-0000-0000-000000000001",
@@ -629,6 +688,7 @@ domínio.
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "clienteId": "{CLIENTE_ID}",
@@ -659,6 +719,7 @@ curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
 ```bash
 # Criar peça com estoque zero
 PECA_SEM_ESTOQUE_ID=$(curl -s -X POST http://localhost:8080/api/v1/pecas-insumos \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "Amortecedor Traseiro",
@@ -669,6 +730,7 @@ PECA_SEM_ESTOQUE_ID=$(curl -s -X POST http://localhost:8080/api/v1/pecas-insumos
   }' | jq -r '.pecaInsumoId')
 
 curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   -H "Content-Type: application/json" \
   -d '{
     "clienteId": "{CLIENTE_ID}",
@@ -702,6 +764,7 @@ curl -s -X POST http://localhost:8080/api/v1/ordens-servico/completa \
 
 ```bash
 curl -s http://localhost:8080/api/v1/ordens-servico/00000000-0000-0000-0000-000000000099/status \
+  -H "Authorization: Bearer $TOKEN_OFICINA" \
   | jq .
 # Esperado: 404
 ```

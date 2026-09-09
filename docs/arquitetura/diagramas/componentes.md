@@ -21,17 +21,30 @@ flowchart TB
     sistema["Sistema de Oficina Mecânica<br/>Back-end REST .NET 10"]
     db[("PostgreSQL 16<br/>1 schema por módulo")]
 
-    atendente -->|"HTTPS/JSON (JWT)"| sistema
-    cliente -->|"consulta pública da OS"| sistema
+    authFn["Function Serverless de autenticação<br/>emite token por CPF (repositório à parte)"]
+
+    atendente -->|"HTTPS/JSON, token papel Oficina<br/>(login por email + senha na própria API)"| sistema
+    cliente -->|"HTTPS/JSON, token papel Cliente<br/>(acompanhamento e decisão do orçamento)"| sistema
+    cliente -->|"autentica por CPF"| authFn
+    authFn -.->|"token assinado com o mesmo segredo (HS256)"| cliente
     sistema -->|"EF Core / Npgsql"| db
+    authFn -->|"consulta cadastro.cliente (somente leitura)"| db
 
     classDef person fill:#08427b,stroke:#052e56,color:#fff
     classDef system fill:#1168bd,stroke:#0b4884,color:#fff
     classDef store fill:#438dd5,stroke:#2e6295,color:#fff
     class atendente,cliente person
-    class sistema system
+    class sistema,authFn system
     class db store
 ```
+
+**Dois emissores de token, autorização por papel.** A aplicação emite o token do atendente
+(`POST /api/v1/auth/login`, papel `Oficina`); a Function Serverless emite o token do cliente a
+partir do CPF (papel `Cliente`). Ambos são HS256 com o mesmo segredo e distinguidos por `iss` e
+pela claim `role` — ver [RFC-001](../rfcs/001-estrategia-de-autenticacao.md),
+[ADR-001](../adrs/001-jwt-hs256-segredo-compartilhado.md) e
+[ADR-003](../adrs/003-dois-emissores-e-autorizacao-por-papel.md). A consulta da OS pelo cliente
+**deixou de ser pública**: hoje é autenticada e restrita ao dono da OS.
 
 ---
 

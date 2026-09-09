@@ -156,3 +156,30 @@ usuários da oficina — o usuário administrador continua vindo de configuraç�
   continua disponível — pelo token de CPF, em `GET /api/v1/ordens-servico/acompanhamento`
   (seção 4.2), agora também filtrado pelo `sub` do token para não expor OS de terceiros.
 - **Validação na borda** (seção 5) fica pendente de tempo e de acesso à infraestrutura.
+
+---
+
+## 8. Superfície não autenticada da documentação OpenAPI
+
+Decisão tomada durante a implementação da fase, registrada aqui por afetar diretamente a
+superfície pública da aplicação.
+
+A documentação OpenAPI/Scalar deixou de ser exposta apenas em `Development` e passa a ser exposta
+**em qualquer ambiente por padrão**, controlada pela flag de configuração `OpenApi:Enabled`
+(variável `OpenApi__Enabled`), cujo default é `true`.
+
+**Consequência explícita:** a documentação completa da API — rotas, contratos de request e
+response, e o mapa de quais rotas exigem autenticação — fica **acessível sem autenticação em
+qualquer ambiente publicado**. Nenhum dado de negócio é exposto por ela; o que é exposto é a
+descrição da superfície da API.
+
+**Por que foi aceito:** o requisito de entrega da fase pede o link do Swagger da API publicada no
+README, o que só é atendível com a documentação acessível fora de `Development`. A alternativa
+(protegê-la com autenticação) tornaria o link inútil como evidência de entrega.
+
+**Mitigação:** a exposição é **configuração, não código** — basta `OpenApi__Enabled=false` no
+ConfigMap ou nas variáveis de ambiente para desligá-la, sem recompilar nem republicar a imagem.
+Os testes de integração já rodam com a flag desligada.
+
+Fica em aberto, para uma fase de endurecimento: restringir a documentação por rede (acesso apenas
+de dentro da VPC ou via API Gateway autenticado) em vez de por flag.

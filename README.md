@@ -147,7 +147,7 @@ As **migrations são aplicadas automaticamente** na inicialização da API (`Mig
 |---|---|
 | API REST | `http://localhost:8080/api/v1/` |
 | Scalar (docs interativa) | `http://localhost:8080/scalar` |
-| Health check | `http://localhost:8080/healthz` |
+| Health checks | `http://localhost:8080/healthz` (agregado), `/healthz/live`, `/healthz/ready` |
 | PostgreSQL | `localhost:5432` — user/pass: `oficina` / `oficina-dev-pass` |
 
 ---
@@ -232,9 +232,20 @@ autocontido. Segredos necessários: `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN`.
 
 ---
 
-## Autenticação
+## Autenticação e autorização
 
-A maioria dos endpoints requer JWT. Para obtê-lo:
+Praticamente todos os endpoints exigem JWT, e a autorização passou a considerar o **papel** do
+token — ver [RFC-001](docs/arquitetura/rfcs/001-estrategia-de-autenticacao.md) e
+[ADR-003](docs/arquitetura/adrs/003-dois-emissores-e-autorizacao-por-papel.md).
+
+### Os dois papéis
+
+| Papel | Quem é | Emissor do token | Credencial |
+|---|---|---|---|
+| `Oficina` | Operador da oficina | **Esta aplicação** — `POST /api/v1/auth/login` | email + senha |
+| `Cliente` | Cliente da oficina | **Function Serverless** de autenticação (repositório separado) | CPF |
+
+**Token da oficina** — emitido pela própria aplicação:
 
 ```bash
 curl -s -X POST http://localhost:8080/api/v1/auth/login \
@@ -242,14 +253,63 @@ curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -d '{"email": "admin@oficina.com", "senha": "admin123"}'
 ```
 
-O token tem validade de **1 hora**. Use-o como `Authorization: Bearer <token>` ou pelo botão
-**Authorize** no Scalar.
+**Token do cliente** — a Function Serverless que o emite **ainda não existe** (será entregue em
+repositório próprio, ver [ADR-005](docs/arquitetura/adrs/005-quatro-repositorios-e-estrategia-de-branches.md)).
+Até lá, esse token só é obtido manualmente: assinando um JWT em HS256 com o mesmo
+`Jwt__Secret` da aplicação, com `iss=oficina-mecanica-auth`, `aud=oficina-mecanica-api`,
+`sub=<id do cliente>` e `role=Cliente`. É exatamente o que o helper
+`CreateClienteAuthenticatedClient(clienteId)` faz nos testes de integração
+([`OficinaMecanicaWebApplicationFactory`](tests/IntegrationTests/Infrastructure/OficinaMecanicaWebApplicationFactory.cs)).
+**Não existe rota nesta aplicação que emita token de cliente.**
+
+Ambos os tokens têm validade de **1 hora** e são enviados como `Authorization: Bearer <token>`
+(ou pelo botão **Authorize** no Scalar). O contrato de claims está no
+[RFC-001 §4.1](docs/arquitetura/rfcs/001-estrategia-de-autenticacao.md).
+
+### Mapa de rotas por papel
+
+| Rota | Papel exigido |
+|---|---|
+| `POST /api/v1/auth/login` | **Anônima** |
+| `GET /healthz`, `/healthz/live`, `/healthz/ready` | **Anônima** |
+| `GET /api/v1/ordens-servico/acompanhamento` | `Cliente` (lista só as OS do cliente do token) |
+| `PATCH /api/v1/ordens-servico/{id}/aprovar-orcamento` | `Cliente` |
+| `PATCH /api/v1/ordens-servico/{id}/rejeitar-orcamento` | `Cliente` |
+| `GET /api/v1/ordens-servico/{id}` e `/{id}/status` | `Cliente` **ou** `Oficina` |
+| `GET /api/v1/ordens-servico?clienteId=...` | `Oficina` |
+| Demais rotas de `ordens-servico` (abertura, diagnóstico, execução, finalização, conclusão) | `Oficina` |
+| Todas as rotas de `clientes`, `veiculos`, `servicos` e `pecas-insumos` | `Oficina` |
+
+Regra adicional: um token de papel `Cliente` só opera sobre ordens de serviço **do próprio
+cliente** — o `sub` do token é comparado com o dono da OS. Um cliente acessando a OS de outro
+recebe **403 Forbidden**, não 404.
+
+> **Mudança em relação à Fase 2:** `GET /api/v1/ordens-servico?clienteId=...` **deixou de ser
+> anônima** e passou a exigir papel `Oficina` — uma listagem completa de ordens de serviço é
+> informação sensível. O acompanhamento pelo cliente também deixou de ser público: agora é
+> `GET /api/v1/ordens-servico/acompanhamento`, autenticado e filtrado pelo token.
+>
+> A documentação OpenAPI/Scalar continua acessível **sem autenticação** — decisão consciente,
+> registrada no [RFC-001 §8](docs/arquitetura/rfcs/001-estrategia-de-autenticacao.md).
 
 > Credenciais e segredo JWT são definidos no `docker-compose.yml` (dev) e na Secret do Kubernetes
-> (cluster). Em produção, substitua `Jwt__Secret`, `Auth__AdminEmail` e `Auth__AdminSenha`.
+> (cluster). Em produção, substitua `Jwt__Secret`, `Auth__AdminEmail` e `Auth__AdminSenha`. O
+> emissor e a audience aceitos vêm de `Jwt__ValidIssuers__0` / `__1` e `Jwt__Audience`.
 
-**Endpoints públicos** (sem autenticação): consulta de acompanhamento da OS pelo cliente e
-`GET /healthz`.
+---
+
+## Health checks
+
+| Endpoint | O que verifica | Uso |
+|---|---|---|
+| `GET /healthz/live` | **Liveness** — só se o processo responde; não toca em dependências | `livenessProbe` do Kubernetes |
+| `GET /healthz/ready` | **Readiness** — inclui o check do **PostgreSQL**; devolve `503` se o banco estiver indisponível | `readinessProbe` do Kubernetes |
+| `GET /healthz` | **Agregado** — todos os checks registrados | Smoke test da pipeline (`ci-cd.yml`) |
+
+Os três são **anônimos**. `/healthz/live` continua respondendo `200` mesmo com o banco fora do
+ar — é o que separa "o processo travou" (reiniciar) de "a dependência caiu" (tirar do
+balanceamento), comportamento coberto por teste de integração em
+[`tests/IntegrationTests/HealthChecks`](tests/IntegrationTests/HealthChecks).
 
 ---
 
@@ -260,7 +320,13 @@ O token tem validade de **1 hora**. Use-o como `Authorization: Bearer <token>` o
 | **Documentação interativa (Scalar/OpenAPI)** | `docker compose up`: `http://localhost:8080/scalar` (e `/openapi`) — cluster kind (`k8s`/Terraform): `http://localhost:30080/scalar` (NodePort) ou via `kubectl port-forward -n oficina-mecanica svc/oficina-api 8080:8080` |
 | **Collection completa (Bruno)** | [`docs/guias/collection_bruno.yml`](docs/guias/collection_bruno.yml) — importável no [Bruno](https://usebruno.com), ambiente `Local` pré-configurado |
 
-A collection Bruno inclui todos os módulos e endpoints, incluindo os novos da Fase 2.
+A collection Bruno inclui todos os módulos e endpoints. Ela usa **duas variáveis de token** no
+ambiente `Local`: `token_oficina` (herdado por todas as requisições) e `token_cliente`, que
+sobrescreve o header apenas em **Aprovar Orçamento**, **Rejeitar Orçamento** e **Listar para
+Acompanhamento** — as três rotas de papel `Cliente`. Preencha `token_oficina` com o campo `token`
+da resposta de **Autenticacao > Login**; `token_cliente` precisa ser gerado manualmente enquanto a
+Function Serverless de autenticação por CPF não existir (ver seção
+[Autenticação e autorização](#autenticação-e-autorização)).
 
 A exposição do Scalar/OpenAPI **não depende mais do ambiente** (`ASPNETCORE_ENVIRONMENT`) — é
 controlada pela flag `OpenApi:Enabled` (variável `OpenApi__Enabled`), habilitada por padrão em
