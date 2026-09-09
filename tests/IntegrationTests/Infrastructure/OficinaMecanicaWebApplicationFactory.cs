@@ -43,7 +43,6 @@ public sealed class OficinaMecanicaWebApplicationFactory
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // "Testing" evita que app.MapOpenApi() e Scalar sejam registrados
         builder.UseEnvironment("Testing");
 
         // Sobrescreve configurações sensíveis com valores de teste.
@@ -60,6 +59,10 @@ public sealed class OficinaMecanicaWebApplicationFactory
                 // Credenciais do admin — usadas pelo LoginHandler
                 ["Auth:AdminEmail"] = TestAdminEmail,
                 ["Auth:AdminSenha"] = TestAdminSenha,
+                // A exposição do OpenAPI/Scalar não depende mais do ambiente (ver
+                // Api.Extensions.OpenApiExtensions), então é desligada explicitamente aqui
+                // para manter a suíte de integração rápida e sem rotas de documentação.
+                ["OpenApi:Enabled"] = "false",
             });
         });
     }

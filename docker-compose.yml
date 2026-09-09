@@ -12,6 +12,7 @@ services:
       - Jwt__Secret=docker-dev-secret-key-replace-in-prod-000
       - Auth__AdminEmail=admin@oficina.com
       - Auth__AdminSenha=admin123
+      - OpenApi__Enabled=true
     depends_on:
       postgres:
         condition: service_healthy

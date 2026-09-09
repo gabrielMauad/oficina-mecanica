@@ -9,3 +9,4 @@ data:
   ASPNETCORE_ENVIRONMENT: "Development"
   ASPNETCORE_URLS: "http://+:8080"
   Auth__AdminEmail: "admin@oficina.com"
+  OpenApi__Enabled: "true"
