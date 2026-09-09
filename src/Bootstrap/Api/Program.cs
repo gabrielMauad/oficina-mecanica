@@ -73,7 +73,7 @@ builder.Services.AddOpenApi(options =>
 });
 
 
-builder.Services.AddHealthChecks();
+builder.Services.AddApiHealthChecks();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddAutenticacaoModule(builder.Configuration);
@@ -99,7 +99,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapOpenApiDocumentation();
-app.MapHealthChecks("/healthz");
+app.MapApiHealthChecks();
 
 using (var scope = app.Services.CreateScope())
 {
