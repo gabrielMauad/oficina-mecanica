@@ -31,11 +31,15 @@ public class CadastroEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("João Silva");
+        var documento = TestData.Cpf();
+        var email = TestData.Email("joao.silva");
+
         var command = new
         {
-            Nome = "João Silva",
-            Documento = "01404238000",
-            Email = "joao.silva@integration.test",
+            Nome = nome,
+            Documento = documento,
+            Email = email,
             Telefone = "31999990001",
             PessoaFisica = true
         };
@@ -49,9 +53,9 @@ public class CadastroEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<ClienteCriadoResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.NotEqual(Guid.Empty, body.ClienteId);
-        Assert.Equal("João Silva", body.Nome);
-        Assert.Equal("01404238000", body.Documento);
-        Assert.Equal("joao.silva@integration.test", body.Email);
+        Assert.Equal(nome, body.Nome);
+        Assert.Equal(documento, body.Documento);
+        Assert.Equal(email, body.Email);
         Assert.True(body.Ativo);
     }
 
@@ -63,9 +67,9 @@ public class CadastroEndpointsTests
 
         var command = new
         {
-            Nome = "Anônimo",
-            Documento = "12345678909",
-            Email = "anonimo@test.com",
+            Nome = TestData.Nome("Anônimo"),
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("anonimo"),
             Telefone = "31999990000",
             PessoaFisica = true
         };
@@ -88,11 +92,14 @@ public class CadastroEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("Maria Santos");
+        var documento = TestData.Cpf();
+
         var command = new
         {
-            Nome = "Maria Santos",
-            Documento = "52998224725",
-            Email = "maria.santos@integration.test",
+            Nome = nome,
+            Documento = documento,
+            Email = TestData.Email("maria.santos"),
             Telefone = "31999990002",
             PessoaFisica = true
         };
@@ -113,8 +120,8 @@ public class CadastroEndpointsTests
 
         var cliente = body.FirstOrDefault(c => c.Id == created!.ClienteId);
         Assert.NotNull(cliente);
-        Assert.Equal("Maria Santos", cliente.Nome);
-        Assert.Equal("52998224725", cliente.Documento);
+        Assert.Equal(nome, cliente.Nome);
+        Assert.Equal(documento, cliente.Documento);
     }
 
     // =========================================================================
@@ -128,11 +135,15 @@ public class CadastroEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("Pedro Costa");
+        var documento = TestData.Cpf();
+        var email = TestData.Email("pedro.costa");
+
         var command = new
         {
-            Nome = "Pedro Costa",
-            Documento = "87748248800",
-            Email = "pedro.costa@integration.test",
+            Nome = nome,
+            Documento = documento,
+            Email = email,
             Telefone = "31999990003",
             PessoaFisica = true
         };
@@ -151,9 +162,9 @@ public class CadastroEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<ClienteGetResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.Equal(clienteId, body.Id);
-        Assert.Equal("Pedro Costa", body.Nome);
-        Assert.Equal("87748248800", body.Documento);
-        Assert.Equal("pedro.costa@integration.test", body.Email);
+        Assert.Equal(nome, body.Nome);
+        Assert.Equal(documento, body.Documento);
+        Assert.Equal(email, body.Email);
         Assert.True(body.Ativo);
     }
 
@@ -184,9 +195,9 @@ public class CadastroEndpointsTests
 
         var command = new
         {
-            Nome = "Carlos Antigo",
-            Documento = "26475244406",
-            Email = "carlos@integration.test",
+            Nome = TestData.Nome("Carlos Antigo"),
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("carlos"),
             Telefone = "31999990004",
             PessoaFisica = true
         };
@@ -222,9 +233,9 @@ public class CadastroEndpointsTests
 
         var command = new
         {
-            Nome = "Ana Lima",
-            Documento = "71428793860",
-            Email = "ana.lima@integration.test",
+            Nome = TestData.Nome("Ana Lima"),
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("ana.lima"),
             Telefone = "31999990005",
             PessoaFisica = true
         };
@@ -260,9 +271,9 @@ public class CadastroEndpointsTests
 
         var command = new
         {
-            Nome = "Lucas Temporário",
-            Documento = "98765432100",
-            Email = "lucas@integration.test",
+            Nome = TestData.Nome("Lucas Temporário"),
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("lucas"),
             Telefone = "31999990006",
             PessoaFisica = true
         };
@@ -314,34 +325,24 @@ public class CadastroEndpointsTests
 
         var clienteCommand = new
         {
-            Nome = "Bruno Motorista",
-            Documento = "11144477735",
-            Email = "bruno@integration.test",
+            Nome = TestData.Nome("Bruno Motorista"),
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("bruno"),
             Telefone = "31999990007",
             PessoaFisica = true
         };
 
-        // Tenta criar o cliente; se CPF já existe (de outro teste), busca pelo GET da lista
+        // CPF gerado por TestData é inédito, então a criação sempre retorna 201
         var clienteResponse = await client.PostAsJsonAsync("/api/v1/clientes", clienteCommand);
-        Guid clienteId;
+        clienteResponse.EnsureSuccessStatusCode();
+        var clienteCriado = await clienteResponse.Content.ReadFromJsonAsync<ClienteCriadoResponse>(JsonOptions);
+        var clienteId = clienteCriado!.ClienteId;
 
-        if (clienteResponse.StatusCode == HttpStatusCode.Created)
-        {
-            var clienteCriado = await clienteResponse.Content.ReadFromJsonAsync<ClienteCriadoResponse>(JsonOptions);
-            clienteId = clienteCriado!.ClienteId;
-        }
-        else
-        {
-            // CPF já cadastrado — busca na lista
-            var listResponse = await client.GetAsync("/api/v1/clientes");
-            listResponse.EnsureSuccessStatusCode();
-            var lista = await listResponse.Content.ReadFromJsonAsync<List<ClienteListItemResponse>>(JsonOptions);
-            clienteId = lista!.First(c => c.Documento == "11144477735").Id;
-        }
+        var placa = TestData.PlacaMercosul();
 
         var veiculoCommand = new
         {
-            Placa = "ABC1D23",
+            Placa = placa,
             Modelo = "Civic",
             Marca = "Honda",
             Ano = 2022,
@@ -357,7 +358,7 @@ public class CadastroEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<VeiculoCriadoResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.NotEqual(Guid.Empty, body.VeiculoId);
-        Assert.Equal("ABC1D23", body.Placa);
+        Assert.Equal(placa, body.Placa);
         Assert.Equal("Civic", body.Modelo);
         Assert.Equal("Honda", body.Marca);
         Assert.Equal(2022, body.Ano);
@@ -378,9 +379,9 @@ public class CadastroEndpointsTests
         // Criar cliente dono do veículo
         var clienteCommand = new
         {
-            Nome = "Diego Viajante",
-            Documento = "23456789173",
-            Email = "diego@integration.test",
+            Nome = TestData.Nome("Diego Viajante"),
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("diego"),
             Telefone = "31999990008",
             PessoaFisica = true
         };
@@ -389,9 +390,11 @@ public class CadastroEndpointsTests
         clienteResponse.EnsureSuccessStatusCode();
         var clienteCriado = await clienteResponse.Content.ReadFromJsonAsync<ClienteCriadoResponse>(JsonOptions);
 
+        var placa = TestData.PlacaMercosul();
+
         var veiculoCommand = new
         {
-            Placa = "GHI1J23",
+            Placa = placa,
             Modelo = "Corolla",
             Marca = "Toyota",
             Ano = 2021,
@@ -414,7 +417,7 @@ public class CadastroEndpointsTests
 
         var veiculo = body.FirstOrDefault(v => v.Id == veiculoCriado!.VeiculoId);
         Assert.NotNull(veiculo);
-        Assert.Equal("GHI1J23", veiculo.Placa);
+        Assert.Equal(placa, veiculo.Placa);
         Assert.Equal("Corolla", veiculo.Modelo);
     }
 
@@ -431,9 +434,9 @@ public class CadastroEndpointsTests
 
         var clienteCommand = new
         {
-            Nome = "Fernanda Condutora",
-            Documento = "34567891228",
-            Email = "fernanda@integration.test",
+            Nome = TestData.Nome("Fernanda Condutora"),
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("fernanda"),
             Telefone = "31999990009",
             PessoaFisica = true
         };
@@ -442,9 +445,11 @@ public class CadastroEndpointsTests
         clienteResponse.EnsureSuccessStatusCode();
         var clienteCriado = await clienteResponse.Content.ReadFromJsonAsync<ClienteCriadoResponse>(JsonOptions);
 
+        var placa = TestData.PlacaMercosul();
+
         var veiculoCommand = new
         {
-            Placa = "LMN2O34",
+            Placa = placa,
             Modelo = "Fit",
             Marca = "Honda",
             Ano = 2020,
@@ -465,7 +470,7 @@ public class CadastroEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<VeiculoGetResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.Equal(veiculoId, body.Id);
-        Assert.Equal("LMN2O34", body.Placa);
+        Assert.Equal(placa, body.Placa);
         Assert.Equal("Fit", body.Modelo);
         Assert.Equal("Honda", body.Marca);
         Assert.Equal(2020, body.Ano);
@@ -497,11 +502,13 @@ public class CadastroEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nomeCliente = TestData.Nome("Gabriel Frota");
+
         var clienteCommand = new
         {
-            Nome = "Gabriel Frota",
-            Documento = "45678912364",
-            Email = "gabriel@integration.test",
+            Nome = nomeCliente,
+            Documento = TestData.Cpf(),
+            Email = TestData.Email("gabriel"),
             Telefone = "31999990010",
             PessoaFisica = true
         };
@@ -512,7 +519,9 @@ public class CadastroEndpointsTests
         var clienteId = clienteCriado!.ClienteId;
 
         // Criar dois veículos para este cliente
-        foreach (var placa in new[] { "PQR3S45", "TUV4W56" })
+        var placas = new[] { TestData.PlacaMercosul(), TestData.PlacaMercosul() };
+
+        foreach (var placa in placas)
         {
             var veiculoCommand = new
             {
@@ -535,10 +544,10 @@ public class CadastroEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<VeiculosPorClienteResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.Equal(clienteId, body.ClienteId);
-        Assert.Equal("Gabriel Frota", body.NomeCliente);
+        Assert.Equal(nomeCliente, body.NomeCliente);
         Assert.Equal(2, body.Veiculos.Count);
-        Assert.Contains(body.Veiculos, v => v.Placa == "PQR3S45");
-        Assert.Contains(body.Veiculos, v => v.Placa == "TUV4W56");
+        Assert.Contains(body.Veiculos, v => v.Placa == placas[0]);
+        Assert.Contains(body.Veiculos, v => v.Placa == placas[1]);
     }
 
     [Fact(DisplayName = "GET /clientes/{id}/veiculos — retorna 404 quando cliente não existe")]
@@ -566,10 +575,13 @@ public class CadastroEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("Troca de Óleo");
+        var descricao = TestData.Descricao("Troca completa com filtro");
+
         var command = new
         {
-            Nome = "Troca de Óleo",
-            Descricao = "Troca completa com filtro",
+            Nome = nome,
+            Descricao = descricao,
             Preco = 150.00m
         };
 
@@ -582,8 +594,8 @@ public class CadastroEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<ServicoCriadoResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.NotEqual(Guid.Empty, body.ServicoId);
-        Assert.Equal("Troca de Óleo", body.Nome);
-        Assert.Equal("Troca completa com filtro", body.Descricao);
+        Assert.Equal(nome, body.Nome);
+        Assert.Equal(descricao, body.Descricao);
         Assert.Equal(150.00m, body.PrecoBase);
         Assert.True(body.Ativo);
     }
@@ -599,9 +611,11 @@ public class CadastroEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("Alinhamento e Balanceamento");
+
         var command = new
         {
-            Nome = "Alinhamento e Balanceamento",
+            Nome = nome,
             Descricao = (string?)null,
             Preco = 120.00m
         };
@@ -622,7 +636,7 @@ public class CadastroEndpointsTests
 
         var servico = body.FirstOrDefault(s => s.Id == created!.ServicoId);
         Assert.NotNull(servico);
-        Assert.Equal("Alinhamento e Balanceamento", servico.Nome);
+        Assert.Equal(nome, servico.Nome);
         Assert.Equal(120.00m, servico.Preco);
     }
 
@@ -637,10 +651,13 @@ public class CadastroEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("Revisão de Freios");
+        var descricao = TestData.Descricao("Pastilhas e discos dianteiros");
+
         var command = new
         {
-            Nome = "Revisão de Freios",
-            Descricao = "Pastilhas e discos dianteiros",
+            Nome = nome,
+            Descricao = descricao,
             Preco = 350.00m
         };
 
@@ -658,8 +675,8 @@ public class CadastroEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<ServicoGetResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.Equal(servicoId, body.Id);
-        Assert.Equal("Revisão de Freios", body.Nome);
-        Assert.Equal("Pastilhas e discos dianteiros", body.Descricao);
+        Assert.Equal(nome, body.Nome);
+        Assert.Equal(descricao, body.Descricao);
         Assert.Equal(350.00m, body.Preco);
         Assert.True(body.Ativo);
     }
@@ -691,8 +708,8 @@ public class CadastroEndpointsTests
 
         var command = new
         {
-            Nome = "Diagnóstico Eletrônico",
-            Descricao = "Descrição original",
+            Nome = TestData.Nome("Diagnóstico Eletrônico"),
+            Descricao = TestData.Descricao("Descrição original"),
             Preco = 200.00m
         };
 
@@ -727,7 +744,7 @@ public class CadastroEndpointsTests
 
         var command = new
         {
-            Nome = "Lavagem Completa",
+            Nome = TestData.Nome("Lavagem Completa"),
             Descricao = (string?)null,
             Preco = 80.00m
         };
@@ -763,7 +780,7 @@ public class CadastroEndpointsTests
 
         var command = new
         {
-            Nome = "Polimento Temporário",
+            Nome = TestData.Nome("Polimento Temporário"),
             Descricao = (string?)null,
             Preco = 300.00m
         };

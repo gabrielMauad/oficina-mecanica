@@ -41,14 +41,14 @@ public class OrdemServicoEndpointsTests
 
         // 1. Criar Cliente
         var clienteId = await CriarClienteAsync(client,
-            nome: "Carlos Teste OS",
-            documento: "39053344705",
-            email: "carlos.os@integration.test",
+            nome: TestData.Nome("Carlos Teste OS"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("carlos.os"),
             telefone: "31999990010");
 
         // 2. Criar Veículo (vinculado ao cliente)
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "XYZ2E34",
+            placa: TestData.PlacaMercosul(),
             modelo: "Corolla",
             marca: "Toyota",
             ano: 2021,
@@ -56,14 +56,14 @@ public class OrdemServicoEndpointsTests
 
         // 3. Criar Serviço no catálogo
         var servicoId = await CriarServicoAsync(client,
-            nome: "Troca de Óleo OS",
-            descricao: "Troca de óleo do motor",
+            nome: TestData.Nome("Troca de Óleo OS"),
+            descricao: TestData.Descricao("Troca de óleo do motor"),
             preco: 150.00m);
 
         // 4. Criar Peça/Insumo com estoque
         var pecaId = await CriarPecaAsync(client,
-            nome: "Óleo 5W30 1L",
-            descricao: "Óleo mineral",
+            nome: TestData.Nome("Óleo 5W30 1L"),
+            descricao: TestData.Descricao("Óleo mineral"),
             preco: 35.00m,
             estoque: 50,
             unidade: "Litro");
@@ -175,25 +175,25 @@ public class OrdemServicoEndpointsTests
         using var client = _factory.CreateAuthenticatedClient(token);
 
         var clienteId = await CriarClienteAsync(client,
-            nome: "Rejeita OS Cliente",
-            documento: "60749960086",
-            email: "rejeita.os@integration.test",
+            nome: TestData.Nome("Rejeita OS Cliente"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("rejeita.os"),
             telefone: "31999990020");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "REJ1B23",
+            placa: TestData.PlacaMercosul(),
             modelo: "Gol",
             marca: "VW",
             ano: 2019,
             clienteId: clienteId);
 
         var servicoId = await CriarServicoAsync(client,
-            nome: "Revisão Completa Rejeita",
+            nome: TestData.Nome("Revisão Completa Rejeita"),
             descricao: null,
             preco: 200.00m);
 
         var pecaId = await CriarPecaAsync(client,
-            nome: "Filtro Ar K&N",
+            nome: TestData.Nome("Filtro Ar K&N"),
             descricao: null,
             preco: 80.00m,
             estoque: 10,
@@ -251,13 +251,13 @@ public class OrdemServicoEndpointsTests
         using var authClient = _factory.CreateAuthenticatedClient(token);
 
         var clienteId = await CriarClienteAsync(authClient,
-            nome: "Cliente Lista Oficina",
-            documento: "48668018086",
-            email: "lista.oficina@integration.test",
+            nome: TestData.Nome("Cliente Lista Oficina"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("lista.oficina"),
             telefone: "31999990030");
 
         var veiculoId = await CriarVeiculoAsync(authClient,
-            placa: "PUB2C34",
+            placa: TestData.PlacaMercosul(),
             modelo: "Fiesta",
             marca: "Ford",
             ano: 2018,
@@ -316,13 +316,13 @@ public class OrdemServicoEndpointsTests
         using var client = _factory.CreateAuthenticatedClient(token);
 
         var donoId = await CriarClienteAsync(client,
-            nome: "Dono da OS",
-            documento: "14730217071",
-            email: "dono.os@integration.test",
+            nome: TestData.Nome("Dono da OS"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("dono.os"),
             telefone: "31999990080");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "DON4H56",
+            placa: TestData.PlacaMercosul(),
             modelo: "Argo",
             marca: "Fiat",
             ano: 2022,
@@ -351,25 +351,25 @@ public class OrdemServicoEndpointsTests
         using var client = _factory.CreateAuthenticatedClient(token);
 
         var donoId = await CriarClienteAsync(client,
-            nome: "Dono do Orcamento",
-            documento: "85476279016",
-            email: "dono.orcamento@integration.test",
+            nome: TestData.Nome("Dono do Orcamento"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("dono.orcamento"),
             telefone: "31999990090");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "DON5I67",
+            placa: TestData.PlacaMercosul(),
             modelo: "Kwid",
             marca: "Renault",
             ano: 2021,
             clienteId: donoId);
 
         var servicoId = await CriarServicoAsync(client,
-            nome: "Troca de Amortecedor",
+            nome: TestData.Nome("Troca de Amortecedor"),
             descricao: null,
             preco: 300.00m);
 
         var pecaId = await CriarPecaAsync(client,
-            nome: "Amortecedor Traseiro",
+            nome: TestData.Nome("Amortecedor Traseiro"),
             descricao: null,
             preco: 150.00m,
             estoque: 5,
@@ -469,13 +469,13 @@ public class OrdemServicoEndpointsTests
         using var client = _factory.CreateAuthenticatedClient(token);
 
         var clienteId = await CriarClienteAsync(client,
-            nome: "Transicao Invalida",
-            documento: "65718630062",
-            email: "transicao.invalida@integration.test",
+            nome: TestData.Nome("Transicao Invalida"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("transicao.invalida"),
             telefone: "31999990040");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "INV1D23",
+            placa: TestData.PlacaMercosul(),
             modelo: "Palio",
             marca: "Fiat",
             ano: 2017,

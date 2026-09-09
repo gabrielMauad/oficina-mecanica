@@ -31,9 +31,11 @@ public class PecasInsumosEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("Filtro de Óleo Bosch");
+
         var command = new
         {
-            Nome = "Filtro de Óleo Bosch",
+            Nome = nome,
             Descricao = "Filtro de óleo para motor 1.0",
             Preco = 49.90m,
             QuantidadeEmEstoque = 20,
@@ -49,7 +51,7 @@ public class PecasInsumosEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<AdicionarPecaResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.NotEqual(Guid.Empty, body.PecaInsumoId);
-        Assert.Equal("Filtro de Óleo Bosch", body.Nome);
+        Assert.Equal(nome, body.Nome);
         Assert.Equal(49.90m, body.PrecoUnitario);
         Assert.Equal(20, body.QuantidadeEmEstoque);
         Assert.Equal("Unidade", body.UnidadeDeMedida);
@@ -68,9 +70,11 @@ public class PecasInsumosEndpointsTests
         using var client = _factory.CreateAuthenticatedClient(token);
 
         // Criar uma peça para garantir que a lista não estará vazia
+        var nome = TestData.Nome("Correia Dentada Gates");
+
         var command = new
         {
-            Nome = "Correia Dentada Gates",
+            Nome = nome,
             Descricao = (string?)null,
             Preco = 120.00m,
             QuantidadeEmEstoque = 8,
@@ -93,7 +97,7 @@ public class PecasInsumosEndpointsTests
 
         var peca = body.FirstOrDefault(p => p.Id == created!.PecaInsumoId);
         Assert.NotNull(peca);
-        Assert.Equal("Correia Dentada Gates", peca.Nome);
+        Assert.Equal(nome, peca.Nome);
         Assert.Equal(120.00m, peca.PrecoUnitario);
         Assert.Equal(8, peca.QuantidadeEmEstoque);
     }
@@ -109,10 +113,13 @@ public class PecasInsumosEndpointsTests
         var token = await _factory.GetAuthTokenAsync();
         using var client = _factory.CreateAuthenticatedClient(token);
 
+        var nome = TestData.Nome("Pastilha de Freio Fras-le");
+        var descricao = TestData.Descricao("Jogo dianteiro");
+
         var command = new
         {
-            Nome = "Pastilha de Freio Fras-le",
-            Descricao = "Jogo dianteiro",
+            Nome = nome,
+            Descricao = descricao,
             Preco = 89.90m,
             QuantidadeEmEstoque = 15,
             UnidadeDeMedida = "Unidade"
@@ -132,8 +139,8 @@ public class PecasInsumosEndpointsTests
         var body = await response.Content.ReadFromJsonAsync<ObterPecaResponse>(JsonOptions);
         Assert.NotNull(body);
         Assert.Equal(pecaId, body.Id);
-        Assert.Equal("Pastilha de Freio Fras-le", body.Nome);
-        Assert.Equal("Jogo dianteiro", body.Descricao);
+        Assert.Equal(nome, body.Nome);
+        Assert.Equal(descricao, body.Descricao);
         Assert.Equal(15, body.QuantidadeEmEstoque);
         Assert.Equal(89.90m, body.PrecoUnitario);
         Assert.Equal("Unidade", body.UnidadeDeMedida);
@@ -167,8 +174,8 @@ public class PecasInsumosEndpointsTests
 
         var command = new
         {
-            Nome = "Vela de Ignição NGK",
-            Descricao = "Descrição original",
+            Nome = TestData.Nome("Vela de Ignição NGK"),
+            Descricao = TestData.Descricao("Descrição original"),
             Preco = 35.00m,
             QuantidadeEmEstoque = 12,
             UnidadeDeMedida = "Unidade"
@@ -206,7 +213,7 @@ public class PecasInsumosEndpointsTests
 
         var command = new
         {
-            Nome = "Amortecedor Dianteiro Monroe",
+            Nome = TestData.Nome("Amortecedor Dianteiro Monroe"),
             Descricao = (string?)null,
             Preco = 250.00m,
             QuantidadeEmEstoque = 4,
@@ -245,7 +252,7 @@ public class PecasInsumosEndpointsTests
 
         var command = new
         {
-            Nome = "Palheta Limpador",
+            Nome = TestData.Nome("Palheta Limpador"),
             Descricao = (string?)null,
             Preco = 25.00m,
             QuantidadeEmEstoque = 5,
@@ -288,7 +295,7 @@ public class PecasInsumosEndpointsTests
 
         var command = new
         {
-            Nome = "Óleo Motul 5W30",
+            Nome = TestData.Nome("Óleo Motul 5W30"),
             Descricao = (string?)null,
             Preco = 45.00m,
             QuantidadeEmEstoque = 20,
@@ -327,7 +334,7 @@ public class PecasInsumosEndpointsTests
 
         var command = new
         {
-            Nome = "Cabo de Vela Bosch",
+            Nome = TestData.Nome("Cabo de Vela Bosch"),
             Descricao = (string?)null,
             Preco = 80.00m,
             QuantidadeEmEstoque = 3, // apenas 3 em estoque
@@ -361,7 +368,7 @@ public class PecasInsumosEndpointsTests
 
         var command = new
         {
-            Nome = "Rolamento Roda Dianteira SKF",
+            Nome = TestData.Nome("Rolamento Roda Dianteira SKF"),
             Descricao = (string?)null,
             Preco = 180.00m,
             QuantidadeEmEstoque = 6,
