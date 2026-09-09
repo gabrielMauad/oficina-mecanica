@@ -38,24 +38,24 @@ public class AbrirOrdemServicoCompletaEndpointsTests
         const int quantidadeUsada = 3;
 
         var clienteId = await CriarClienteAsync(client,
-            nome: "Fluxo Completo Cliente",
-            documento: "98530209044",
-            email: "fluxo.completo@integration.test",
+            nome: TestData.Nome("Fluxo Completo Cliente"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("fluxo.completo"),
             telefone: "31999990050");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "CMP1E23",
+            placa: TestData.PlacaMercosul(),
             modelo: "Civic",
             marca: "Honda",
             ano: 2022,
             clienteId: clienteId);
 
         var servicoId = await CriarServicoAsync(client,
-            nome: "Alinhamento e Balanceamento OS Completa",
+            nome: TestData.Nome("Alinhamento e Balanceamento OS Completa"),
             preco: 120.00m);
 
         var pecaId = await CriarPecaAsync(client,
-            nome: "Pastilha de Freio Completa",
+            nome: TestData.Nome("Pastilha de Freio Completa"),
             preco: 60.00m,
             estoque: estoqueInicial,
             unidade: "Par");
@@ -101,24 +101,24 @@ public class AbrirOrdemServicoCompletaEndpointsTests
         using var client = _factory.CreateAuthenticatedClient(token);
 
         var clienteId = await CriarClienteAsync(client,
-            nome: "Ciclo Completo Cliente",
-            documento: "16899269023",
-            email: "ciclo.completo@integration.test",
+            nome: TestData.Nome("Ciclo Completo Cliente"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("ciclo.completo"),
             telefone: "31999990060");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "CIC2F34",
+            placa: TestData.PlacaMercosul(),
             modelo: "HB20",
             marca: "Hyundai",
             ano: 2020,
             clienteId: clienteId);
 
         var servicoId = await CriarServicoAsync(client,
-            nome: "Revisão de Freios Ciclo Completo OS",
+            nome: TestData.Nome("Revisão de Freios Ciclo Completo OS"),
             preco: 90.00m);
 
         var pecaId = await CriarPecaAsync(client,
-            nome: "Disco de Freio Dianteiro",
+            nome: TestData.Nome("Disco de Freio Dianteiro"),
             preco: 45.00m,
             estoque: 5,
             unidade: "Unidade");
@@ -167,20 +167,20 @@ public class AbrirOrdemServicoCompletaEndpointsTests
         using var client = _factory.CreateAuthenticatedClient(token);
 
         var clienteId = await CriarClienteAsync(client,
-            nome: "Acompanhamento Cliente",
-            documento: "72809768080",
-            email: "acompanhamento@integration.test",
+            nome: TestData.Nome("Acompanhamento Cliente"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("acompanhamento"),
             telefone: "31999990070");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "ACO3G45",
+            placa: TestData.PlacaMercosul(),
             modelo: "Onix",
             marca: "Chevrolet",
             ano: 2021,
             clienteId: clienteId);
 
-        var servicoId = await CriarServicoAsync(client, nome: "Revisão Acompanhamento", preco: 70.00m);
-        var pecaId = await CriarPecaAsync(client, nome: "Peça Acompanhamento", preco: 30.00m, estoque: 20, unidade: "Unidade");
+        var servicoId = await CriarServicoAsync(client, nome: TestData.Nome("Revisão Acompanhamento"), preco: 70.00m);
+        var pecaId = await CriarPecaAsync(client, nome: TestData.Nome("Peça Acompanhamento"), preco: 30.00m, estoque: 20, unidade: "Unidade");
 
         // OS 1: fica em Recebida
         var os1Id = await AbrirOsVaziaAsync(client, clienteId, veiculoId);

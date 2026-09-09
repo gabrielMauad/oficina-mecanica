@@ -49,13 +49,13 @@ public class OrdemServicoAcessoDoDonoTests
         using var oficinaClient = _factory.CreateAuthenticatedClient(token);
 
         var donoId = await CriarClienteAsync(oficinaClient,
-            nome: "Dono do Status",
-            documento: "74185296355",
-            email: "dono.status@integration.test",
+            nome: TestData.Nome("Dono do Status"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("dono.status"),
             telefone: "31999990100");
 
         var veiculoId = await CriarVeiculoAsync(oficinaClient,
-            placa: "DON6J78",
+            placa: TestData.PlacaMercosul(),
             modelo: "HB20",
             marca: "Hyundai",
             ano: 2020,
@@ -81,24 +81,24 @@ public class OrdemServicoAcessoDoDonoTests
         using var oficinaClient = _factory.CreateAuthenticatedClient(token);
 
         var donoId = await CriarClienteAsync(oficinaClient,
-            nome: "Dono da Rejeicao",
-            documento: "35715948606",
-            email: "dono.rejeicao@integration.test",
+            nome: TestData.Nome("Dono da Rejeicao"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("dono.rejeicao"),
             telefone: "31999990110");
 
         var veiculoId = await CriarVeiculoAsync(oficinaClient,
-            placa: "DON7K89",
+            placa: TestData.PlacaMercosul(),
             modelo: "Onix",
             marca: "Chevrolet",
             ano: 2023,
             clienteId: donoId);
 
         var servicoId = await CriarServicoAsync(oficinaClient,
-            nome: "Alinhamento Acesso Dono",
+            nome: TestData.Nome("Alinhamento Acesso Dono"),
             preco: 180.00m);
 
         var pecaId = await CriarPecaAsync(oficinaClient,
-            nome: "Contrapeso de Roda Acesso Dono",
+            nome: TestData.Nome("Contrapeso de Roda Acesso Dono"),
             preco: 25.00m,
             estoque: 20,
             unidade: "Unidade");

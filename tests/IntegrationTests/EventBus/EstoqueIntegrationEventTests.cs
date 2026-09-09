@@ -44,21 +44,21 @@ public class EstoqueIntegrationEventTests
 
         // 1. Criar peça com estoque inicial conhecido
         var pecaId = await CriarPecaAsync(client,
-            nome: "Vela de Ignição NGK EventBus",
+            nome: TestData.Nome("Vela de Ignição NGK EventBus"),
             preco: 12.50m,
             estoque: estoqueInicial,
             unidade: "Unidade");
 
         // 2. Criar cliente
         var clienteId = await CriarClienteAsync(client,
-            nome: "Ana EventBus",
-            documento: "23157499050",
-            email: "ana.eventbus@integration.test",
+            nome: TestData.Nome("Ana EventBus"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("ana.eventbus"),
             telefone: "31999990020");
 
         // 3. Criar veículo
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "DEF3G45",
+            placa: TestData.PlacaMercosul(),
             modelo: "Gol",
             marca: "Volkswagen",
             ano: 2019,
@@ -66,7 +66,7 @@ public class EstoqueIntegrationEventTests
 
         // 4. Criar serviço no catálogo (obrigatório para RegistrarDiagnostico)
         var servicoId = await CriarServicoAsync(client,
-            nome: "Troca de Velas",
+            nome: TestData.Nome("Troca de Velas"),
             preco: 80.00m);
 
         // ──────────────────────────────────────────────────────────────
@@ -130,27 +130,27 @@ public class EstoqueIntegrationEventTests
 
         // 1. Criar peça com estoque conhecido
         var pecaId = await CriarPecaAsync(client,
-            nome: "Correia Dentada Gates EventBus",
+            nome: TestData.Nome("Correia Dentada Gates EventBus"),
             preco: 95.00m,
             estoque: estoqueInicial,
             unidade: "Unidade");
 
-        // 2. Pré-requisitos — CPF diferente para evitar conflito de unicidade no banco compartilhado
+        // 2. Pré-requisitos — CPF gerado por TestData, inédito a cada execução
         var clienteId = await CriarClienteAsync(client,
-            nome: "Bruno Rejeicao",
-            documento: "52998224059",
-            email: "bruno.rejeicao@integration.test",
+            nome: TestData.Nome("Bruno Rejeicao"),
+            documento: TestData.Cpf(),
+            email: TestData.Email("bruno.rejeicao"),
             telefone: "31999990030");
 
         var veiculoId = await CriarVeiculoAsync(client,
-            placa: "REJ1A12",
+            placa: TestData.PlacaMercosul(),
             modelo: "Sandero",
             marca: "Renault",
             ano: 2018,
             clienteId: clienteId);
 
         var servicoId = await CriarServicoAsync(client,
-            nome: "Troca de Correia Dentada",
+            nome: TestData.Nome("Troca de Correia Dentada"),
             preco: 200.00m);
 
         // ──────────────────────────────────────────────────────────────
