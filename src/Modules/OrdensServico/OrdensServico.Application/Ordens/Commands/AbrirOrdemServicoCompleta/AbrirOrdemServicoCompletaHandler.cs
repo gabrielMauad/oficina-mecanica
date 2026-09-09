@@ -1,6 +1,7 @@
 using MediatR;
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Gateways.Dtos;
+using OrdensServico.Application.Metrics;
 using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
@@ -14,13 +15,15 @@ public sealed class AbrirOrdemServicoCompletaHandler : IRequestHandler<AbrirOrde
     private readonly IServicoGateway _servicoGateway;
     private readonly IPecaDisponibilidadeGateway _pecaDisponibilidadeGateway;
     private readonly IOrdemServicoGateway _ordemServicoGateway;
+    private readonly OrdensServicoMetrics _metrics;
 
     public AbrirOrdemServicoCompletaHandler(
         IClienteGateway clienteGateway,
         IVeiculoGateway veiculoGateway,
         IServicoGateway servicoGateway,
         IPecaDisponibilidadeGateway pecaDisponibilidadeGateway,
-        IOrdemServicoGateway ordemServicoGateway
+        IOrdemServicoGateway ordemServicoGateway,
+        OrdensServicoMetrics metrics
     )
     {
         _clienteGateway = clienteGateway;
@@ -28,6 +31,7 @@ public sealed class AbrirOrdemServicoCompletaHandler : IRequestHandler<AbrirOrde
         _servicoGateway = servicoGateway;
         _pecaDisponibilidadeGateway = pecaDisponibilidadeGateway;
         _ordemServicoGateway = ordemServicoGateway;
+        _metrics = metrics;
     }
 
     public async Task<Result<OrdemServico>> Handle(AbrirOrdemServicoCompletaCommand command, CancellationToken ct)
@@ -55,6 +59,7 @@ public sealed class AbrirOrdemServicoCompletaHandler : IRequestHandler<AbrirOrde
 
         var os = result.Value;
         await _ordemServicoGateway.Adicionar(os, ct);
+        _metrics.RegistrarOrdemAberta("completa");
 
         return os;
     }

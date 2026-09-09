@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Diagnostics.Metrics.Testing;
 using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Metrics;
 using OrdensServico.Application.Ordens.Commands.FinalizarOrdemServico;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
@@ -8,6 +10,7 @@ namespace OrdensServico.Application.Tests.Commands;
 public class FinalizarOrdemServicoHandlerTests
 {
     private readonly Mock<IOrdemServicoGateway> _repoMock = new();
+    private readonly OrdensServicoMetrics _metrics = new();
     private readonly FinalizarOrdemServicoHandler _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();
@@ -17,7 +20,7 @@ public class FinalizarOrdemServicoHandlerTests
 
     public FinalizarOrdemServicoHandlerTests()
     {
-        _handler = new(_repoMock.Object);
+        _handler = new(_repoMock.Object, _metrics);
     }
 
     private static OrdensServico.Domain.OrdemServico.OrdemServico CriarOsEmExecucao()
@@ -34,6 +37,7 @@ public class FinalizarOrdemServicoHandlerTests
     [Fact(DisplayName = "Cenário feliz: OS em execução → status Finalizada")]
     public async Task Handle_OsEmExecucao_TransitaParaFinalizada()
     {
+        using var collector = new MetricCollector<double>(_metrics.Meter, OrdensServicoMetrics.EtapaDuracaoInstrumentName);
         var os = CriarOsEmExecucao();
         _repoMock.Setup(x => x.ObterPorId(It.IsAny<OrdemServicoId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(os);
@@ -44,11 +48,16 @@ public class FinalizarOrdemServicoHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal("Finalizada", result.Value.Status.ToString());
         _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        var medicao = Assert.Single(collector.GetMeasurementSnapshot());
+        Assert.True(medicao.Value >= 0);
+        Assert.Equal("execucao", medicao.Tags["etapa"]);
     }
 
     [Fact(DisplayName = "Erro: OS não encontrada → NaoEncontrada")]
     public async Task Handle_OsNaoEncontrada_RetornaErroNaoEncontrada()
     {
+        using var collector = new MetricCollector<double>(_metrics.Meter, OrdensServicoMetrics.EtapaDuracaoInstrumentName);
         _repoMock.Setup(x => x.ObterPorId(It.IsAny<OrdemServicoId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((OrdensServico.Domain.OrdemServico.OrdemServico?)null);
 
@@ -58,5 +67,6 @@ public class FinalizarOrdemServicoHandlerTests
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);
         _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(collector.GetMeasurementSnapshot());
     }
 }
