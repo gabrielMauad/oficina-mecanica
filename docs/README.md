@@ -8,15 +8,17 @@
 | Documento | Conteúdo |
 |---|---|
 | [`diagramas/componentes.md`](arquitetura/diagramas/componentes.md) | **Desenho dos componentes** (C4 níveis 1–4, incluindo implantação em nuvem — implementado vs. alvo, Mermaid) |
+| [`diagramas/sequencia-abertura-os.md`](arquitetura/diagramas/sequencia-abertura-os.md) | **Diagrama de sequência** da abertura de uma OS — rotas simples e completa, pipeline MediatR, ACL e eventos (Mermaid) |
 | [`diagramas/infraestrutura.md`](arquitetura/diagramas/infraestrutura.md) | **Desenho da infraestrutura** — ambiente local (kind, `docker compose`) e ambiente alvo em nuvem, ainda não provisionado (Mermaid) |
 | [`diagramas/fluxo-deploy.md`](arquitetura/diagramas/fluxo-deploy.md) | **Desenho do fluxo de deploy** (CI/CD, Mermaid) |
+| [`diagramas/sequencia-autenticacao.md`](arquitetura/diagramas/sequencia-autenticacao.md) | **Sequência de autenticação** — cliente por CPF e oficina por email/senha (Mermaid) |
 | [`estrutura-do-projeto.md`](arquitetura/estrutura-do-projeto.md) | Decisões de estrutura, papel de cada projeto, regras de referência |
 | [`clean-architecture.md`](arquitetura/clean-architecture.md) | Análise de aderência à Clean Architecture (anéis, Regra de Dependência) |
 | [`rfcs/`](arquitetura/rfcs/) | **RFCs** — análise das decisões técnicas relevantes, com alternativas e trade-offs |
 | [`adrs/`](arquitetura/adrs/) | **ADRs** — registro das decisões arquiteturais permanentes |
 | [`decisoes.md`](arquitetura/decisoes.md) | Decisões de design relevantes + ciclo de vida da OS |
 | [`metricas.md`](arquitetura/metricas.md) | Contrato de métricas de negócio (meters, instrumentos, dashboards, limitações) |
-| [`database-schema.md`](arquitetura/database-schema.md) | Schema do banco com DDL e rastreabilidade event storming → coluna |
+| [`database-schema.md`](arquitetura/database-schema.md) | Schema do banco com DDL, diagrama ER (Mermaid) e rastreabilidade event storming → coluna |
 | [`event-storming.md`](arquitetura/event-storming.md) | Event storming com todos os fluxos e contextos delimitados |
 
 ## 📋 Planos — [`planos/`](planos/)
