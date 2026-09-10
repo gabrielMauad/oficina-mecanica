@@ -22,6 +22,7 @@ desenvolvido como **Tech Challenge da pós-graduação em Arquitetura de Softwar
 - [Provisionamento da Infraestrutura (Terraform)](#provisionamento-da-infraestrutura-terraform)
 - [CI/CD](#cicd)
 - [Autenticação](#autenticação)
+- [Observabilidade (OpenTelemetry)](#observabilidade-opentelemetry)
 - [APIs — Documentação e Collection](#apis--documentação-e-collection)
 - [Testes](#testes)
 - [Vídeo Demonstrativo](#vídeo-demonstrativo)
@@ -134,9 +135,11 @@ cd oficina-mecanica-v2
 docker compose up --build
 ```
 
-Sobe dois serviços:
+Sobe três serviços:
 - **`postgres`** — PostgreSQL 16, banco `oficina_mecanica`, porta `5432`
 - **`api`** — aplicação .NET 10, porta `8080`
+- **`jaeger`** — coletor OTLP + UI para visualizar traces localmente, sem depender de uma
+  ferramenta paga (ver [Observabilidade](#observabilidade-opentelemetry))
 
 As **migrations são aplicadas automaticamente** na inicialização da API (`MigrateAsync()` em
 `Program.cs`). Nenhum comando manual é necessário.
@@ -148,6 +151,7 @@ As **migrations são aplicadas automaticamente** na inicialização da API (`Mig
 | API REST | `http://localhost:8080/api/v1/` |
 | Scalar (docs interativa) | `http://localhost:8080/scalar` |
 | Health checks | `http://localhost:8080/healthz` (agregado), `/healthz/live`, `/healthz/ready` |
+| Jaeger UI (traces) | `http://localhost:16686` |
 | PostgreSQL | `localhost:5432` — user/pass: `oficina` / `oficina-dev-pass` |
 
 ---
@@ -310,6 +314,68 @@ Os três são **anônimos**. `/healthz/live` continua respondendo `200` mesmo co
 ar — é o que separa "o processo travou" (reiniciar) de "a dependência caiu" (tirar do
 balanceamento), comportamento coberto por teste de integração em
 [`tests/IntegrationTests/HealthChecks`](tests/IntegrationTests/HealthChecks).
+
+---
+
+## Observabilidade (OpenTelemetry)
+
+Traces e métricas via **OpenTelemetry .NET**, exportados por **OTLP** — ver
+[ADR-004](docs/arquitetura/adrs/004-correlacao-via-traceid-w3c.md) para a decisão completa de
+correlação. Tudo isolado em
+[`src/Bootstrap/Api/Extensions/ObservabilityExtensions.cs`](src/Bootstrap/Api/Extensions/ObservabilityExtensions.cs).
+
+**O que é instrumentado:**
+- **ASP.NET Core** — requisições de entrada (latência das APIs).
+- **HttpClient** — chamadas HTTP de saída.
+- **Npgsql** — comandos SQL executados via EF Core/Npgsql, aparecem como spans filhos do span da
+  requisição (tempo gasto em banco).
+- **Runtime** (`OpenTelemetry.Instrumentation.Runtime`) — CPU, memória e GC do processo, para
+  correlacionar com o consumo visto pelo `kubectl top pods` / HPA.
+- Os **meters de negócio** da aplicação (`OficinaMecanica.OrdensServico`,
+  `OficinaMecanica.Integracoes`) já estão registrados no provedor de métricas — as métricas em si
+  são publicadas por outra frente de trabalho.
+
+**Amostragem em 100%** (`AlwaysOnSampler`), decisão da ADR-004: nenhum trace usado como evidência
+para o vídeo de entrega pode ser descartado. Isso é deliberado para o volume deste projeto — **não
+seria adequado em produção real**, onde amostragem parcial é necessária.
+
+**Destino configurável, sem acoplamento a fornecedor.** O SDK usa as variáveis de ambiente padrão
+do OpenTelemetry — não há nenhum SDK/agente da New Relic ou Datadog no código:
+
+| Variável | Efeito |
+|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Endpoint OTLP (gRPC) de destino — coletor local, New Relic, Datadog Agent, etc. |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Headers extras (ex.: chave de API do APM), no formato `chave1=valor1,chave2=valor2` |
+
+No ambiente **`Testing`** (usado pelo `WebApplicationFactory` dos testes de integração) o SDK do
+OpenTelemetry **não é registrado** — sem isso, a suíte tentaria exportar para um coletor
+inexistente, seria mais lenta e mais ruidosa nos logs.
+
+### Verificação local (sem ferramenta paga)
+
+O `docker compose up` sobe também um **Jaeger all-in-one** com OTLP habilitado, já apontado pela
+API (`OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317` no `docker-compose.yml`):
+
+```bash
+docker compose up --build
+
+# faça algumas requisições autenticadas contra a API (ex.: via Bruno/curl) e depois:
+# abra a UI do Jaeger
+```
+
+- **Jaeger UI:** `http://localhost:16686` — selecione o serviço `oficina-mecanica-api`, clique em
+  **Find Traces** e abra um trace: o span da requisição HTTP aparece com o(s) span(s) do banco
+  (Npgsql) aninhados dentro dele, com a duração de cada um.
+- Os logs (`docker compose logs api`) continuam em JSON com `trace_id`/`span_id`
+  (`TraceJsonConsoleFormatter`, ADR-004) — o mesmo `trace_id` visto no log aparece na busca por
+  Trace ID do Jaeger, fechando a correlação log → trace.
+
+Em Kubernetes, a mesma variável é propagada via
+[`ConfigMap`](k8s/base/01-configmap.yaml) (`OTEL_EXPORTER_OTLP_ENDPOINT`) — hoje apontando para um
+coletor hipotético no cluster (`otel-collector`); quando a ferramenta de APM (New Relic/Datadog)
+for escolhida, basta trocar esse valor (e, se precisar de chave de API, adicioná-la como
+`OTEL_EXPORTER_OTLP_HEADERS` no [`Secret`](k8s/base/02-secret.yaml) — nunca em texto plano no
+ConfigMap).
 
 ---
 

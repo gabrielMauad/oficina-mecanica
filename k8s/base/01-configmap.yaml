@@ -14,3 +14,8 @@ data:
   Jwt__ValidIssuers__1: "oficina-mecanica-auth"
   Auth__AdminEmail: "admin@oficina.com"
   OpenApi__Enabled: "true"
+  # Destino do OTLP (traces + métricas). Sem nada específico de fornecedor: aponta para o
+  # coletor/APM escolhido (ex.: OpenTelemetry Collector, Datadog Agent, New Relic OTLP
+  # endpoint). Chave de API de fornecedor, se necessária, vai em Secret (OTEL_EXPORTER_OTLP_HEADERS
+  # com "api-key=..."), nunca aqui.
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.oficina-mecanica.svc.cluster.local:4317"
