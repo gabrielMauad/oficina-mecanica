@@ -8,6 +8,7 @@
 | Documento | Conteúdo |
 |---|---|
 | [`diagramas/componentes.md`](arquitetura/diagramas/componentes.md) | **Desenho dos componentes** (C4 níveis 1–3, Mermaid) |
+| [`diagramas/sequencia-abertura-os.md`](arquitetura/diagramas/sequencia-abertura-os.md) | **Diagrama de sequência** da abertura de uma OS — rotas simples e completa, pipeline MediatR, ACL e eventos (Mermaid) |
 | [`diagramas/infraestrutura.md`](arquitetura/diagramas/infraestrutura.md) | **Desenho da infraestrutura** provisionada (cluster kind, Mermaid) |
 | [`diagramas/fluxo-deploy.md`](arquitetura/diagramas/fluxo-deploy.md) | **Desenho do fluxo de deploy** (CI/CD, Mermaid) |
 | [`estrutura-do-projeto.md`](arquitetura/estrutura-do-projeto.md) | Decisões de estrutura, papel de cada projeto, regras de referência |
