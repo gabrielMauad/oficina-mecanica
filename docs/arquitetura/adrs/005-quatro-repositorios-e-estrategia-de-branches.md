@@ -71,3 +71,19 @@ repositórios com nomenclatura assimétrica na lista de links do PDF de entrega.
 - *Dependência entre repositórios* (banco → cluster → lambda/aplicação) deixa de ser garantida pelo
   compilador e passa a depender de ordem de execução documentada, com os outputs compartilhados via
   estado remoto do Terraform.
+
+## Nota de execução (2026-09-10)
+
+Os quatro repositórios foram criados: `oficina-mecanica-app` (rename concluído, histórico e
+colaboradores preservados), `oficina-mecanica-lambda-auth` (já existia), e
+`oficina-mecanica-infra-k8s` / `oficina-mecanica-infra-db` (criados vazios, com README, `.gitignore`
+de Terraform e pipeline de `fmt`/`validate` — sem recursos ainda, pendentes da RFC-002 de escolha de
+nuvem). `main` protegida e `soat-architecture` convidado como colaborador nos quatro.
+
+Uma decisão de execução não prevista no texto original: a pasta `infra/` (Terraform do cluster
+**kind** local, Fase 2) **não foi movida** para `oficina-mecanica-infra-k8s` neste momento — ela
+continua na aplicação porque o job de deploy do `ci-cd.yml` depende dela (`working-directory: infra`)
+e `infra/main.tf` aplica os manifestos de `../k8s`, também na aplicação. Mover agora quebraria a
+pipeline de deploy sem que o Terraform de nuvem existisse para substituí-la. A migração está registrada
+como pendência, a ser feita no mesmo Pull Request que introduzir o Terraform de nuvem em
+`oficina-mecanica-infra-k8s`.
