@@ -112,7 +112,7 @@ Pontos confirmados que estavam implícitos ou ambíguos no PDF:
 | Function serverless | Não existe | ❌ Faltando |
 | Banco | PostgreSQL 16 **em pod** (`k8s/database/`), PVC local | ❌ Precisa ser **gerenciado** |
 | Kubernetes | **kind** local/efêmero, namespace `oficina-mecanica`, HPA 1–5 @50% CPU, probes ok | ⚠️ Manifestos reaproveitáveis; cluster precisa virar gerenciado |
-| Terraform | `infra/` provisiona kind + metrics-server + manifests. **`terraform.tfstate` está commitado no repo** | ⚠️ Reescrever para nuvem + **state remoto** |
+| Terraform | `infra/` provisiona kind + metrics-server + manifests. `terraform.tfstate` existe **apenas localmente** (ignorado pelo `.gitignore`, nunca commitado) | ⚠️ Reescrever para nuvem + **state remoto** |
 | CI/CD | `ci.yml` (PR → build/test) e `ci-cd.yml` (push main → imagem Docker Hub → kind efêmero no runner → smoke test → destroy) | ⚠️ Não há deploy real na nuvem, nem branch de homologação |
 | Proteção de branch | `main` protegida, PR obrigatório, status check "Build & Test", sem force-push | ✅ Já atende (replicar nos 4 repos) |
 | `soat-architecture` | Já é colaborador do repo atual | ✅ Replicar nos outros 3 |
@@ -208,8 +208,9 @@ Pontos confirmados que estavam implícitos ou ambíguos no PDF:
 
 **D. Terraform**
 - Reescrever `infra/` de kind → AWS, dividido nos 2 repos de infra.
-- **Backend S3 remoto** e **parar de commitar `terraform.tfstate`** (hoje `infra/terraform.tfstate`
-  está versionado — remover e adicionar ao `.gitignore`).
+- **Backend S3 remoto** para o state (hoje `infra/terraform.tfstate` já é ignorado pelo
+  `.gitignore` e nunca foi commitado — o que falta é migrar de state local para remoto, não parar
+  de commitar algo que nunca foi versionado).
 - Workspaces/diretórios para homologação e produção.
 
 **E. CI/CD (GitHub Actions, um conjunto por repo)**
@@ -256,7 +257,9 @@ Pontos confirmados que estavam implícitos ou ambíguos no PDF:
 2. **Custo** — EKS (~US$0,10/h de control plane) + NAT Gateway + RDS + ALB rodando 24/7 pesa.
    Estratégia: subir para gravar o vídeo e destruir depois, mantendo o histórico do Actions como
    evidência do "deploy ativo".
-3. **`terraform.tfstate` commitado** no repo atual — remover do versionamento junto com o split.
+3. **State do Terraform ainda local** — `infra/terraform.tfstate` nunca foi commitado (já é
+   ignorado pelo `.gitignore`), mas também não tem backend remoto; migrar para S3 + DynamoDB junto
+   com o split para os repos de infra.
 4. **Segredo JWT compartilhado** entre Lambda e app é o ponto frágil da integração; resolver via
    Secrets Manager desde o começo (ou usar chave assimétrica RS256 + JWKS, mais limpo para o
    JWT authorizer do API Gateway).

@@ -129,8 +129,8 @@ Forma mais rápida de subir tudo para desenvolvimento e testes manuais.
 container.)
 
 ```bash
-git clone <repo>
-cd oficina-mecanica-v2
+git clone https://github.com/gabrielMauad/oficina-mecanica-app.git
+cd oficina-mecanica-app
 
 docker compose up --build
 ```
