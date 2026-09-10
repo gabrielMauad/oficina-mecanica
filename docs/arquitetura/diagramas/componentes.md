@@ -1,7 +1,9 @@
 # Desenho — Componentes da Aplicação
 
-> Modelo C4 (níveis 1 → 3) do **Sistema de Oficina Mecânica**, um _Modular Monolith_ em
-> .NET 10 com quatro Bounded Contexts e aderência à Clean Architecture.
+> Modelo C4 (níveis 1 → 4) do **Sistema de Oficina Mecânica**, um _Modular Monolith_ em
+> .NET 10 com quatro Bounded Contexts e aderência à Clean Architecture. O nível 4
+> (implantação em nuvem) mistura o que já está implementado com o que é alvo da Fase 3 —
+> ver a legenda na respectiva seção.
 > Diagramas em [Mermaid](https://mermaid.js.org/) — renderizam nativamente no GitHub.
 >
 > Documentação de apoio: [`estrutura-do-projeto.md`](../estrutura-do-projeto.md),
@@ -101,3 +103,71 @@ equivalente à "linguagem publicada" do BC.
 
 > Detalhamento em [`estrutura-do-projeto.md`](../estrutura-do-projeto.md) e
 > [`clean-architecture.md`](../clean-architecture.md).
+
+---
+
+## Nível 4 — Implantação em Nuvem (alvo da Fase 3)
+
+A Fase 3 exige que este diagrama de componentes ganhe uma **visão de nuvem**: API Gateway, banco
+de dados, Kubernetes, Function Serverless e monitoramento. O diagrama abaixo é uma visão de
+**implantação** (deployment), não mais de código — mostra onde cada componente roda e como eles se
+falam quando o ambiente de nuvem existir.
+
+```mermaid
+flowchart TB
+    atendente["Atendente / Mecânico"]
+    cliente["Cliente"]
+
+    subgraph nuvem["Nuvem — provedor a definir<br/>(AWS é hipótese de trabalho; decisão formal no RFC-002, pendente)"]
+        direction TB
+        gateway["API Gateway<br/>roteamento e controle de acesso"]
+        authFn["Function Serverless de autenticação<br/>valida CPF, consulta cadastro.cliente, emite JWT<br/>repositório próprio: oficina-mecanica-lambda-auth"]
+        subgraph k8s["Cluster Kubernetes gerenciado"]
+            direction TB
+            app["Aplicação .NET 10<br/>monólito modular, 4 Bounded Contexts"]
+        end
+        db[("Banco de dados gerenciado<br/>PostgreSQL, 1 schema por módulo")]
+        apm["Ferramenta de APM<br/>Datadog ou New Relic — escolha pendente"]
+    end
+
+    atendente -->|"HTTPS/JSON, token papel Oficina"| gateway
+    cliente -->|"HTTPS/JSON, token papel Cliente"| gateway
+    cliente -->|"autentica por CPF"| gateway
+    gateway -->|"rota pública /auth"| authFn
+    gateway -->|"rotas protegidas, valida JWT"| app
+    authFn -.->|"token assinado (HS256)"| cliente
+    authFn -->|"consulta cadastro.cliente (somente leitura)"| db
+    app -->|"EF Core / Npgsql"| db
+    app -.->|"OTLP: traces + métricas"| apm
+    authFn -.->|"logs (via CloudWatch ou equivalente)"| apm
+
+    classDef person fill:#08427b,stroke:#052e56,color:#fff
+    classDef existente fill:#1168bd,stroke:#0b4884,color:#fff
+    classDef alvo fill:#ffffff,stroke:#999999,color:#555555,stroke-dasharray: 5 5
+
+    class atendente,cliente person
+    class app,authFn existente
+    class gateway,apm,db,k8s,nuvem alvo
+```
+
+**Legenda:** caixa azul sólida = **implementado hoje**; caixa branca de borda tracejada = **alvo
+da Fase 3, ainda não provisionado**.
+
+**O que já existe:** a **aplicação** (`app`) — o mesmo monólito modular dos níveis 1 a 3 — e a
+**Function Serverless de autenticação** (`authFn`) têm código e testes prontos em seus
+repositórios (ver [ADR-005](../adrs/005-quatro-repositorios-e-estrategia-de-branches.md)). A
+aplicação já emite traces e métricas via OpenTelemetry/OTLP e já expõe health checks — hoje esse
+tráfego roda **localmente** (kind ou `docker compose`, ver
+[`infraestrutura.md`](infraestrutura.md)), não na nuvem.
+
+**O que é alvo, ainda não provisionado:** **API Gateway**, **cluster Kubernetes gerenciado**
+(hoje é kind local), **banco de dados gerenciado** (hoje é PostgreSQL em pod) e a **ferramenta de
+APM** configurada para receber o OTLP que a aplicação já exporta. Nenhum desses quatro itens tem
+Terraform de nuvem escrito ainda — ver
+[`docs/planos/fase-3/00-analise-da-spec.md`](../../planos/fase-3/00-analise-da-spec.md), seção
+3.1, para o inventário completo de recursos e o que falta.
+
+**Sobre o provedor:** o diagrama usa vocabulário genérico (API Gateway, banco gerenciado, cluster
+Kubernetes gerenciado) porque a escolha de nuvem **ainda não é uma decisão formal** — o RFC-002
+está pendente. AWS aparece nos planos como hipótese de trabalho (API Gateway, EKS, RDS), mas este
+diagrama não deve ser lido como confirmação de que a nuvem já foi escolhida.

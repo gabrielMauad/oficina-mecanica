@@ -7,9 +7,9 @@
 
 | Documento | Conteúdo |
 |---|---|
-| [`diagramas/componentes.md`](arquitetura/diagramas/componentes.md) | **Desenho dos componentes** (C4 níveis 1–3, Mermaid) |
+| [`diagramas/componentes.md`](arquitetura/diagramas/componentes.md) | **Desenho dos componentes** (C4 níveis 1–4, incluindo implantação em nuvem — implementado vs. alvo, Mermaid) |
 | [`diagramas/sequencia-abertura-os.md`](arquitetura/diagramas/sequencia-abertura-os.md) | **Diagrama de sequência** da abertura de uma OS — rotas simples e completa, pipeline MediatR, ACL e eventos (Mermaid) |
-| [`diagramas/infraestrutura.md`](arquitetura/diagramas/infraestrutura.md) | **Desenho da infraestrutura** provisionada (cluster kind, Mermaid) |
+| [`diagramas/infraestrutura.md`](arquitetura/diagramas/infraestrutura.md) | **Desenho da infraestrutura** — ambiente local (kind, `docker compose`) e ambiente alvo em nuvem, ainda não provisionado (Mermaid) |
 | [`diagramas/fluxo-deploy.md`](arquitetura/diagramas/fluxo-deploy.md) | **Desenho do fluxo de deploy** (CI/CD, Mermaid) |
 | [`diagramas/sequencia-autenticacao.md`](arquitetura/diagramas/sequencia-autenticacao.md) | **Sequência de autenticação** — cliente por CPF e oficina por email/senha (Mermaid) |
 | [`estrutura-do-projeto.md`](arquitetura/estrutura-do-projeto.md) | Decisões de estrutura, papel de cada projeto, regras de referência |
