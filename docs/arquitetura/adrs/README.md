@@ -26,3 +26,4 @@ Ver [`../rfcs/`](../rfcs/).
 | [ADR-003](003-dois-emissores-e-autorizacao-por-papel.md) | Dois emissores de token e autorização por papel | Aceita |
 | [ADR-004](004-correlacao-via-traceid-w3c.md) | Correlação de requisições via `traceId` do W3C/OpenTelemetry | Aceita |
 | [ADR-005](005-quatro-repositorios-e-estrategia-de-branches.md) | Quatro repositórios e estratégia de branches | Aceita |
+| [ADR-006](006-credenciais-de-nuvem-no-cicd.md) | Credenciais de nuvem no CI/CD | Aceita |

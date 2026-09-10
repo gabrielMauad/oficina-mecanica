@@ -45,6 +45,6 @@ Planos de implementação e specs de refatoração (histórico de execução do 
 
 | Pasta / Documento | Conteúdo |
 |---|---|
-| [`spec/`](spec/) | Enunciados oficiais FIAP/SOAT (PDFs das Fases 1, 2 e 3) |
+| [`spec/`](spec/) | Enunciados oficiais FIAP/SOAT (PDFs das Fases 1, 2 e 3) e a lista de serviços da conta AWS Academy (`aws-academy.pdf`), referência do [RFC-002](arquitetura/rfcs/002-escolha-do-provedor-de-nuvem.md) |
 | [`../infra/README.md`](../infra/README.md) | Documentação dos recursos Terraform e passo a passo de apply/destroy |
 | [`images/`](images/) | Imagens (relatórios de cobertura) |
