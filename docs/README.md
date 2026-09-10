@@ -16,7 +16,7 @@
 | [`adrs/`](arquitetura/adrs/) | **ADRs** — registro das decisões arquiteturais permanentes |
 | [`decisoes.md`](arquitetura/decisoes.md) | Decisões de design relevantes + ciclo de vida da OS |
 | [`metricas.md`](arquitetura/metricas.md) | Contrato de métricas de negócio (meters, instrumentos, dashboards, limitações) |
-| [`database-schema.md`](arquitetura/database-schema.md) | Schema do banco com DDL e rastreabilidade event storming → coluna |
+| [`database-schema.md`](arquitetura/database-schema.md) | Schema do banco com DDL, diagrama ER (Mermaid) e rastreabilidade event storming → coluna |
 | [`event-storming.md`](arquitetura/event-storming.md) | Event storming com todos os fluxos e contextos delimitados |
 
 ## 📋 Planos — [`planos/`](planos/)
