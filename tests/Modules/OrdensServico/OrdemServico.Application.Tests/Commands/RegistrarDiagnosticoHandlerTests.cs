@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Diagnostics.Metrics.Testing;
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Gateways.Dtos;
+using OrdensServico.Application.Metrics;
 using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
@@ -11,6 +13,7 @@ public class RegistrarDiagnosticoHandlerTests
     private readonly Mock<IServicoGateway> _servicoMock = new();
     private readonly Mock<IPecaDisponibilidadeGateway> _pecaMock = new();
     private readonly Mock<IOrdemServicoGateway> _repoMock = new();
+    private readonly OrdensServicoMetrics _metrics = new();
     private readonly RegistrarDiagnosticoHandler _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();
@@ -20,7 +23,7 @@ public class RegistrarDiagnosticoHandlerTests
 
     public RegistrarDiagnosticoHandlerTests()
     {
-        _handler = new(_servicoMock.Object, _pecaMock.Object, _repoMock.Object);
+        _handler = new(_servicoMock.Object, _pecaMock.Object, _repoMock.Object, _metrics);
     }
 
     private static OrdensServico.Domain.OrdemServico.OrdemServico CriarOsEmDiagnostico()
@@ -33,6 +36,7 @@ public class RegistrarDiagnosticoHandlerTests
     [Fact(DisplayName = "Cenário feliz: serviço e peça disponíveis → registra diagnóstico e retorna DTO")]
     public async Task Handle_ServicoEPecaDisponiveis_RegistraDiagnostico()
     {
+        using var collector = new MetricCollector<double>(_metrics.Meter, OrdensServicoMetrics.EtapaDuracaoInstrumentName);
         var os = CriarOsEmDiagnostico();
         _repoMock.Setup(x => x.ObterPorId(It.IsAny<OrdemServicoId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(os);
@@ -55,11 +59,16 @@ public class RegistrarDiagnosticoHandlerTests
         Assert.Single(result.Value.Orcamentos);
         Assert.Equal("Pendente", result.Value.Orcamentos[0].Status.ToString());
         _repoMock.Verify(x => x.Atualizar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        var medicao = Assert.Single(collector.GetMeasurementSnapshot());
+        Assert.True(medicao.Value >= 0);
+        Assert.Equal("diagnostico", medicao.Tags["etapa"]);
     }
 
     [Fact(DisplayName = "Erro: OS não encontrada → NaoEncontrada")]
     public async Task Handle_OsNaoEncontrada_RetornaErroNaoEncontrada()
     {
+        using var collector = new MetricCollector<double>(_metrics.Meter, OrdensServicoMetrics.EtapaDuracaoInstrumentName);
         _repoMock.Setup(x => x.ObterPorId(It.IsAny<OrdemServicoId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((OrdensServico.Domain.OrdemServico.OrdemServico?)null);
 
@@ -70,6 +79,7 @@ public class RegistrarDiagnosticoHandlerTests
 
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.NaoEncontrada", result.Error.Code);
+        Assert.Empty(collector.GetMeasurementSnapshot());
     }
 
     [Fact(DisplayName = "Erro: IServicoGateway retorna null → ServicoNaoEncontrado")]

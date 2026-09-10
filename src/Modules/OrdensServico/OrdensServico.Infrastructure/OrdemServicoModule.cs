@@ -6,6 +6,7 @@ using OrdensServico.Adapters.Controllers;
 using OrdensServico.Adapters.DataSources;
 using OrdensServico.Adapters.Gateways;
 using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Metrics;
 using OrdensServico.Application.Ordens.Commands.GerarOrdemServico;
 using OrdensServico.Application.Ordens.Queries.ListarOrdensParaAcompanhamento;
 using OrdensServico.Application.Ordens.Queries.ListarOrdensPorCliente;
@@ -27,6 +28,8 @@ public static class OrdemServicoModule
             options.UseNpgsql(configuration.GetConnectionString("Default")));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<OrdensServicoDbContext>());
+
+        services.AddSingleton<OrdensServicoMetrics>();
 
         #region DataSources (Repositórios EF)
 

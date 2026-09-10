@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Diagnostics.Metrics.Testing;
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Gateways.Dtos;
+using OrdensServico.Application.Metrics;
 using OrdensServico.Application.Ordens.Commands.AbrirOrdemServicoCompleta;
 using OrdensServico.Application.Ordens.Commands.RegistrarDiagnostico;
 using SharedKernel.Domain;
@@ -13,6 +15,7 @@ public class AbrirOrdemServicoCompletaHandlerTests
     private readonly Mock<IServicoGateway> _servicoMock = new();
     private readonly Mock<IPecaDisponibilidadeGateway> _pecaMock = new();
     private readonly Mock<IOrdemServicoGateway> _repoMock = new();
+    private readonly OrdensServicoMetrics _metrics = new();
     private readonly AbrirOrdemServicoCompletaHandler _handler;
 
     private static readonly Guid ClienteId = Guid.NewGuid();
@@ -22,7 +25,7 @@ public class AbrirOrdemServicoCompletaHandlerTests
 
     public AbrirOrdemServicoCompletaHandlerTests()
     {
-        _handler = new(_clienteMock.Object, _veiculoMock.Object, _servicoMock.Object, _pecaMock.Object, _repoMock.Object);
+        _handler = new(_clienteMock.Object, _veiculoMock.Object, _servicoMock.Object, _pecaMock.Object, _repoMock.Object, _metrics);
     }
 
     private AbrirOrdemServicoCompletaCommand CriarCommandValido() => new(
@@ -42,6 +45,7 @@ public class AbrirOrdemServicoCompletaHandlerTests
     [Fact(DisplayName = "Cenário feliz: cliente/veículo válidos, serviço e peça disponíveis → cria OS AguardandoAprovacao")]
     public async Task Handle_DadosValidos_CriaOrdemServicoAguardandoAprovacao()
     {
+        using var collector = new MetricCollector<long>(_metrics.Meter, OrdensServicoMetrics.OrdensAbertasInstrumentName);
         ConfigurarClienteEVeiculoValidos();
         _servicoMock.Setup(x => x.ObterPreco(ServicoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(100m);
@@ -54,11 +58,16 @@ public class AbrirOrdemServicoCompletaHandlerTests
         Assert.Equal("AguardandoAprovacao", result.Value.Status.ToString());
         Assert.Null(result.Value.DescricaoDiagnostico);
         _repoMock.Verify(x => x.Adicionar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        var medicao = Assert.Single(collector.GetMeasurementSnapshot());
+        Assert.Equal(1, medicao.Value);
+        Assert.Equal("completa", medicao.Tags["tipo"]);
     }
 
     [Fact(DisplayName = "Erro: cliente inexistente ou inativo → ClienteInexistenteOuInativo")]
     public async Task Handle_ClienteInexistente_RetornaErroClienteInexistenteOuInativo()
     {
+        using var collector = new MetricCollector<long>(_metrics.Meter, OrdensServicoMetrics.OrdensAbertasInstrumentName);
         _clienteMock.Setup(x => x.ExisteEAtivo(ClienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
@@ -67,6 +76,7 @@ public class AbrirOrdemServicoCompletaHandlerTests
         Assert.True(result.IsFailure);
         Assert.Equal("OrdemServico.ClienteInexistenteOuInativo", result.Error.Code);
         _repoMock.Verify(x => x.Adicionar(It.IsAny<OrdensServico.Domain.OrdemServico.OrdemServico>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Empty(collector.GetMeasurementSnapshot());
     }
 
     [Fact(DisplayName = "Erro: veículo não pertence ao cliente → VeiculoInexistenteOuNaoPertenceAoCliente")]

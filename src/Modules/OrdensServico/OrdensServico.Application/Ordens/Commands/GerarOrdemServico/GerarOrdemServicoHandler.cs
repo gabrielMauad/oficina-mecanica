@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using OrdensServico.Application.Gateways;
+using OrdensServico.Application.Metrics;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
@@ -10,16 +11,19 @@ public sealed class GerarOrdemServicoHandler : IRequestHandler<GerarOrdemServico
     private readonly IClienteGateway _clienteGateway;
     private readonly IVeiculoGateway _veiculoGateway;
     private readonly IOrdemServicoGateway _ordemServicoGateway;
+    private readonly OrdensServicoMetrics _metrics;
 
     public GerarOrdemServicoHandler(
         IClienteGateway clienteGateway,
         IVeiculoGateway veiculoGateway,
-        IOrdemServicoGateway ordemServicoGateway
+        IOrdemServicoGateway ordemServicoGateway,
+        OrdensServicoMetrics metrics
     )
     {
         _clienteGateway = clienteGateway;
         _veiculoGateway = veiculoGateway;
         _ordemServicoGateway = ordemServicoGateway;
+        _metrics = metrics;
     }
 
     public async Task<Result<OrdemServico>> Handle(GerarOrdemServicoCommand command, CancellationToken ct)
@@ -35,6 +39,7 @@ public sealed class GerarOrdemServicoHandler : IRequestHandler<GerarOrdemServico
 
         var os = result.Value;
         await _ordemServicoGateway.Adicionar(os, ct);
+        _metrics.RegistrarOrdemAberta("simples");
 
         return os;
     }

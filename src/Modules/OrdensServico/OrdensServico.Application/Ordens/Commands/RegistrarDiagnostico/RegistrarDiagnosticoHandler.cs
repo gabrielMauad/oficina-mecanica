@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using OrdensServico.Application.Gateways;
 using OrdensServico.Application.Gateways.Dtos;
+using OrdensServico.Application.Metrics;
 using OrdensServico.Domain.OrdemServico;
 using SharedKernel.Domain;
 
@@ -11,16 +12,19 @@ public sealed class RegistrarDiagnosticoHandler : IRequestHandler<RegistrarDiagn
     private readonly IServicoGateway _servicoGateway;
     private readonly IPecaDisponibilidadeGateway _pecaDisponibilidadeGateway;
     private readonly IOrdemServicoGateway _gateway;
+    private readonly OrdensServicoMetrics _metrics;
 
     public RegistrarDiagnosticoHandler(
         IServicoGateway servicoGateway,
         IPecaDisponibilidadeGateway pecaDisponibilidadeGateway,
-        IOrdemServicoGateway gateway
+        IOrdemServicoGateway gateway,
+        OrdensServicoMetrics metrics
     )
     {
         _servicoGateway = servicoGateway;
         _pecaDisponibilidadeGateway = pecaDisponibilidadeGateway;
         _gateway = gateway;
+        _metrics = metrics;
     }
 
     public async Task<Result<OrdemServico>> Handle(RegistrarDiagnosticoCommand command, CancellationToken ct)
@@ -47,11 +51,13 @@ public sealed class RegistrarDiagnosticoHandler : IRequestHandler<RegistrarDiagn
         List<ItemServicoInput> itemServicoList = servicosResult.Value;
         List<ItemPecaInput> itemPecaList = pecasResult.Value;
 
+        DateTime inicioEtapa = ordemServico.AtualizadoEm;
         Result<OrdemServico> resultado = ordemServico.RegistrarDiagnostico(command.DescricaoDiagnostico, itemServicoList, itemPecaList);
         if (resultado.IsFailure)
             return resultado.Error;
 
         OrdemServico os = resultado.Value;
+        _metrics.RegistrarDuracaoEtapa("diagnostico", (DateTime.UtcNow - inicioEtapa).TotalSeconds);
 
         await _gateway.Atualizar(os, ct);
 
