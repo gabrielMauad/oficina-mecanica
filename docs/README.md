@@ -10,6 +10,7 @@
 | [`diagramas/componentes.md`](arquitetura/diagramas/componentes.md) | **Desenho dos componentes** (C4 níveis 1–3, Mermaid) |
 | [`diagramas/infraestrutura.md`](arquitetura/diagramas/infraestrutura.md) | **Desenho da infraestrutura** provisionada (cluster kind, Mermaid) |
 | [`diagramas/fluxo-deploy.md`](arquitetura/diagramas/fluxo-deploy.md) | **Desenho do fluxo de deploy** (CI/CD, Mermaid) |
+| [`diagramas/sequencia-autenticacao.md`](arquitetura/diagramas/sequencia-autenticacao.md) | **Sequência de autenticação** — cliente por CPF e oficina por email/senha (Mermaid) |
 | [`estrutura-do-projeto.md`](arquitetura/estrutura-do-projeto.md) | Decisões de estrutura, papel de cada projeto, regras de referência |
 | [`clean-architecture.md`](arquitetura/clean-architecture.md) | Análise de aderência à Clean Architecture (anéis, Regra de Dependência) |
 | [`rfcs/`](arquitetura/rfcs/) | **RFCs** — análise das decisões técnicas relevantes, com alternativas e trade-offs |
