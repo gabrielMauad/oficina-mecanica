@@ -11,6 +11,7 @@ public sealed class OrdemServicoRecord
     public DateTime? EntregueEm { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
+    public DateTime StatusAlteradoEm { get; set; }
     public List<ItemServicoRecord> ItensServico { get; set; } = [];
     public List<ItemPecaRecord> ItensPeca { get; set; } = [];
     public List<OrcamentoRecord> Orcamentos { get; set; } = [];

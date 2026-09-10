@@ -51,7 +51,7 @@ public sealed class RegistrarDiagnosticoHandler : IRequestHandler<RegistrarDiagn
         List<ItemServicoInput> itemServicoList = servicosResult.Value;
         List<ItemPecaInput> itemPecaList = pecasResult.Value;
 
-        DateTime inicioEtapa = ordemServico.AtualizadoEm;
+        DateTime inicioEtapa = ordemServico.StatusAlteradoEm;
         Result<OrdemServico> resultado = ordemServico.RegistrarDiagnostico(command.DescricaoDiagnostico, itemServicoList, itemPecaList);
         if (resultado.IsFailure)
             return resultado.Error;

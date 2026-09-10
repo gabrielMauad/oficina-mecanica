@@ -25,7 +25,7 @@ public sealed class ConcluirOrdemServicoHandler : IRequestHandler<ConcluirOrdemS
         if (ordemServico is null)
             return OrdemServicoErrors.NaoEncontrada;
 
-        DateTime inicioEtapa = ordemServico.AtualizadoEm;
+        DateTime inicioEtapa = ordemServico.StatusAlteradoEm;
         Result<OrdemServico> result = ordemServico.Concluir(DateTime.UtcNow);
         if (result.IsFailure)
             return result.Error;
