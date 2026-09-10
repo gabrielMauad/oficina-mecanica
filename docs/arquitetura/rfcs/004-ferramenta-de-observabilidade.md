@@ -239,6 +239,18 @@ Isso é uma continuação direta do que o README já documenta sobre `k8s/base/0
 arquivo é um placeholder para desenvolvimento local; em produção a chave nunca é literal no YAML
 commitado.
 
+> **Caminho mais simples, provavelmente preferível.** O passo 2 acima assume o External Secrets
+> Operator ou o Secrets Manager CSI driver — e ambos normalmente exigem **IRSA**, que exige criar um
+> IAM role, coisa que esta conta **não permite** ([RFC-002](002-escolha-do-provedor-de-nuvem.md) §6.1
+> e [ADR-006](../adrs/006-credenciais-de-nuvem-no-cicd.md)). Verifique isso antes de adotá-lo.
+>
+> Para **esta chave especificamente**, o rodeio nem se justifica: a license key da New Relic é um
+> dado de terceiro, não um recurso da AWS. Ela pode ir de um **secret do GitHub direto para um
+> `Secret` do Kubernetes**, criado pela pipeline no momento do deploy — sem passar pelo Secrets
+> Manager, sem operador adicional e sem depender de IRSA. O Secrets Manager continua sendo a fonte
+> certa para o que **é** da AWS (connection string do RDS, segredo do JWT), onde a Lambda também
+> precisa ler o mesmo valor.
+
 ### 6.3 Dashboards e alertas — checklist mapeado à métrica/sinal
 
 | Dashboard/alerta exigido | Sinal que alimenta | Fonte |
