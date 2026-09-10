@@ -44,6 +44,10 @@ internal sealed class OrdemServicoConfiguration : IEntityTypeConfiguration<Ordem
             .HasColumnName("updated_at")
             .IsRequired();
 
+        builder.Property(s => s.StatusAlteradoEm)
+            .HasColumnName("status_alterado_em")
+            .IsRequired();
+
         builder.HasMany(os => os.ItensServico)
             .WithOne()
             .HasForeignKey("ordem_servico_id")

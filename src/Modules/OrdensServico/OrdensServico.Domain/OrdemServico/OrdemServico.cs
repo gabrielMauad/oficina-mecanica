@@ -17,6 +17,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
     public DateTime? EntregueEm { get; private set; }
     public DateTime CriadoEm { get; private set; }
     public DateTime AtualizadoEm { get; private set; }
+    public DateTime StatusAlteradoEm { get; private set; }
 
     public IReadOnlyList<ItemPeca> ItensPeca => _itensPeca.AsReadOnly();
     public IReadOnlyList<ItemServico> ItensServico => _itensServico.AsReadOnly();
@@ -33,6 +34,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         Status = StatusOrdemServico.Recebida;
         CriadoEm = DateTime.UtcNow;
         AtualizadoEm = DateTime.UtcNow;
+        StatusAlteradoEm = DateTime.UtcNow;
     }
 
     private OrdemServico(
@@ -45,6 +47,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         DateTime? entregueEm,
         DateTime criadoEm,
         DateTime atualizadoEm,
+        DateTime statusAlteradoEm,
         IEnumerable<ItemServico> itensServico,
         IEnumerable<ItemPeca> itensPeca,
         IEnumerable<Orcamento> orcamentos
@@ -58,6 +61,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         EntregueEm = entregueEm;
         CriadoEm = criadoEm;
         AtualizadoEm = atualizadoEm;
+        StatusAlteradoEm = statusAlteradoEm;
         _itensServico.AddRange(itensServico);
         _itensPeca.AddRange(itensPeca);
         _orcamentos.AddRange(orcamentos);
@@ -73,11 +77,12 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         DateTime? entregueEm,
         DateTime criadoEm,
         DateTime atualizadoEm,
+        DateTime statusAlteradoEm,
         IEnumerable<ItemServico> itensServico,
         IEnumerable<ItemPeca> itensPeca,
         IEnumerable<Orcamento> orcamentos) =>
         new(id, clienteId, veiculoId, status, descricaoDiagnostico, notificadoEm, entregueEm,
-            criadoEm, atualizadoEm, itensServico, itensPeca, orcamentos);
+            criadoEm, atualizadoEm, statusAlteradoEm, itensServico, itensPeca, orcamentos);
 
     public static Result<OrdemServico> Criar(Guid clienteId, Guid veiculoId)
     {
@@ -106,6 +111,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         if (resultado.IsFailure) return resultado.Error;
 
         os.Status = StatusOrdemServico.AguardandoAprovacao;
+        os.StatusAlteradoEm = DateTime.UtcNow;
         return os;
     }
 
@@ -116,6 +122,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         Status = StatusOrdemServico.EmDiagnostico;
         AtualizadoEm = DateTime.UtcNow;
+        StatusAlteradoEm = DateTime.UtcNow;
         return this;
     }
 
@@ -201,6 +208,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         Status = StatusOrdemServico.AguardandoAprovacao;
         AtualizadoEm = DateTime.UtcNow;
+        StatusAlteradoEm = DateTime.UtcNow;
         return this;
     }
 
@@ -252,6 +260,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         Status = StatusOrdemServico.EmExecucao;
         AtualizadoEm = DateTime.UtcNow;
+        StatusAlteradoEm = DateTime.UtcNow;
         return this;
     }
 
@@ -262,6 +271,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
 
         Status = StatusOrdemServico.Finalizada;
         AtualizadoEm = DateTime.UtcNow;
+        StatusAlteradoEm = DateTime.UtcNow;
         AddDomainEvent(new OrdemServicoFinalizada(Id, ClienteId, DateTime.UtcNow));
         return this;
     }
@@ -284,6 +294,7 @@ public sealed class OrdemServico : AggregateRoot<OrdemServicoId>
         EntregueEm = dataEntrega;
         Status = StatusOrdemServico.Entregue;
         AtualizadoEm = DateTime.UtcNow;
+        StatusAlteradoEm = DateTime.UtcNow;
         return this;
     }
 }

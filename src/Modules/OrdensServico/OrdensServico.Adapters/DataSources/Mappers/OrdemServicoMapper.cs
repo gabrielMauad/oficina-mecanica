@@ -16,6 +16,7 @@ internal static class OrdemServicoMapper
         EntregueEm = os.EntregueEm,
         CriadoEm = os.CriadoEm,
         AtualizadoEm = os.AtualizadoEm,
+        StatusAlteradoEm = os.StatusAlteradoEm,
         ItensServico = [.. os.ItensServico.Select(i => new ItemServicoRecord
         {
             Id = i.Id.Value,
@@ -70,6 +71,7 @@ internal static class OrdemServicoMapper
             r.EntregueEm,
             r.CriadoEm,
             r.AtualizadoEm,
+            r.StatusAlteradoEm,
             itensServico,
             itensPeca,
             orcamentos);

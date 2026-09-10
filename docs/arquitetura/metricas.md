@@ -57,39 +57,52 @@ encerrar a aplicação, por ser singleton.
   Em todos os três, nada é emitido se a transição de domínio (`RegistrarDiagnostico`,
   `Finalizar`, `Concluir`) retornar falha.
 
-#### Como a duração é derivada — e a limitação que isso traz
+#### Como a duração é derivada — e a limitação que restou
 
-A entidade `OrdemServico` (`OrdensServico.Domain`) não guarda um timestamp por etapa: só existe
-`CriadoEm` e `AtualizadoEm`, e `AtualizadoEm` é reescrito com `DateTime.UtcNow` **a cada** método de
-transição de estado (`IniciarDiagnostico`, `RegistrarDiagnostico`, `EnviarOrcamento`,
-`AprovarOrcamento`, `RejeitarOrcamento`, `Executar`, `Finalizar`, `NotificarCliente`, `Concluir`).
+A entidade `OrdemServico` (`OrdensServico.Domain`) guarda dois timestamps de auditoria/alteração
+genéricos — `CriadoEm` e `AtualizadoEm` — e um terceiro, `StatusAlteradoEm`, dedicado a marcar
+**quando a OS entrou no status em que está**. `AtualizadoEm` continua sendo reescrito com
+`DateTime.UtcNow` a cada método de transição de estado (`IniciarDiagnostico`,
+`RegistrarDiagnostico`, `EnviarOrcamento`, `AprovarOrcamento`, `RejeitarOrcamento`, `Executar`,
+`Finalizar`, `NotificarCliente`, `Concluir`) — nada mudou nesse comportamento. `StatusAlteradoEm`,
+por outro lado, é reescrito **exclusivamente** pelos métodos que de fato mudam `Status`
+(`IniciarDiagnostico`, `EnviarOrcamento`, `Executar`, `Finalizar`, `Concluir`, e a construção via
+`AbrirComServicos`) — os quatro métodos que só tocam `AtualizadoEm` sem mudar `Status`
+(`RegistrarDiagnostico`, `AprovarOrcamento`, `RejeitarOrcamento`, `NotificarCliente`) não encostam
+em `StatusAlteradoEm`.
 
-Não alteramos o domínio para adicionar timestamps por etapa — mudar o modelo relacional nesta fase
-exigiria uma decisão arquitetural documentada à parte. Em vez disso, cada handler lê
-`ordemServico.AtualizadoEm` **antes** de chamar o método de domínio que faz a transição (depois da
-chamada o valor já foi sobrescrito) e calcula `DateTime.UtcNow - inicioEtapa` como proxy da duração
-da etapa.
+Cada handler lê `ordemServico.StatusAlteradoEm` **antes** de chamar o método de domínio que faz a
+transição (depois da chamada o valor já foi sobrescrito, se o método mudar o status) e calcula
+`DateTime.UtcNow - inicioEtapa` como a duração da etapa.
 
-Essa aproximação é exata quando nenhuma outra operação de domínio toca `AtualizadoEm` entre o início
-e o fim da etapa. Isso vale integralmente para `execucao` (nada mais atualiza a OS enquanto ela está
-`EmExecucao`), mas tem duas limitações conhecidas:
+Essa medição é exata sempre que nenhuma outra transição de status acontece entre o início e o fim da
+etapa. Isso agora vale para `execucao` (que já era exata) e também para `finalizacao`:
 
-- **`diagnostico`**: no caminho feliz (`IniciarDiagnostico` → `RegistrarDiagnostico`), a medida
-  reflete corretamente o tempo em diagnóstico. Mas `RegistrarDiagnostico` também aceita OS no status
-  `AguardandoAprovacao` (recadastro de diagnóstico após um orçamento ser rejeitado — ver
-  `RejeitarOrcamento`). Nesse caminho alternativo, `AtualizadoEm` já foi sobrescrito pela rejeição do
-  orçamento, então a métrica passa a medir "tempo desde a rejeição do orçamento até o novo
-  diagnóstico", não o tempo total em diagnóstico.
-- **`finalizacao`**: `Concluir` exige que a OS já tenha sido notificada (`NotificarCliente`), e
-  `NotificarCliente` também sobrescreve `AtualizadoEm`. Como `NotificarCliente` é sempre chamado
-  depois de `Finalizar` e antes de `Concluir`, a métrica **não mede o intervalo real entre
-  finalização e entrega** — mede o intervalo entre a notificação ao cliente e a entrega/conclusão.
-  Para medir o intervalo real seria necessário um timestamp dedicado (`FinalizadoEm`), o que fica
-  fora do escopo desta tarefa.
+- **`finalizacao`** (`Finalizar` → `Concluir`): antes desta correção, a métrica usava
+  `AtualizadoEm` como marco inicial, e como `NotificarCliente` sempre roda entre `Finalizar` e
+  `Concluir` e também sobrescrevia `AtualizadoEm`, a métrica media na prática "notificação →
+  entrega", não "finalização → entrega" — um viés sistemático no caminho normal, não uma borda rara.
+  Com `StatusAlteradoEm` — que `NotificarCliente` não toca, por não mudar `Status` — a métrica passa
+  a medir corretamente o intervalo real entre `Finalizar` e `Concluir`.
 
-Essas duas limitações devem ser lidas como "o dashboard de tempo médio de finalização e de
-recadastro de diagnóstico após rejeição de orçamento tem viés conhecido", não como um bug — o
-contrato de métricas prioriza não alterar o schema de domínio nesta fase.
+Uma limitação conhecida permanece, com causa diferente da versão anterior deste documento:
+
+- **`diagnostico`** no caminho alternativo: no caminho feliz (`IniciarDiagnostico` →
+  `RegistrarDiagnostico`), a medida reflete corretamente o tempo em diagnóstico. Mas
+  `RegistrarDiagnostico` também aceita OS no status `AguardandoAprovacao` (recadastro de diagnóstico
+  após um orçamento ser rejeitado — ver `RejeitarOrcamento`), e nesse caminho `Status` não muda:
+  `RejeitarOrcamento` mantém a OS em `AguardandoAprovacao`, e o novo `RegistrarDiagnostico` também
+  não transiciona o status. Como não existe no domínio nenhum evento que marque o início de um
+  *re-diagnóstico* (a OS nunca sai de `AguardandoAprovacao` nesse fluxo), `StatusAlteradoEm` ainda
+  aponta para a última transição de status real — a que levou a OS a `AguardandoAprovacao` pela
+  primeira vez, possivelmente bem antes da rejeição. A métrica, portanto, mede um intervalo maior
+  que o tempo real do recadastro nesse caminho. Corrigir isso exigiria um conceito novo de domínio
+  ("reabrir diagnóstico", com uma transição ou timestamp próprio), o que fica fora do escopo desta
+  tarefa.
+
+Essa limitação deve ser lida como "o dashboard de tempo médio de recadastro de diagnóstico após
+rejeição de orçamento tem viés conhecido nesse caminho específico", não como um bug generalizado —
+`diagnostico` no caminho feliz e `execucao` são exatos, e `finalizacao` deixou de ser aproximada.
 
 ### `oficina.integracoes.falhas`
 
@@ -129,3 +142,16 @@ Cada instrumento tem cobertura em testes unitários usando `MetricCollector<T>`
 Os testes cobrem tanto o caminho de sucesso (valor e tags corretos) quanto o de falha (nenhuma
 métrica emitida quando o handler retorna erro / lança exceção), além de confirmar que a exceção
 continua sendo propagada pelo `InMemoryIntegrationEventBus`.
+
+O comportamento de `StatusAlteradoEm` em si — o que faz a medição de `finalizacao` estar correta —
+é coberto no nível de domínio, não de métrica:
+
+- `tests/Modules/OrdensServico/OrdemServico.Domain.Tests/OrdemServico/OrdemServicoStatusAlteradoEmTests.cs`
+  cobre que `StatusAlteradoEm` avança em cada método que muda `Status` e, mais importante, que ele
+  **não se move** em `RegistrarDiagnostico`, `AprovarOrcamento`, `RejeitarOrcamento` e
+  `NotificarCliente` — mesmo quando esses métodos sobrescrevem `AtualizadoEm`. São esses testes de
+  "não se move" que impedem alguém de, no futuro, voltar a sujar o campo e quebrar a métrica em
+  silêncio.
+- `ConcluirOrdemServicoHandlerTests` tem um teste dedicado ao cenário que motivou a correção:
+  `NotificarCliente` acontecendo entre `Finalizar` e `Concluir`, verificando que a duração registrada
+  para `finalizacao` reflete o intervalo desde `Finalizar`, não desde a notificação.

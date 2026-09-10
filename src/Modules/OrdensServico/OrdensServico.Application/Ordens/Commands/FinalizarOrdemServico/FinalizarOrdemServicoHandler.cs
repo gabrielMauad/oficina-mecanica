@@ -25,7 +25,7 @@ public sealed class FinalizarOrdemServicoHandler : IRequestHandler<FinalizarOrde
         if (ordemServico is null)
             return OrdemServicoErrors.NaoEncontrada;
 
-        DateTime inicioEtapa = ordemServico.AtualizadoEm;
+        DateTime inicioEtapa = ordemServico.StatusAlteradoEm;
         Result<OrdemServico> result = ordemServico.Finalizar();
         if (result.IsFailure)
             return result.Error;
