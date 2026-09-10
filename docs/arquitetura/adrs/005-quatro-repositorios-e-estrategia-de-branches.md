@@ -87,3 +87,21 @@ e `infra/main.tf` aplica os manifestos de `../k8s`, também na aplicação. Move
 pipeline de deploy sem que o Terraform de nuvem existisse para substituí-la. A migração está registrada
 como pendência, a ser feita no mesmo Pull Request que introduzir o Terraform de nuvem em
 `oficina-mecanica-infra-k8s`.
+
+## Resolução da questão em aberto sobre homologação (2026-09-10)
+
+O texto acima deixava em aberto se haveria um **ambiente** de homologação, já que a decisão de não
+ter uma **branch** de homologação não resolvia sozinha o requisito da fase.
+
+**Decisão: não haverá homologação — nem branch, nem ambiente.** Existe apenas produção.
+
+O motivo é o mesmo que sustenta o resto desta ADR: o desenvolvimento é conduzido por uma única
+pessoa, com prazo curto, e um segundo ambiente significaria duplicar cluster, banco e balanceador —
+com o custo correspondente numa conta de crédito finito
+([RFC-002](../rfcs/002-escolha-do-provedor-de-nuvem.md)) e sem nenhum ganho real de qualidade, já que
+não há equipe para validar em homologação antes de promover.
+
+**Risco assumido, declarado explicitamente:** o requisito *"deploy automatizado para os ambientes ou
+branches de homologação e produção"* fica atendido **apenas na parte de produção**. Esta é uma
+decisão consciente de escopo, não uma omissão — e deve ser apresentada como tal na documentação de
+entrega e na demonstração em vídeo.
